@@ -1,0 +1,121 @@
+/* --- Reusable Form & Input Styles --- */
+.formContainer {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem 3rem;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    flex-grow: 1;
+}
+
+/* New style for the back link */
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    margin-bottom: 1.5rem; /* Space between link and header */
+    transition: color 0.3s;
+}
+
+.backLink:hover {
+    color: #e74c3c;
+}
+
+.formHeader {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.formHeader h1 {
+    font-size: 2.8rem;
+    color: #2c3e50;
+}
+
+.formHeader p {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    margin-top: 0.5rem;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.75rem;
+    margin-bottom: 1.5rem; /* Reduced margin */
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroupFullWidth {
+    grid-column: 1 / -1;
+}
+
+.formLabel {
+    font-weight: 600;
+    color: #34495e;
+}
+
+.formInput,
+.formTextarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: #fdfdfd;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.formInput:focus,
+.formTextarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.formTextarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* New Style for API Errors */
+.apiError {
+    color: #e74c3c;
+    background-color: #fbeae5;
+    border: 1px solid #e74c3c;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    .formContainer {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+    }
+    .formHeader h1 {
+        font-size: 2.2rem;
+    }
+    .formGrid {
+        grid-template-columns: 1fr; /* This stacks the fields */
+        gap: 1.25rem;
+    }
+}

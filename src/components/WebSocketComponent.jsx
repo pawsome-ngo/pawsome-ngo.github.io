@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 
-const WebSocketComponent = ({ onMessageReceived, token }) => {
+const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
     const stompClientRef = useRef(null);
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        if (!token) {
+        if (!token || !chatId) {
             if (stompClientRef.current) {
                 stompClientRef.current.disconnect();
             }
@@ -22,22 +22,22 @@ const WebSocketComponent = ({ onMessageReceived, token }) => {
             'Authorization': `Bearer ${token}`,
         };
 
+        // Disconnect from any previous chat before connecting to a new one
+        if (stompClientRef.current) {
+            stompClientRef.current.disconnect();
+        }
+
         client.connect(headers, (frame) => {
             console.log('Connected: ' + frame);
             setIsConnected(true);
 
-            client.subscribe('/topic/greetings', (greeting) => {
-                onMessageReceived(greeting.body);
+            // Subscribe to the specific chat group topic
+            client.subscribe(`/topic/chat/${chatId}`, (message) => {
+                onMessageReceived(JSON.parse(message.body));
             });
         }, (error) => {
             console.error('Connection error:', error);
             setIsConnected(false);
-            // Handle unauthorized or other connection errors
-            if (error.includes("Who are you")) { // Customize this based on your backend error handling
-                // Token might be invalid, force logout
-                localStorage.removeItem('jwtToken');
-                window.location.reload();
-            }
         });
 
         stompClientRef.current = client;
@@ -47,11 +47,11 @@ const WebSocketComponent = ({ onMessageReceived, token }) => {
                 stompClientRef.current.disconnect();
             }
         };
-    }, [onMessageReceived, token]); // Add 'token' to the dependency array
+    }, [onMessageReceived, token, chatId]);
 
     const sendMessage = (message) => {
-        if (stompClientRef.current && isConnected && message) {
-            stompClientRef.current.send('/app/hello', {}, message);
+        if (stompClientRef.current && isConnected && chatId) {
+            stompClientRef.current.send(`/app/chat/${chatId}`, {}, JSON.stringify(message));
         }
     };
 

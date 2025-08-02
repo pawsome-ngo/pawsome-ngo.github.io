@@ -2,9 +2,12 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import './App.css';
-import WebSocketComponent from './components/WebSocketComponent';
+
 import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
+import ChatGroupsPage from './components/ChatGroupsPage';
+import ChatWindow from './components/ChatWindow';
+
 
 const getRolesFromToken = (token) => {
     try {
@@ -16,53 +19,20 @@ const getRolesFromToken = (token) => {
     }
 };
 
-const ProtectedContent = ({ token, onLogout }) => {
-    const [messages, setMessages] = useState([]);
-    const [messageInput, setMessageInput] = useState('');
-    const roles = getRolesFromToken(token);
-    const isAdmin = roles.includes('ADMIN') || roles.includes('SUPER_ADMIN');
+const ProtectedContent = ({ token, onLogout, Component, ...rest }) => {
+    const navigate = useNavigate();
 
-    const onMessageReceived = useCallback((message) => {
-        setMessages((prevMessages) => [...prevMessages, message]);
-    }, []);
-
-    const { sendMessage, isConnected } = WebSocketComponent({ onMessageReceived, token });
-
-    const handleSendMessage = () => {
-        if (messageInput) {
-            sendMessage(messageInput);
-            setMessageInput('');
+    useEffect(() => {
+        if (!token) {
+            navigate('/login');
         }
-    };
+    }, [token, navigate]);
 
-    return (
-        <div className="App-header">
-            <div className="header-container">
-                <h1>React WebSocket Demo</h1>
-                <button onClick={onLogout}>Log Out</button>
-            </div>
-            {isAdmin && <h2>Admin Panel Access</h2>}
-            <div>
-                <input
-                    type="text"
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    placeholder="Enter your message..."
-                />
-                <button onClick={handleSendMessage} disabled={!isConnected}>
-                    Send
-                </button>
-            </div>
-            <div>
-                <h2>Messages:</h2>
-                <ul>
-                    {messages.map((msg, index) => (
-                        <li key={index}>{msg}</li>
-                    ))}
-                </ul>
-            </div>
-        </div>
-    );
+    if (!token) {
+        return null;
+    }
+
+    return <Component token={token} onLogout={onLogout} {...rest} />;
 };
 
 const App = () => {
@@ -81,27 +51,15 @@ const App = () => {
         navigate('/login');
     };
 
-    const ProtectedWrapper = () => {
-        useEffect(() => {
-            if (!token) {
-                navigate('/login');
-            }
-        }, [token, navigate]);
-
-        if (!token) {
-            return null;
-        }
-
-        return <ProtectedContent token={token} onLogout={handleLogout} />;
-    };
-
     return (
         <div className="App">
             <Routes>
                 <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
                 <Route path="/signup" element={<SignUpPage />} />
-                <Route path="/chat" element={<ProtectedWrapper />} />
-                <Route path="/" element={<ProtectedWrapper />} />
+                {/* The root path now redirects to the chat group list */}
+                <Route path="/" element={<ProtectedContent Component={ChatGroupsPage} token={token} onLogout={handleLogout} />} />
+                <Route path="/chat" element={<ProtectedContent Component={ChatGroupsPage} token={token} onLogout={handleLogout} />} />
+                <Route path="/chat/:chatId" element={<ProtectedContent Component={ChatWindow} token={token} onLogout={handleLogout} />} />
             </Routes>
         </div>
     );

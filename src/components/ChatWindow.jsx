@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import WebSocketComponent from './WebSocketComponent';
@@ -24,26 +24,36 @@ const ChatWindow = ({ token }) => {
     const [messageInput, setMessageInput] = useState('');
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef(null);
+    const [loggedInUser, setLoggedInUser] = useState(null);
 
-    const userInfo = getUserInfoFromToken(token);
-    const loggedInUserId = userInfo.id;
-    const loggedInUsername = userInfo.username;
+    // This useEffect hook runs only when the `token` changes.
+    // It fetches and stores the user info in state, preventing redundant calls.
+    useEffect(() => {
+        if (token) {
+            const userInfo = getUserInfoFromToken(token);
+            setLoggedInUser(userInfo);
+        }
+    }, [token]);
 
-    const onMessageReceived = (newMessage) => {
+    // Memoize the onMessageReceived function to prevent it from causing a re-render in WebSocketComponent
+    const onMessageReceived = useCallback((newMessage) => {
         setMessages((prevMessages) => {
+            // Check if the incoming message has a client-side ID
             const existingMessageIndex = prevMessages.findIndex(
-                (msg) => msg.id === newMessage.id
+                (msg) => msg.id === newMessage.clientMessageId
             );
 
             if (existingMessageIndex !== -1) {
+                // If it's an update to an optimistic message, replace it
                 const updatedMessages = [...prevMessages];
                 updatedMessages[existingMessageIndex] = newMessage;
                 return updatedMessages;
             } else {
+                // Otherwise, it's a new message from another user, so add it
                 return [...prevMessages, newMessage];
             }
         });
-    };
+    }, []); // Empty dependency array ensures the function is created only once
 
     const { sendMessage, isConnected } = WebSocketComponent({ onMessageReceived, token, chatId });
 
@@ -81,29 +91,30 @@ const ChatWindow = ({ token }) => {
 
     const handleSendMessage = (e) => {
         e.preventDefault();
-        if (messageInput) {
+        if (messageInput && loggedInUser) {
+            const clientMessageId = `temp-${Date.now()}`;
             const optimisticMessage = {
-                id: `temp-${Date.now()}`,
+                id: clientMessageId,
                 text: messageInput,
-                sender: { id: loggedInUserId, firstName: loggedInUsername, lastName: '' },
+                sender: { id: loggedInUser.id, firstName: 'You', lastName: '' },
                 timestamp: new Date().toISOString(),
             };
 
             setMessages((prevMessages) => [...prevMessages, optimisticMessage]);
 
-            sendMessage({ text: messageInput });
+            sendMessage({ text: messageInput, clientMessageId: clientMessageId });
             setMessageInput('');
         }
     };
 
-    if (loading) return <div className={styles.container}>Loading chat...</div>;
+    if (loading || !loggedInUser) return <div className={styles.container}>Loading chat...</div>;
 
     return (
         <div className={styles.container}>
             <div className={styles.messagesList}>
                 {messages.map(msg => (
-                    <div key={msg.id} className={`${styles.message} ${msg.sender.firstName?.toLowerCase() === loggedInUsername ? styles.sent : styles.received}`}>
-                        <strong>{msg.sender.firstName?.toLowerCase() === loggedInUsername ? 'You' : msg.sender.firstName}:</strong> {msg.text}
+                    <div key={msg.id} className={`${styles.message} ${Number(msg.sender.id) === loggedInUser.id ? styles.sent : styles.received}`}>
+                        <strong>{Number(msg.sender.id) === loggedInUser.id ? 'You' : msg.sender.firstName}:</strong> {msg.text}
                     </div>
                 ))}
                 <div ref={messagesEndRef} />

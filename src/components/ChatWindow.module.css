@@ -1,12 +1,12 @@
-/* General Chat Window Container - Mobile First */
 .chatWindow {
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100vh;
+    height: 100vh; /* Full viewport height for a native feel */
     background-color: #2a2a2a;
+    /* The main container will now handle scrolling */
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: hidden; /* This is the fix */
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     margin: 0;
     border: none;
@@ -14,6 +14,7 @@
     box-shadow: none;
 }
 
+/* Apply desktop styles on larger screens */
 @media (min-width: 601px) {
     .chatWindow {
         max-width: 600px;
@@ -25,11 +26,12 @@
     }
 }
 
+/* Chat Header */
 .chatHeader {
     padding: 1rem;
     background-color: #333;
     border-bottom: 1px solid #444;
-    display: flex;
+    display: flex; /* Use flexbox for alignment */
     align-items: center;
     flex-shrink: 0;
     position: sticky;
@@ -50,11 +52,13 @@
 .chatHeader h2 {
     font-size: 1.2rem;
     color: #e0e0e0;
-    flex-grow: 1;
-    text-align: center;
+    flex-grow: 1; /* Allow title to take up space */
+    text-align: center; /* Center the title */
+    /* Offset for the button to keep title centered */
     margin: 0 -2rem 0 0;
 }
 
+/* Message List Area */
 .messageList {
     flex-grow: 1;
     padding: 1rem;
@@ -63,6 +67,7 @@
     gap: 0.25rem;
 }
 
+/* Individual Message Styling */
 .message {
     display: flex;
     gap: 0.5rem;
@@ -97,11 +102,54 @@
 .messageText {
     margin: 0;
     line-height: 1.4;
-    white-space: normal;
+    white-space: normal; /* or pre-wrap */
     overflow-wrap: break-word;
-    word-break: break-word;
+    word-break: break-word; /* For older browser compatibility */
+}
+/* --- Reply Styles --- */
+.replyHeader {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #a0a0a0;
+    margin-bottom: 0.25rem;
+    padding: 0 0.5rem;
+    white-space: nowrap; /* This is the fix */
 }
 
+.replyIcon {
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    color: #a0a0a0;
+}
+
+.repliedMessageSnippet {
+    background-color: rgba(0, 0, 0, 0.25);
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+    overflow: hidden; /* Ensure container clips the content */
+}
+
+.repliedMessageSnippet p {
+    margin: 0;
+    font-size: 0.9rem;
+    white-space: normal; /* Allow wrapping to enable line clamp */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1; /* Limit to one line */
+    -webkit-box-orient: vertical;
+}
+
+.sent .repliedMessageSnippet {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+
+/* Sent Messages (current user) */
 .sent {
     align-self: flex-end;
     justify-content: flex-end;
@@ -118,8 +166,10 @@
     max-width: 90%;
 }
 
+/* Received Messages (other user) */
 .received {
     align-self: flex-start;
+    min-width: 90%;
 }
 
 .received .messageBubble {
@@ -127,6 +177,8 @@
     color: #f1f1f1;
     max-width: 90%;
 }
+
+/* --- Reaction Styles --- */
 
 .emojiPicker {
     position: absolute;
@@ -152,6 +204,7 @@
 
 .emojiPicker span:hover { transform: scale(1.2); }
 
+/* Clubbed Reactions Container */
 .reactionsContainer {
     display: flex;
     align-items: center;
@@ -179,6 +232,117 @@
     font-weight: 500;
 }
 
+/* --- Message Details (Timestamp, Seen By) --- */
+.messageDetails {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 4px 8px 0 8px;
+    font-size: 0.75rem; /* 12px */
+    color: #a0a0a0;
+    animation: fadeInDetails 0.4s ease;
+    gap: 1rem;
+    white-space: nowrap;
+}
+
+.seenByText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    min-width: max-content;
+}
+
+@keyframes fadeInDetails {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Reactions Modal Styles --- */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 100;
+}
+
+.reactionsModal {
+    background-color: #2c2c2c;
+    width: 100%;
+    max-width: 600px;
+    max-height: 60vh;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.modalHeader {
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #444;
+}
+
+.modalHeader h3 {
+    margin: 0;
+    color: #f1f1f1;
+    flex-grow: 1;
+    text-align: center;
+    padding-left: 24px;
+}
+
+.modalCloseButton {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+
+.modalContent {
+    overflow-y: auto;
+    padding: 0.5rem 1rem;
+}
+
+.modalReactionItem {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    color: #e0e0e0;
+    border-bottom: 1px solid #3a3a3a;
+}
+.modalReactionItem:last-child {
+    border-bottom: none;
+}
+
+.modalReactionEmoji {
+    font-size: 1.2rem;
+    margin-right: 1rem;
+}
+
+/* Message Input Form */
 .messageInputForm {
     flex-shrink: 0;
     position: sticky;
@@ -226,3 +390,50 @@
 .sendButton:hover {
     background-color: #535bf2;
 }
+
+/* Reply Context Bar Styles */
+.replyingToContext {
+    padding: 0.5rem 1rem;
+    background-color: #2a2a2a;
+    border-bottom: 1px solid #444;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.replyingToInfo {
+    text-align: left;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.replyingToInfo p {
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.replyingToTitle {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #a0a0a0;
+}
+
+.replyingToText {
+    font-size: 0.85rem;
+    color: #d0d0d0;
+}
+
+.cancelReplyButton {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.5rem;
+    flex-shrink: 0;
+}
+

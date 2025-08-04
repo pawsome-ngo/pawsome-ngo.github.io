@@ -37,6 +37,8 @@ const ChatWindow = ({ token, onLogout }) => {
     const [reactionsModalData, setReactionsModalData] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null);
     const pressTimer = useRef(null);
+    const initialLoadRef = useRef(true); // Ref to track initial load
+    const messageListRef = useRef(null); // Ref for the message list element
 
     useEffect(() => {
         if (token) {
@@ -45,7 +47,6 @@ const ChatWindow = ({ token, onLogout }) => {
         }
     }, [token]);
 
-    // The fix is here: handling both optimistic and real-time updates
     const onMessageReceived = useCallback((message) => {
         setMessages(prevMessages => {
             // First, check if it's an optimistic update (message sent by me)
@@ -65,9 +66,21 @@ const ChatWindow = ({ token, onLogout }) => {
             }
 
             // If it's a new message from another user, simply add it
-            return [...prevMessages, message];
+            // This is where we return the new array for new messages.
+            const newMessages = [...prevMessages, message];
+
+            // Only scroll if a new message is added and the user is already near the bottom
+            if (messageListRef.current) {
+                const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
+                // A simple check to see if the user is already at the bottom.
+                if (scrollHeight - scrollTop <= clientHeight + 100) { // Add a small buffer
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+
+            return newMessages;
         });
-    }, []);
+    }, [loggedInUser]);
 
     const { sendMessage, isConnected } = WebSocketComponent({ onMessageReceived, token, chatId });
 
@@ -91,6 +104,7 @@ const ChatWindow = ({ token, onLogout }) => {
                 if (currentGroup) {
                     setChatGroup(currentGroup);
                     setMessages(messagesData);
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); // Scroll on initial load
                 } else {
                     throw new Error('Chat group not found.');
                 }
@@ -107,10 +121,6 @@ const ChatWindow = ({ token, onLogout }) => {
             fetchChatData();
         }
     }, [chatId, token, onLogout]);
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
 
     const handleSendMessage = (event) => {
         event.preventDefault();
@@ -138,6 +148,7 @@ const ChatWindow = ({ token, onLogout }) => {
 
         setNewMessage('');
         setReplyingTo(null);
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); // Scroll on sent message
     };
 
     const handleLongPressStart = (messageId) => {
@@ -170,7 +181,6 @@ const ChatWindow = ({ token, onLogout }) => {
 
     const handleClosePopups = () => {
         setActiveEmojiPicker(null);
-        // You can add logic here to close other popups if you have them
     };
 
     if (loading || !loggedInUser || !chatGroup) return <div className={styles.centeredMessage}>Loading messages...</div>;
@@ -181,7 +191,7 @@ const ChatWindow = ({ token, onLogout }) => {
                 <h2>{chatGroup.name}</h2>
                 <div className={styles.headerPlaceholder}></div>
             </header>
-            <main className={styles.messageList} onClick={handleClosePopups}>
+            <main ref={messageListRef} className={styles.messageList} onClick={handleClosePopups}>
                 {messages.map((msg) => {
                     const isSentByCurrentUser = Number(msg.sender.id) === loggedInUser.id;
                     const reactionsCount = msg.reactions ? Object.values(msg.reactions).flat().length : 0;

@@ -37,8 +37,8 @@ const ChatWindow = ({ token, onLogout }) => {
     const [reactionsModalData, setReactionsModalData] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null);
     const pressTimer = useRef(null);
-    const initialLoadRef = useRef(true); // Ref to track initial load
-    const messageListRef = useRef(null); // Ref for the message list element
+    const initialLoadRef = useRef(true);
+    const messageListRef = useRef(null);
 
     useEffect(() => {
         if (token) {
@@ -49,7 +49,6 @@ const ChatWindow = ({ token, onLogout }) => {
 
     const onMessageReceived = useCallback((message) => {
         setMessages(prevMessages => {
-            // First, check if it's an optimistic update (message sent by me)
             const optimisticMessageIndex = prevMessages.findIndex(m => m.id === message.clientMessageId);
             if (optimisticMessageIndex !== -1) {
                 const updatedMessages = [...prevMessages];
@@ -57,7 +56,6 @@ const ChatWindow = ({ token, onLogout }) => {
                 return updatedMessages;
             }
 
-            // Second, check if it's a real-time update to an existing message (e.g., a reaction)
             const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
             if (existingMessageIndex !== -1) {
                 const updatedMessages = [...prevMessages];
@@ -65,15 +63,11 @@ const ChatWindow = ({ token, onLogout }) => {
                 return updatedMessages;
             }
 
-            // If it's a new message from another user, simply add it
-            // This is where we return the new array for new messages.
             const newMessages = [...prevMessages, message];
 
-            // Only scroll if a new message is added and the user is already near the bottom
             if (messageListRef.current) {
                 const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
-                // A simple check to see if the user is already at the bottom.
-                if (scrollHeight - scrollTop <= clientHeight + 100) { // Add a small buffer
+                if (scrollHeight - scrollTop <= clientHeight + 100) {
                     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                 }
             }
@@ -104,7 +98,6 @@ const ChatWindow = ({ token, onLogout }) => {
                 if (currentGroup) {
                     setChatGroup(currentGroup);
                     setMessages(messagesData);
-                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); // Scroll on initial load
                 } else {
                     throw new Error('Chat group not found.');
                 }
@@ -121,6 +114,12 @@ const ChatWindow = ({ token, onLogout }) => {
             fetchChatData();
         }
     }, [chatId, token, onLogout]);
+
+    useEffect(() => {
+        if (messages.length > 0) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages]);
 
     const handleSendMessage = (event) => {
         event.preventDefault();
@@ -148,7 +147,6 @@ const ChatWindow = ({ token, onLogout }) => {
 
         setNewMessage('');
         setReplyingTo(null);
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); // Scroll on sent message
     };
 
     const handleLongPressStart = (messageId) => {

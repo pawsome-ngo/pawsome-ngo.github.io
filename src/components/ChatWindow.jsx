@@ -22,6 +22,15 @@ const getUserInfoFromToken = (token) => {
     }
 };
 
+const stringToHslColor = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = hash % 360;
+    return `hsl(${h}, 70%, 50%)`;
+};
+
 const ChatWindow = ({ token, onLogout }) => {
     const { chatId } = useParams();
     const navigate = useNavigate();
@@ -42,12 +51,26 @@ const ChatWindow = ({ token, onLogout }) => {
     const dragStartXRef = useRef(null);
     const DRAG_THRESHOLD = 50;
 
+    const userIsAtBottomRef = useRef(true);
+    const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+
     useEffect(() => {
         if (token) {
             const userInfo = getUserInfoFromToken(token);
             setLoggedInUser(userInfo);
         }
     }, [token]);
+
+    const handleScroll = () => {
+        if (messageListRef.current) {
+            const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
+            const isAtBottom = scrollHeight - scrollTop <= clientHeight + 100;
+            userIsAtBottomRef.current = isAtBottom;
+            if (isAtBottom) {
+                setHasUnreadMessages(false);
+            }
+        }
+    };
 
     const onMessageReceived = useCallback((message) => {
         setMessages(prevMessages => {
@@ -74,9 +97,10 @@ const ChatWindow = ({ token, onLogout }) => {
 
             setTimeout(() => {
                 if (messageListRef.current) {
-                    const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
-                    if (scrollHeight - scrollTop <= clientHeight + 100) {
+                    if (userIsAtBottomRef.current) {
                         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        setHasUnreadMessages(true);
                     }
                 }
             }, 0);
@@ -200,6 +224,10 @@ const ChatWindow = ({ token, onLogout }) => {
         }
     };
 
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        setHasUnreadMessages(false);
+    };
 
     if (loading || !loggedInUser || !chatGroup) return <div className={styles.centeredMessage}>Loading messages...</div>;
     return (
@@ -209,16 +237,24 @@ const ChatWindow = ({ token, onLogout }) => {
                 <h2>{chatGroup.name}</h2>
                 <div className={styles.headerPlaceholder}></div>
             </header>
-            <main ref={messageListRef} className={styles.messageList} onClick={handleClosePopups}>
+            <main ref={messageListRef} className={styles.messageList} onScroll={handleScroll} onClick={handleClosePopups}>
                 {messages.map((msg) => {
                     const isSentByCurrentUser = Number(msg.sender.id) === loggedInUser.id;
                     const reactionsCount = msg.reactions ? Object.values(msg.reactions).flat().length : 0;
-                    const senderName = isSentByCurrentUser ? 'You' : msg.sender.firstName;
                     const parentMessage = msg.parentMessageId ? messages.find(m => m.id === msg.parentMessageId) : null;
                     const replyHeaderName = isSentByCurrentUser ? 'You replied to' : `Replied to`;
 
+                    const senderInitials = msg.sender.firstName.charAt(0).toUpperCase() +
+                        (msg.sender.lastName ? msg.sender.lastName.charAt(0).toUpperCase() : '');
+                    const avatarColor = stringToHslColor(msg.sender.id.toString());
+
                     return (
                         <div key={msg.id} className={`${styles.message} ${isSentByCurrentUser ? styles.sent : styles.received}`}>
+                            {!isSentByCurrentUser && (
+                                <div className={styles.avatar} style={{ backgroundColor: avatarColor }}>
+                                    {senderInitials}
+                                </div>
+                            )}
                             <div className={styles.messageContent}>
                                 {parentMessage && (
                                     <div className={styles.repliedMessageSnippet}>
@@ -243,7 +279,7 @@ const ChatWindow = ({ token, onLogout }) => {
                                     onTouchEnd={(e) => handleInteractionEnd(e, msg)}
                                     onDragStart={(e) => e.preventDefault()}
                                 >
-                                    <p className={styles.messageText}>{senderName}: {msg.text}</p>
+                                    <p className={styles.messageText}>{msg.text}</p>
                                 </div>
                                 {reactionsCount > 0 && (
                                     <div className={styles.reactionsContainer} onClick={(e) => { e.stopPropagation(); handleOpenReactionsModal(msg.reactions); }}>
@@ -259,6 +295,11 @@ const ChatWindow = ({ token, onLogout }) => {
                 })}
                 <div ref={messagesEndRef} />
             </main>
+            {hasUnreadMessages && (
+                <button className={styles.scrollToBottomIndicator} onClick={scrollToBottom}>
+                    ↓
+                </button>
+            )}
             {replyingTo && (
                 <div className={styles.replyingToContext}>
                     <div className={styles.replyingToInfo}>

@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import WebSocketComponent from './WebSocketComponent';
+import ReactionsModal from './ReactionsModal';
+import ReactionPicker from './ReactionPicker';
 import styles from './ChatWindow.module.css';
+
+const EMOJI_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 // A utility function to extract user ID and username from the JWT token
 const getUserInfoFromToken = (token) => {
@@ -10,7 +15,7 @@ const getUserInfoFromToken = (token) => {
         const decodedToken = jwtDecode(token);
         return {
             id: Number(decodedToken.id),
-            username: decodedToken.sub // The 'sub' claim holds the username
+            username: decodedToken.sub
         };
     } catch (error) {
         console.error('Failed to decode token:', error);
@@ -18,16 +23,21 @@ const getUserInfoFromToken = (token) => {
     }
 };
 
-const ChatWindow = ({ token }) => {
+const ChatWindow = ({ token, onLogout }) => {
     const { chatId } = useParams();
+    const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
-    const [messageInput, setMessageInput] = useState('');
+    const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef(null);
     const [loggedInUser, setLoggedInUser] = useState(null);
 
-    // This useEffect hook runs only when the `token` changes.
-    // It fetches and stores the user info in state, preventing redundant calls.
+    const [chatGroup, setChatGroup] = useState(null);
+    const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
+    const [reactionsModalData, setReactionsModalData] = useState(null);
+    const [replyingTo, setReplyingTo] = useState(null);
+    const pressTimer = useRef(null);
+
     useEffect(() => {
         if (token) {
             const userInfo = getUserInfoFromToken(token);
@@ -35,100 +45,184 @@ const ChatWindow = ({ token }) => {
         }
     }, [token]);
 
-    // Memoize the onMessageReceived function to prevent it from causing a re-render in WebSocketComponent
-    const onMessageReceived = useCallback((newMessage) => {
-        setMessages((prevMessages) => {
-            // Check if the incoming message has a client-side ID
-            const existingMessageIndex = prevMessages.findIndex(
-                (msg) => msg.id === newMessage.clientMessageId
-            );
-
+    // The fix is here: using newMessage.clientMessageId to find and replace the optimistic message
+    const onMessageReceived = useCallback((message) => {
+        setMessages(prevMessages => {
+            const existingMessageIndex = prevMessages.findIndex(m => m.id === message.clientMessageId);
             if (existingMessageIndex !== -1) {
-                // If it's an update to an optimistic message, replace it
                 const updatedMessages = [...prevMessages];
-                updatedMessages[existingMessageIndex] = newMessage;
+                updatedMessages[existingMessageIndex] = message;
                 return updatedMessages;
             } else {
-                // Otherwise, it's a new message from another user, so add it
-                return [...prevMessages, newMessage];
+                return [...prevMessages, message];
             }
         });
-    }, []); // Empty dependency array ensures the function is created only once
+    }, []);
 
     const { sendMessage, isConnected } = WebSocketComponent({ onMessageReceived, token, chatId });
 
     useEffect(() => {
-        const fetchMessages = async () => {
+        const fetchChatData = async () => {
+            setLoading(true);
             try {
-                const response = await fetch(`http://localhost:8080/api/chat/messages/${chatId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setMessages(data);
-                } else {
-                    console.error('Failed to fetch messages');
+                const [messagesResponse, chatGroupsResponse] = await Promise.all([
+                    fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+
+                if (!messagesResponse.ok || !chatGroupsResponse.ok) {
+                    throw new Error('Failed to fetch chat data.');
                 }
+
+                const messagesData = await messagesResponse.json();
+                const groupsData = await chatGroupsResponse.json();
+
+                const currentGroup = groupsData.find(p => p.chatGroup.id === chatId)?.chatGroup;
+                if (currentGroup) {
+                    setChatGroup(currentGroup);
+                    setMessages(messagesData);
+                } else {
+                    throw new Error('Chat group not found.');
+                }
+
             } catch (err) {
-                console.error('API call failed', err);
+                console.error(err);
+                onLogout();
             } finally {
                 setLoading(false);
             }
         };
 
         if (chatId && token) {
-            fetchMessages();
+            fetchChatData();
         }
-    }, [chatId, token]);
+    }, [chatId, token, onLogout]);
 
     useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-        }
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const handleSendMessage = (e) => {
-        e.preventDefault();
-        if (messageInput && loggedInUser) {
-            const clientMessageId = `temp-${Date.now()}`;
-            const optimisticMessage = {
-                id: clientMessageId,
-                text: messageInput,
-                sender: { id: loggedInUser.id, firstName: 'You', lastName: '' },
-                timestamp: new Date().toISOString(),
-            };
+    const handleSendMessage = (event) => {
+        event.preventDefault();
+        if (newMessage.trim() === '' || !loggedInUser) return;
 
-            setMessages((prevMessages) => [...prevMessages, optimisticMessage]);
+        const clientMessageId = `temp-${Date.now()}`;
+        const optimisticMessage = {
+            id: clientMessageId,
+            text: newMessage.trim(),
+            sender: { id: loggedInUser.id, firstName: 'You', lastName: '' },
+            timestamp: new Date().toISOString(),
+            reactions: {},
+            seenBy: [],
+            parentMessageId: replyingTo ? replyingTo.id : null,
+        };
 
-            sendMessage({ text: messageInput, clientMessageId: clientMessageId });
-            setMessageInput('');
-        }
+        setMessages(prevMessages => [...prevMessages, optimisticMessage]);
+
+        const payload = {
+            text: newMessage.trim(),
+            clientMessageId: clientMessageId,
+            parentMessageId: replyingTo ? replyingTo.id : null,
+        };
+        sendMessage(payload, `/app/chat/${chatId}/send`);
+
+        setNewMessage('');
+        setReplyingTo(null);
     };
 
-    if (loading || !loggedInUser) return <div className={styles.container}>Loading chat...</div>;
+    const handleLongPressStart = (messageId) => {
+        pressTimer.current = setTimeout(() => {
+            setActiveEmojiPicker(messageId);
+        }, 500);
+    };
 
+    const handleLongPressEnd = () => {
+        clearTimeout(pressTimer.current);
+    };
+
+    const handleReact = (reaction) => {
+        if (loggedInUser && activeEmojiPicker) {
+            const payload = { messageId: activeEmojiPicker, reaction: reaction };
+            sendMessage(payload, `/app/chat/${chatId}/react`);
+        }
+        setActiveEmojiPicker(null);
+    };
+
+    const handleOpenReactionsModal = (reactions) => setReactionsModalData(reactions);
+
+    const handleCloseModal = () => setReactionsModalData(null);
+
+    const handleCancelReply = () => setReplyingTo(null);
+
+    const handleBackClick = () => {
+        navigate('/chat');
+    };
+
+    const handleClosePopups = () => {
+        setActiveEmojiPicker(null);
+        // You can add logic here to close other popups if you have them
+    };
+
+    if (loading || !loggedInUser || !chatGroup) return <div className={styles.centeredMessage}>Loading messages...</div>;
     return (
-        <div className={styles.container}>
-            <div className={styles.messagesList}>
-                {messages.map(msg => (
-                    <div key={msg.id} className={`${styles.message} ${Number(msg.sender.id) === loggedInUser.id ? styles.sent : styles.received}`}>
-                        <strong>{Number(msg.sender.id) === loggedInUser.id ? 'You' : msg.sender.firstName}:</strong> {msg.text}
-                    </div>
-                ))}
+        <div className={styles.chatWindow}>
+            <header className={styles.chatHeader}>
+                <button onClick={handleBackClick} className={styles.backButton}>&larr;</button>
+                <h2>{chatGroup.name}</h2>
+                <div className={styles.headerPlaceholder}></div>
+            </header>
+            <main className={styles.messageList} onClick={handleClosePopups}>
+                {messages.map((msg) => {
+                    const isSentByCurrentUser = Number(msg.sender.id) === loggedInUser.id;
+                    const reactionsCount = msg.reactions ? Object.values(msg.reactions).flat().length : 0;
+                    const senderName = isSentByCurrentUser ? 'You' : msg.sender.firstName;
+
+                    return (
+                        <div key={msg.id} className={`${styles.message} ${isSentByCurrentUser ? styles.sent : styles.received}`}>
+                            <div className={styles.messageContent}>
+                                {activeEmojiPicker === msg.id && (
+                                    <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />
+                                )}
+                                <div
+                                    className={styles.messageBubble}
+                                    onMouseDown={() => handleLongPressStart(msg.id)}
+                                    onMouseUp={handleLongPressEnd}
+                                    onMouseLeave={handleLongPressEnd}
+                                    onTouchStart={() => handleLongPressStart(msg.id)}
+                                    onTouchEnd={handleLongPressEnd}
+                                >
+                                    <p className={styles.messageText}>{senderName}: {msg.text}</p>
+                                </div>
+                                {reactionsCount > 0 && (
+                                    <div className={styles.reactionsContainer} onClick={(e) => { e.stopPropagation(); handleOpenReactionsModal(msg.reactions); }}>
+                                        {Object.entries(msg.reactions).map(([emoji]) => (
+                                            <span key={emoji} className={styles.reactionEmoji}>{emoji}</span>
+                                        ))}
+                                        <span className={styles.totalReactionCount}>{reactionsCount}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
                 <div ref={messagesEndRef} />
-            </div>
-            <form onSubmit={handleSendMessage} className={styles.messageForm}>
-                <input
-                    type="text"
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    placeholder="Type a message..."
-                    className={styles.messageInput}
-                />
-                <button type="submit" disabled={!isConnected} className={styles.sendButton}>Send</button>
-            </form>
+            </main>
+            {replyingTo && (
+                <div className={styles.replyingToContext}>
+                    <div className={styles.replyingToInfo}>
+                        <p className={styles.replyingToTitle}>Replying to {replyingTo.sender.firstName}</p>
+                        <p className={styles.replyingToText}>{replyingTo.text}</p>
+                    </div>
+                    <button onClick={handleCancelReply} className={styles.cancelReplyButton}>&times;</button>
+                </div>
+            )}
+            <footer className={styles.messageInputForm}>
+                <form onSubmit={handleSendMessage}>
+                    <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className={styles.input} />
+                    <button type="submit" className={styles.sendButton}>Send</button>
+                </form>
+            </footer>
+            <ReactionsModal reactions={reactionsModalData} onClose={handleCloseModal} />
         </div>
     );
 };

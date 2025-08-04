@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
 const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
     const stompClientRef = useRef(null);
     const [isConnected, setIsConnected] = useState(false);
@@ -15,14 +17,13 @@ const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
             return;
         }
 
-        const socket = new SockJS('http://localhost:8080/ws');
+        const socket = new SockJS(`${API_BASE_URL}/ws`);
         const client = Stomp.over(socket);
 
         const headers = {
             'Authorization': `Bearer ${token}`,
         };
 
-        // Disconnect from any previous chat before connecting to a new one
         if (stompClientRef.current) {
             stompClientRef.current.disconnect();
         }
@@ -31,7 +32,6 @@ const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
             console.log('Connected: ' + frame);
             setIsConnected(true);
 
-            // Subscribe to the specific chat group topic
             client.subscribe(`/topic/chat/${chatId}`, (message) => {
                 onMessageReceived(JSON.parse(message.body));
             });
@@ -49,9 +49,10 @@ const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
         };
     }, [onMessageReceived, token, chatId]);
 
-    const sendMessage = (message) => {
-        if (stompClientRef.current && isConnected && chatId) {
-            stompClientRef.current.send(`/app/chat/${chatId}`, {}, JSON.stringify(message));
+    // Updated sendMessage to accept a destination
+    const sendMessage = (message, destination) => {
+        if (stompClientRef.current && isConnected) {
+            stompClientRef.current.send(destination, {}, JSON.stringify(message));
         }
     };
 

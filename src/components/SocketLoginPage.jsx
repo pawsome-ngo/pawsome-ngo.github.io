@@ -1,32 +1,41 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const SocketLoginPage = ({ onLoginSuccess }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    const [formData, setFormData] = useState({
+        username: '',
+        password: '',
+    });
     const [loginError, setLoginError] = useState('');
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevState => ({ ...prevState, [name]: value }));
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoginError('');
 
         try {
-            const response = await fetch('http://localhost:8080/auth/login', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify(formData),
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                setLoginError(errorText || 'Login failed');
+                const errorData = await response.json();
+                setLoginError(errorData.message || 'Login failed. Please check your credentials.');
                 return;
             }
 
             const data = await response.json();
             localStorage.setItem('jwtToken', data.token);
-            onLoginSuccess(data.token); // Call the prop function to update the token in the parent
+            onLoginSuccess(data.token);
         } catch (error) {
             setLoginError('Could not connect to server.');
             console.error('Login error:', error);
@@ -40,15 +49,15 @@ const SocketLoginPage = ({ onLoginSuccess }) => {
             <input
                 type="text"
                 placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={formData.username}
+                onChange={handleChange}
                 required
             />
             <input
                 type="password"
                 placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={handleChange}
                 required
             />
             <button type="submit">Log In</button>

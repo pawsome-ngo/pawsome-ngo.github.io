@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ChatGroupsPage.module.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
 const ChatGroupsPage = ({ token, onLogout }) => {
     const [chatGroups, setChatGroups] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -13,7 +15,7 @@ const ChatGroupsPage = ({ token, onLogout }) => {
             if (!token) return;
 
             try {
-                const response = await fetch('http://localhost:8080/api/chat/groups', {
+                const response = await fetch(`${API_BASE_URL}/api/chat/groups`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
@@ -23,9 +25,8 @@ const ChatGroupsPage = ({ token, onLogout }) => {
                     const data = await response.json();
                     setChatGroups(data);
                 } else if (response.status === 403) {
-                    // Handle forbidden access gracefully
                     setError('You are not authorized to view this page. Logging out.');
-                    onLogout(); // Log out the user
+                    onLogout();
                 } else {
                     setError('Failed to fetch chat groups.');
                 }

@@ -45,17 +45,27 @@ const ChatWindow = ({ token, onLogout }) => {
         }
     }, [token]);
 
-    // The fix is here: using newMessage.clientMessageId to find and replace the optimistic message
+    // The fix is here: handling both optimistic and real-time updates
     const onMessageReceived = useCallback((message) => {
         setMessages(prevMessages => {
-            const existingMessageIndex = prevMessages.findIndex(m => m.id === message.clientMessageId);
+            // First, check if it's an optimistic update (message sent by me)
+            const optimisticMessageIndex = prevMessages.findIndex(m => m.id === message.clientMessageId);
+            if (optimisticMessageIndex !== -1) {
+                const updatedMessages = [...prevMessages];
+                updatedMessages[optimisticMessageIndex] = message;
+                return updatedMessages;
+            }
+
+            // Second, check if it's a real-time update to an existing message (e.g., a reaction)
+            const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
             if (existingMessageIndex !== -1) {
                 const updatedMessages = [...prevMessages];
                 updatedMessages[existingMessageIndex] = message;
                 return updatedMessages;
-            } else {
-                return [...prevMessages, message];
             }
+
+            // If it's a new message from another user, simply add it
+            return [...prevMessages, message];
         });
     }, []);
 

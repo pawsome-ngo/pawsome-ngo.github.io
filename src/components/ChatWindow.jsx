@@ -9,7 +9,6 @@ import styles from './ChatWindow.module.css';
 const EMOJI_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// A utility function to extract user ID and username from the JWT token
 const getUserInfoFromToken = (token) => {
     try {
         const decodedToken = jwtDecode(token);
@@ -30,6 +29,7 @@ const ChatWindow = ({ token, onLogout }) => {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef(null);
+    const inputRef = useRef(null);
     const [loggedInUser, setLoggedInUser] = useState(null);
 
     const [chatGroup, setChatGroup] = useState(null);
@@ -37,8 +37,10 @@ const ChatWindow = ({ token, onLogout }) => {
     const [reactionsModalData, setReactionsModalData] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null);
     const pressTimer = useRef(null);
-    const initialLoadRef = useRef(true);
     const messageListRef = useRef(null);
+
+    const dragStartXRef = useRef(null);
+    const DRAG_THRESHOLD = 50;
 
     useEffect(() => {
         if (token) {
@@ -49,10 +51,15 @@ const ChatWindow = ({ token, onLogout }) => {
 
     const onMessageReceived = useCallback((message) => {
         setMessages(prevMessages => {
+            const isSentByMe = message.sender.id === loggedInUser?.id;
+
             const optimisticMessageIndex = prevMessages.findIndex(m => m.id === message.clientMessageId);
             if (optimisticMessageIndex !== -1) {
                 const updatedMessages = [...prevMessages];
                 updatedMessages[optimisticMessageIndex] = message;
+                if (isSentByMe) {
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }
                 return updatedMessages;
             }
 
@@ -65,12 +72,14 @@ const ChatWindow = ({ token, onLogout }) => {
 
             const newMessages = [...prevMessages, message];
 
-            if (messageListRef.current) {
-                const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
-                if (scrollHeight - scrollTop <= clientHeight + 100) {
-                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+                if (messageListRef.current) {
+                    const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
+                    if (scrollHeight - scrollTop <= clientHeight + 100) {
+                        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                    }
                 }
-            }
+            }, 0);
 
             return newMessages;
         });
@@ -86,22 +95,19 @@ const ChatWindow = ({ token, onLogout }) => {
                     fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } }),
                     fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
-
                 if (!messagesResponse.ok || !chatGroupsResponse.ok) {
                     throw new Error('Failed to fetch chat data.');
                 }
-
                 const messagesData = await messagesResponse.json();
                 const groupsData = await chatGroupsResponse.json();
-
                 const currentGroup = groupsData.find(p => p.chatGroup.id === chatId)?.chatGroup;
                 if (currentGroup) {
                     setChatGroup(currentGroup);
                     setMessages(messagesData);
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                 } else {
                     throw new Error('Chat group not found.');
                 }
-
             } catch (err) {
                 console.error(err);
                 onLogout();
@@ -109,22 +115,21 @@ const ChatWindow = ({ token, onLogout }) => {
                 setLoading(false);
             }
         };
-
         if (chatId && token) {
             fetchChatData();
         }
     }, [chatId, token, onLogout]);
 
     useEffect(() => {
-        if (messages.length > 0) {
+        if (replyingTo) {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            inputRef.current?.focus();
         }
-    }, [messages]);
+    }, [replyingTo]);
 
     const handleSendMessage = (event) => {
         event.preventDefault();
         if (newMessage.trim() === '' || !loggedInUser) return;
-
         const clientMessageId = `temp-${Date.now()}`;
         const optimisticMessage = {
             id: clientMessageId,
@@ -135,28 +140,15 @@ const ChatWindow = ({ token, onLogout }) => {
             seenBy: [],
             parentMessageId: replyingTo ? replyingTo.id : null,
         };
-
         setMessages(prevMessages => [...prevMessages, optimisticMessage]);
-
         const payload = {
             text: newMessage.trim(),
             clientMessageId: clientMessageId,
             parentMessageId: replyingTo ? replyingTo.id : null,
         };
         sendMessage(payload, `/app/chat/${chatId}/send`);
-
         setNewMessage('');
         setReplyingTo(null);
-    };
-
-    const handleLongPressStart = (messageId) => {
-        pressTimer.current = setTimeout(() => {
-            setActiveEmojiPicker(messageId);
-        }, 500);
-    };
-
-    const handleLongPressEnd = () => {
-        clearTimeout(pressTimer.current);
     };
 
     const handleReact = (reaction) => {
@@ -168,18 +160,46 @@ const ChatWindow = ({ token, onLogout }) => {
     };
 
     const handleOpenReactionsModal = (reactions) => setReactionsModalData(reactions);
-
     const handleCloseModal = () => setReactionsModalData(null);
+    const handleCancelReply = () => {
+        setReplyingTo(null);
+        inputRef.current?.focus();
+    };
+    const handleBackClick = () => navigate('/chat');
+    const handleClosePopups = () => setActiveEmojiPicker(null);
 
-    const handleCancelReply = () => setReplyingTo(null);
-
-    const handleBackClick = () => {
-        navigate('/chat');
+    const handleInteractionStart = (e, message) => {
+        pressTimer.current = setTimeout(() => {
+            setActiveEmojiPicker(message.id);
+        }, 500);
+        const clientX = e.clientX || e.touches[0].clientX;
+        dragStartXRef.current = clientX;
     };
 
-    const handleClosePopups = () => {
-        setActiveEmojiPicker(null);
+    const handleInteractionEnd = (e, message) => {
+        clearTimeout(pressTimer.current);
+
+        if (activeEmojiPicker) {
+            dragStartXRef.current = null;
+            return;
+        }
+
+        const dragEndX = e.clientX || (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : null);
+        if (dragEndX && dragEndX - dragStartXRef.current > DRAG_THRESHOLD) {
+            setReplyingTo(message);
+        }
+        dragStartXRef.current = null;
     };
+
+    const handleInteractionMove = (e) => {
+        if (pressTimer.current && dragStartXRef.current !== null) {
+            const currentX = e.clientX || e.touches[0].clientX;
+            if (Math.abs(currentX - dragStartXRef.current) > 5) {
+                clearTimeout(pressTimer.current);
+            }
+        }
+    };
+
 
     if (loading || !loggedInUser || !chatGroup) return <div className={styles.centeredMessage}>Loading messages...</div>;
     return (
@@ -194,20 +214,34 @@ const ChatWindow = ({ token, onLogout }) => {
                     const isSentByCurrentUser = Number(msg.sender.id) === loggedInUser.id;
                     const reactionsCount = msg.reactions ? Object.values(msg.reactions).flat().length : 0;
                     const senderName = isSentByCurrentUser ? 'You' : msg.sender.firstName;
+                    const parentMessage = msg.parentMessageId ? messages.find(m => m.id === msg.parentMessageId) : null;
+                    const replyHeaderName = isSentByCurrentUser ? 'You replied to' : `Replied to`;
 
                     return (
                         <div key={msg.id} className={`${styles.message} ${isSentByCurrentUser ? styles.sent : styles.received}`}>
                             <div className={styles.messageContent}>
+                                {parentMessage && (
+                                    <div className={styles.repliedMessageSnippet}>
+                                        <p className={styles.replyHeader}>
+                                            <span className={styles.replyIcon}>&larr;</span>
+                                            {replyHeaderName} {parentMessage.sender.firstName}:
+                                        </p>
+                                        <p>{parentMessage.text}</p>
+                                    </div>
+                                )}
                                 {activeEmojiPicker === msg.id && (
                                     <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />
                                 )}
                                 <div
                                     className={styles.messageBubble}
-                                    onMouseDown={() => handleLongPressStart(msg.id)}
-                                    onMouseUp={handleLongPressEnd}
-                                    onMouseLeave={handleLongPressEnd}
-                                    onTouchStart={() => handleLongPressStart(msg.id)}
-                                    onTouchEnd={handleLongPressEnd}
+                                    onMouseDown={(e) => handleInteractionStart(e, msg)}
+                                    onMouseUp={(e) => handleInteractionEnd(e, msg)}
+                                    onMouseMove={handleInteractionMove}
+                                    onMouseLeave={(e) => handleInteractionEnd(e, msg)}
+                                    onTouchStart={(e) => handleInteractionStart(e, msg)}
+                                    onTouchMove={handleInteractionMove}
+                                    onTouchEnd={(e) => handleInteractionEnd(e, msg)}
+                                    onDragStart={(e) => e.preventDefault()}
                                 >
                                     <p className={styles.messageText}>{senderName}: {msg.text}</p>
                                 </div>
@@ -236,7 +270,7 @@ const ChatWindow = ({ token, onLogout }) => {
             )}
             <footer className={styles.messageInputForm}>
                 <form onSubmit={handleSendMessage}>
-                    <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className={styles.input} />
+                    <input type="text" ref={inputRef} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className={styles.input} />
                     <button type="submit" className={styles.sendButton}>Send</button>
                 </form>
             </footer>

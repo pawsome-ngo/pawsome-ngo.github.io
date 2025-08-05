@@ -53,6 +53,8 @@ const ChatWindow = ({ token, onLogout }) => {
 
     const userIsAtBottomRef = useRef(true);
     const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+    const [animatedHeart, setAnimatedHeart] = useState(null);
+
 
     useEffect(() => {
         if (token) {
@@ -199,6 +201,14 @@ const ChatWindow = ({ token, onLogout }) => {
         const clientX = e.clientX || e.touches[0].clientX;
         dragStartXRef.current = clientX;
     };
+    const handleDoubleClick = (message) => {
+        if (!loggedInUser) return;
+        const payload = { messageId: message.id, reaction: '❤️' };
+        sendMessage(payload, `/app/chat/${chatId}/react`);
+        // Trigger the animation
+        setAnimatedHeart(message.id);
+        setTimeout(() => setAnimatedHeart(null), 500); // Animation duration
+    };
 
     const handleInteractionEnd = (e, message) => {
         clearTimeout(pressTimer.current);
@@ -277,6 +287,7 @@ const ChatWindow = ({ token, onLogout }) => {
                                     onTouchStart={(e) => handleInteractionStart(e, msg)}
                                     onTouchMove={handleInteractionMove}
                                     onTouchEnd={(e) => handleInteractionEnd(e, msg)}
+                                    onDoubleClick={() => handleDoubleClick(msg)}
                                     onDragStart={(e) => e.preventDefault()}
                                 >
                                     <p className={styles.messageText}>{msg.text}</p>
@@ -290,6 +301,10 @@ const ChatWindow = ({ token, onLogout }) => {
                                     </div>
                                 )}
                             </div>
+                            {/* Animated heart overlay */}
+                            {animatedHeart === msg.id && (
+                                <div className={`${styles.animatedHeart}`}>❤️</div>
+                            )}
                         </div>
                     );
                 })}

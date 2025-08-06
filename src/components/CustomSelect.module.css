@@ -2,22 +2,24 @@
     position: relative;
     width: 100%;
     font-family: inherit;
+    color: #2c3e50; /* Updated: Dark text color for readability */
 }
 
 .selectButton {
     box-sizing: border-box;
     width: 100%;
     padding: 0.85rem 1rem;
-    border: 1px solid #dcdcdc;
+    border: 1px solid #dcdcdc; /* Updated: Light border color */
     border-radius: 8px;
     font-size: 1rem;
-    background-color: #fdfdfd;
+    background-color: #fdfdfd; /* Updated: Light background color */
     text-align: left;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
     transition: border-color 0.3s, box-shadow 0.3s;
+    color: #2c3e50; /* Updated: Dark text color */
 }
 
 .selectButton:focus {
@@ -28,6 +30,7 @@
 
 .arrowIcon {
     transition: transform 0.3s;
+    color: #7f8c8d; /* Updated: Darker arrow icon color */
 }
 
 .arrowIconOpen {
@@ -39,8 +42,8 @@
     top: 100%;
     left: 0;
     right: 0;
-    background-color: #fff;
-    border: 1px solid #dcdcdc;
+    background-color: #fff; /* Updated: Light list background color */
+    border: 1px solid #dcdcdc; /* Updated: Light list border color */
     border-radius: 8px;
     list-style: none;
     padding: 0.5rem 0;
@@ -55,8 +58,9 @@
     padding: 0.75rem 1rem;
     cursor: pointer;
     transition: background-color 0.2s;
+    color: #2c3e50; /* Updated: Dark option item text color */
 }
 
 .optionItem:hover {
-    background-color: #f0f0f0;
+    background-color: #f0f0f0; /* Updated: Lighter hover background color */
 }

@@ -1,10 +1,24 @@
 .container {
-    max-width: 600px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    margin: 0;
+    padding: 1rem;
+    background-color: #1a1a1a;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
+    box-sizing: border-box;
+    overflow-x: hidden; /* Added to prevent horizontal scrolling */
+}
+
+@media (min-width: 601px) {
+    .container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: #212121;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
 }
 
 .header {
@@ -12,11 +26,13 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
+    padding: 0 1rem;
+    color: #e0e0e0;
 }
 
 .header h1 {
-    font-size: 2rem;
-    color: #2c3e50;
+    font-size: 1.5rem;
+    color: #e0e0e0;
 }
 
 .logoutButton {
@@ -32,18 +48,20 @@
 .groupList {
     list-style: none;
     padding: 0;
+    padding: 0 1rem;
 }
 
 .groupItem {
     padding: 1.5rem;
-    background-color: #f4f7f6;
+    background-color: #333;
     border-radius: 8px;
     margin-bottom: 1rem;
     cursor: pointer;
     font-weight: 600;
     transition: background-color 0.3s;
+    color: #f1f1f1;
 }
 
 .groupItem:hover {
-    background-color: #e9ecef;
+    background-color: #4a4a4a;
 }

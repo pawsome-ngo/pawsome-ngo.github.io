@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import SignUpModal from './SignUpModal';
@@ -27,6 +27,13 @@ const SignUpPage = () => {
         const { name, value } = e.target;
         setFormData(prevState => ({ ...prevState, [name]: value }));
     };
+
+    // New useEffect hook to pre-fill the username
+    useEffect(() => {
+        if (formData.firstName) {
+            setFormData(prevState => ({ ...prevState, username: formData.firstName.toLowerCase() }));
+        }
+    }, [formData.firstName]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

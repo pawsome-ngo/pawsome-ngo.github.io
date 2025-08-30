@@ -1,17 +1,5 @@
-// Add this at the top of your main file
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then((registration) => {
-                console.log('Service Worker registered: ', registration);
-            })
-            .catch((registrationError) => {
-                console.log('Service Worker registration failed: ', registrationError);
-            });
-    });
-}
-import React, { useState, useCallback, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, useNavigate, Outlet, Navigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import './App.css';
 
@@ -19,32 +7,27 @@ import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
 import ChatGroupsPage from './components/ChatGroupsPage';
 import ChatWindow from './components/ChatWindow';
+import Navbar from './components/Navbar';
+import LivePage from './components/LivePage';
+import ReportPage from './components/ReportPage';
+import StandingsPage from './components/StandingsPage';
 
-
-const getRolesFromToken = (token) => {
-    try {
-        const decodedToken = jwtDecode(token);
-        return decodedToken.roles || [];
-    } catch (error) {
-        console.error('Failed to decode token:', error);
-        return [];
-    }
-};
-
-const ProtectedContent = ({ token, onLogout, Component, ...rest }) => {
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        if (!token) {
-            navigate('/login');
-        }
-    }, [token, navigate]);
-
+// This new component will act as a layout for all protected pages
+const ProtectedLayout = ({ token, onLogout }) => {
     if (!token) {
-        return null;
+        // If no token, redirect to the login page
+        return <Navigate to="/login" />;
     }
 
-    return <Component token={token} onLogout={onLogout} {...rest} />;
+    return (
+        <>
+            <Navbar onLogout={onLogout} />
+            <main>
+                {/* The Outlet component renders the matched child route */}
+                <Outlet />
+            </main>
+        </>
+    );
 };
 
 const App = () => {
@@ -66,12 +49,19 @@ const App = () => {
     return (
         <div className="App">
             <Routes>
+                {/* Public Routes */}
                 <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
                 <Route path="/signup" element={<SignUpPage />} />
-                {/* The root path now redirects to the chat group list */}
-                <Route path="/" element={<ProtectedContent Component={ChatGroupsPage} token={token} onLogout={handleLogout} />} />
-                <Route path="/chat" element={<ProtectedContent Component={ChatGroupsPage} token={token} onLogout={handleLogout} />} />
-                <Route path="/chat/:chatId" element={<ProtectedContent Component={ChatWindow} token={token} onLogout={handleLogout} />} />
+
+                {/* Protected Routes nested inside the layout */}
+                <Route element={<ProtectedLayout token={token} onLogout={handleLogout} />}>
+                    <Route path="/" element={<Navigate to="/chat" />} />
+                    <Route path="/chat" element={<ChatGroupsPage token={token} onLogout={handleLogout} />} />
+                    <Route path="/chat/:chatId" element={<ChatWindow token={token} onLogout={handleLogout} />} />
+                    <Route path="/live" element={<LivePage />} />
+                    <Route path="/report" element={<ReportPage />} />
+                    <Route path="/standings" element={<StandingsPage />} />
+                </Route>
             </Routes>
         </div>
     );

@@ -1,0 +1,147 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logoContainer {
+    display: flex;
+    align-items: center;
+}
+
+.logoLink {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #2c3e50;
+}
+
+.logoIcon {
+    font-size: 2rem;
+    margin-right: 0.5rem;
+}
+
+.logoText {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.navLink {
+    padding: 0.5rem 0;
+    text-decoration: none;
+    color: #34495e;
+    font-weight: 600;
+    font-size: 1.1rem;
+    position: relative;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.navLink:hover {
+    color: #e74c3c;
+    border-bottom-color: #e74c3c;
+}
+
+.logoutButton {
+    color: #e74c3c;
+}
+
+.logoutButton:hover {
+    color: #c0392b;
+    border-bottom-color: #c0392b;
+}
+
+.menuToggle {
+    display: none;
+    width: 30px;
+    height: 25px;
+    position: relative;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    z-index: 10;
+}
+
+.menuToggle:focus {
+    outline: none;
+}
+
+.hamburgerBar {
+    display: block;
+    position: absolute;
+    height: 3px;
+    width: 100%;
+    background: #333;
+    border-radius: 3px;
+    opacity: 1;
+    left: 0;
+    transform: rotate(0deg);
+    transition: .25s ease-in-out;
+}
+
+.hamburgerBar:nth-child(1) { top: 0px; }
+.hamburgerBar:nth-child(2) { top: 10px; }
+.hamburgerBar:nth-child(3) { top: 20px; }
+
+.menuToggleOpen .hamburgerBar:nth-child(1) {
+    top: 10px;
+    transform: rotate(135deg);
+}
+
+.menuToggleOpen .hamburgerBar:nth-child(2) {
+    opacity: 0;
+    left: -60px;
+}
+
+.menuToggleOpen .hamburgerBar:nth-child(3) {
+    top: 10px;
+    transform: rotate(-135deg);
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 1rem;
+    }
+    .nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background-color: #fff;
+        flex-direction: column;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 1rem 0;
+        gap: 0;
+    }
+    .navOpen {
+        display: flex;
+    }
+    .navLink {
+        margin: 0.75rem 0;
+        text-align: center;
+        width: 100%;
+    }
+    .menuToggle {
+        display: block;
+    }
+}

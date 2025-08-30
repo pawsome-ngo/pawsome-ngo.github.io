@@ -50,10 +50,6 @@ const ChatGroupsPage = ({ token, onLogout }) => {
 
     return (
         <div className={styles.container}>
-            <div className={styles.header}>
-                <h1>My Chat Groups</h1>
-                <button onClick={onLogout} className={styles.logoutButton}>Log Out</button>
-            </div>
             <ul className={styles.groupList}>
                 {chatGroups.map(participant => (
                     <li key={participant.chatGroup.id} onClick={() => handleGroupClick(participant.chatGroup.id)} className={styles.groupItem}>

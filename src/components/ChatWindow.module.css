@@ -1,278 +1,325 @@
 .chatWindow {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    height: 100vh; /* Full viewport height for a native feel */
-    background-color: #2a2a2a;
-    /* The main container will now handle scrolling */
-    overflow-y: auto;
-    overflow-x: hidden; /* This is the fix */
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    margin: 0;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
+    height: calc(100vh - 60px); /* Full height minus navbar */
+    background-color: #fff;
+    font-family: system-ui, -apple-system, sans-serif;
+    overflow: hidden;
 }
 
-/* Apply desktop styles on larger screens */
-@media (min-width: 601px) {
-    .chatWindow {
-        max-width: 600px;
-        height: 70vh;
-        border: 1px solid #444;
-        border-radius: 12px;
-        margin: 2rem auto;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    }
-}
-
-/* Chat Header */
-.chatHeader {
-    padding: 1rem;
-    background-color: #333;
-    border-bottom: 1px solid #444;
-    display: flex; /* Use flexbox for alignment */
+.centeredMessage {
+    display: flex;
+    justify-content: center;
     align-items: center;
+    height: 100%;
+    color: #888;
+}
+
+/* --- Header --- */
+.chatHeader {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: #fff;
+    border-bottom: 1px solid #e5e5e5;
     flex-shrink: 0;
-    position: sticky;
-    top: 0;
-    z-index: 10;
 }
 
 .backButton {
     background: none;
     border: none;
-    color: #a0a0a0;
     font-size: 1.5rem;
     cursor: pointer;
+    color: #007aff;
     padding: 0 1rem 0 0;
-    line-height: 1;
 }
 
 .chatHeader h2 {
-    font-size: 1.2rem;
-    color: #e0e0e0;
-    flex-grow: 1; /* Allow title to take up space */
-    text-align: center; /* Center the title */
-    /* Offset for the button to keep title centered */
-    margin: 0 -2rem 0 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1c1c1e;
+    text-align: center;
+    flex-grow: 1;
+    margin: 0;
+    margin-right: -2.5rem; /* Offset for back button */
 }
 
-/* Message List Area */
+/* --- Message List --- */
 .messageList {
     flex-grow: 1;
-    padding: 1rem;
+    padding: 1rem 0.75rem;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
 }
 
-/* Individual Message Styling */
-.message {
+/* --- Date Separator --- */
+.dateSeparator {
+    text-align: center;
+    margin: 1rem 0;
+    color: #8a8a8e;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.dateSeparator span {
+    background-color: #f2f2f7;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+}
+
+/* --- Message Structure --- */
+.messageWrapper {
     display: flex;
-    gap: 0.5rem;
-    align-items: flex-start; /* Reverted to align items to the top */
+    max-width: 85%;
+    margin-bottom: 0.5rem;
+}
+
+.avatarContainer {
+    width: 34px;
+    flex-shrink: 0;
+    margin-right: 0.5rem;
+    position: relative;
 }
 
 .avatar {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    flex-shrink: 0;
-    margin-top: 0.5rem; /* Added margin to push it down slightly from the top */
     color: white;
     font-weight: bold;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 0.9rem;
-    line-height: 1;
+    position: absolute;
+    bottom: 0;
 }
 
 .messageContent {
     display: flex;
     flex-direction: column;
-    max-width: 75%;
-    position: relative;
+    width: 100%;
+}
+
+/* ** NEW CONTAINER FOR BUBBLE + REACTIONS ** */
+.bubbleContainer {
+    display: flex;
+    flex-direction: column;
 }
 
 .messageBubble {
-    padding: 0.75rem 1rem;
+    padding: 0.6rem 0.9rem;
     border-radius: 18px;
-    width: fit-content;
+    line-height: 1.4;
+    word-wrap: break-word;
     cursor: pointer;
     user-select: none;
-    -webkit-user-select: none;
-    text-align: left;
+    width: fit-content;
 }
 
 .messageText {
     margin: 0;
-    line-height: 1.4;
-    white-space: normal; /* or pre-wrap */
-    overflow-wrap: break-word;
-    word-break: break-word; /* For older browser compatibility */
-}
-/* --- Reply Styles --- */
-.replyHeader {
-    display: flex;
-    align-items: center;
-    font-size: 0.8rem;
-    color: #a0a0a0;
-    margin-bottom: 0.25rem;
-    padding: 0 0.5rem;
-    white-space: nowrap; /* This is the fix */
+    font-size: 1rem;
 }
 
-.replyIcon {
-    width: 12px;
-    height: 12px;
-    margin-right: 6px;
-    color: #a0a0a0;
-}
-
-.repliedMessageSnippet {
-    background-color: rgba(0, 0, 0, 0.25);
-    padding: 0.5rem 0.75rem;
-    border-radius: 12px;
-    margin-bottom: 0; /* Updated: Removed the margin to close the gap */
-    opacity: 0.7;
-    overflow: hidden; /* Ensure container clips the content */
-}
-
-.repliedMessageSnippet p {
-    margin: 0;
-    font-size: 0.9rem;
-    white-space: normal; /* Allow wrapping to enable line clamp */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 1; /* Limit to one line */
-    -webkit-box-orient: vertical;
-}
-
-
-.sent .repliedMessageSnippet {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-
-/* Sent Messages (current user) */
+/* Sent Messages */
 .sent {
     align-self: flex-end;
-    justify-content: flex-end;
-    min-width: 90%;
+    flex-direction: row-reverse;
 }
-
-.sent .messageContent {
-    align-items: flex-end;
-}
-
+.sent .bubbleContainer { align-items: flex-end; }
 .sent .messageBubble {
-    background-color: #646cff;
+    background-color: #007aff;
     color: white;
-    max-width: 90%;
+    border-bottom-right-radius: 4px;
 }
 
-/* Received Messages (other user) */
+/* Received Messages */
 .received {
     align-self: flex-start;
-    min-width: 90%;
 }
-
+.received .bubbleContainer { align-items: flex-start; }
 .received .messageBubble {
-    background-color: #4a4a4a;
-    color: #f1f1f1;
-    max-width: 90%;
+    background-color: #e5e5ea;
+    color: #1c1c1e;
+    border-bottom-left-radius: 4px;
 }
 
-/* --- Reaction Styles --- */
-
-.emojiPicker {
-    position: absolute;
-    bottom: 100%;
-    margin-bottom: 8px;
-    background-color: #3e3e3e;
-    border-radius: 20px;
-    padding: 0.5rem;
-    display: flex;
-    gap: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 20;
+/* Grouped Messages Logic */
+.grouped {
+    margin-bottom: 0.15rem;
+}
+.sent.grouped .messageBubble {
+    border-top-right-radius: 4px;
+}
+.received.grouped .messageBubble {
+    border-top-left-radius: 4px;
 }
 
-.sent .emojiPicker { right: 0; }
-.received .emojiPicker { left: 0; }
-
-.emojiPicker span {
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: transform 0.1s ease-in-out;
+/* --- Timestamp --- */
+.timestamp {
+    font-size: 0.7rem;
+    color: #8a8a8e;
+    margin-top: 0.25rem;
+    padding: 0 0.25rem;
 }
+.sent .timestamp { align-self: flex-end; }
+.received .timestamp { align-self: flex-start; }
 
-.emojiPicker span:hover { transform: scale(1.2); }
-
-/* Clubbed Reactions Container */
+/* --- Reactions --- */
 .reactionsContainer {
+    /* ** REMOVED NEGATIVE MARGIN TO FIX OVERLAP ** */
+    margin-top: 2px;
+    margin-left: 0.5rem;
+    z-index: 2;
     display: flex;
     align-items: center;
     gap: 2px;
-    margin-top: 0.25rem;
     padding: 2px 8px;
-    background-color: #4a4a4a;
-    border: 1px solid #5a5a5a;
+    background-color: #fff;
+    border: 1px solid #e5e5e5;
     border-radius: 12px;
     cursor: pointer;
     width: fit-content;
 }
-
-.received .reactionsContainer { align-self: flex-end; }
-.sent .reactionsContainer { align-self: flex-end; }
-
-.reactionEmoji {
-    font-size: 0.8rem;
+.sent .reactionsContainer {
+    margin-left: 0;
+    margin-right: 0.5rem;
 }
-
+.reactionEmoji { font-size: 0.8rem; }
 .totalReactionCount {
     font-size: 0.8rem;
-    color: #b0b0b0;
+    color: #888;
     margin-left: 4px;
-    font-weight: 500;
 }
 
-/* --- Message Details (Timestamp, Seen By) --- */
-.messageDetails {
+/* --- Input Form --- */
+.messageInputForm {
+    flex-shrink: 0;
+    background-color: #f2f2f7;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #e5e5e5;
+}
+.messageInputForm form {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    width: 100%;
-    padding: 4px 8px 0 8px;
-    font-size: 0.75rem; /* 12px */
-    color: #a0a0a0;
-    animation: fadeInDetails 0.4s ease;
-    gap: 1rem;
-    white-space: nowrap;
+    gap: 0.75rem;
+}
+.messageInputForm input {
+    flex-grow: 1;
+    padding: 0.6rem 1rem;
+    border: 1px solid #dcdcdc;
+    border-radius: 20px;
+    background-color: #fff;
+    color: #1c1c1e;
+    font-size: 1rem;
+    outline: none;
+}
+.messageInputForm button {
+    padding: 0.6rem 1.25rem;
+    border: none;
+    border-radius: 20px;
+    background-color: #007aff;
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
 }
 
-.seenByText {
+/* --- Style for the replied-to message snippet --- */
+/* --- Style for the replied-to message snippet --- */
+.repliedMessageSnippet {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.25rem;
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.repliedMessageSnippet p {
+    margin: 0;
+}
+
+/* Make the "Replying to..." header darker */
+.replyHeader {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #555; /* Changed from #666 */
+    margin-bottom: 2px;
+}
+
+/* Give the actual replied message text a dark color */
+.replyText {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #333; /* Added dark color for readability */
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
-    min-width: max-content;
 }
 
-@keyframes fadeInDetails {
-    from {
-        opacity: 0;
-        transform: translateY(-5px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* Specific background for reply snippets in sent messages */
+.sent .repliedMessageSnippet {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
-/* --- Reactions Modal Styles --- */
+/* --- Timestamp --- */
+.timestamp {
+    font-size: 0.7rem;
+    color: #6d6d72; /* Changed from #8a8a8e to a darker gray */
+    margin-top: 0.25rem;
+    padding: 0 0.25rem;
+}
+
+/* --- Improved Reply Context Bar --- */
+.replyingToContext {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: #f2f2f7;
+    border-top: 1px solid #dcdcdc;
+    animation: slideInUp 0.2s ease-out;
+}
+
+@keyframes slideInUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.replyContextContent {
+    flex-grow: 1;
+    border-left: 3px solid #007aff;
+    padding-left: 0.75rem;
+    overflow: hidden;
+}
+
+.replyingToTitle {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #007aff; /* Bright blue for high contrast */
+    margin: 0;
+}
+
+.replyingToText {
+    font-size: 0.9rem;
+    color: #333333; /* Dark, readable text */
+    margin: 0.1rem 0 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cancelReplyButton {
+    background: none;
+    border: none;
+    color: #8a8a8e; /* Visible gray for the 'x' */
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+/* --- Fixed Reactions Modal Styles --- */
+/* --- Correct Reactions Modal Styles --- */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -282,12 +329,12 @@
     background-color: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
-    align-items: flex-end;
-    z-index: 100;
+    align-items: flex-end; /* Align modal to the bottom */
+    z-index: 1000;
 }
 
 .reactionsModal {
-    background-color: #2c2c2c;
+    background-color: #ffffff;
     width: 100%;
     max-width: 600px;
     max-height: 60vh;
@@ -295,12 +342,17 @@
     border-top-right-radius: 16px;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
     animation: slide-up 0.3s ease-out;
 }
 
 @keyframes slide-up {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
 }
 
 .modalHeader {
@@ -308,25 +360,33 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid #e5e5e5;
+    flex-shrink: 0;
 }
 
 .modalHeader h3 {
     margin: 0;
-    color: #f1f1f1;
-    flex-grow: 1;
+    color: #1c1c1e;
+    font-size: 1.1rem;
+    font-weight: 600;
     text-align: center;
-    padding-left: 24px;
+    flex-grow: 1;
 }
 
 .modalCloseButton {
-    background: none;
+    background: #e5e5ea;
     border: none;
-    color: #aaa;
-    font-size: 1.5rem;
-    line-height: 1;
+    color: #8a8a8e;
+    font-size: 1rem;
+    font-weight: bold;
     cursor: pointer;
-    padding: 0;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .modalContent {
@@ -337,139 +397,16 @@
 .modalReactionItem {
     display: flex;
     align-items: center;
-    padding: 0.75rem 0;
-    color: #e0e0e0;
-    border-bottom: 1px solid #3a3a3a;
+    padding: 0.75rem 0.5rem;
+    color: #1c1c1e;
+    border-bottom: 1px solid #f2f2f7;
 }
+
 .modalReactionItem:last-child {
     border-bottom: none;
 }
 
 .modalReactionEmoji {
-    font-size: 1.2rem;
-    margin-right: 1rem;
-}
-
-/* Message Input Form */
-.messageInputForm {
-    flex-shrink: 0;
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-    background-color: #333;
-    padding: 1rem;
-    border-top: 1px solid #444;
-}
-
-.messageInputForm form {
-    display: flex;
-    padding: 0;
-}
-
-.input {
-    flex-grow: 1;
-    padding: 0.75rem;
-    border: 1px solid #555;
-    border-radius: 20px;
-    background-color: #4a4a4a;
-    color: #f1f1f1;
-    font-size: 1rem;
-    margin-right: 0.5rem;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.input:focus {
-    border-color: #646cff;
-}
-
-.sendButton {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 20px;
-    background-color: #646cff;
-    color: white;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
-
-.sendButton:hover {
-    background-color: #535bf2;
-}
-
-/* Reply Context Bar Styles */
-.replyingToContext {
-    padding: 0.5rem 1rem;
-    background-color: #2a2a2a;
-    border-bottom: 1px solid #444;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    position: sticky; /* Updated to sticky positioning */
-    bottom: 5.5rem; /* Set to the approximate height of the message input form */
-    z-index: 11;
-}
-
-.replyingToInfo {
-    text-align: left;
-    flex-grow: 1;
-    min-width: 0;
-}
-
-.replyingToInfo p {
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.replyingToTitle {
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: #a0a0a0;
-}
-
-.replyingToText {
-    font-size: 0.85rem;
-    color: #d0d0d0;
-}
-
-.cancelReplyButton {
-    background: none;
-    border: none;
-    color: #aaa;
     font-size: 1.5rem;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0 0.5rem;
-    flex-shrink: 0;
-}
-@keyframes heart-pop {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.5);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(0.5);
-        opacity: 0;
-    }
-}
-
-.animatedHeart {
-    position: absolute;
-    font-size: 3rem;
-    color: #ff3838;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    animation: heart-pop 0.5s ease-out;
-    pointer-events: none; /* Allows clicks to pass through */
-    z-index: 100;
+    margin-right: 1rem;
 }

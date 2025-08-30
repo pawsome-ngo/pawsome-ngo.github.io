@@ -6,16 +6,12 @@ import ReactionsModal from './ReactionsModal';
 import ReactionPicker from './ReactionPicker';
 import styles from './ChatWindow.module.css';
 
-const EMOJI_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const getUserInfoFromToken = (token) => {
     try {
         const decodedToken = jwtDecode(token);
-        return {
-            id: Number(decodedToken.id),
-            username: decodedToken.sub
-        };
+        return { id: Number(decodedToken.id), username: decodedToken.sub };
     } catch (error) {
         console.error('Failed to decode token:', error);
         return { id: null, username: null };
@@ -30,6 +26,31 @@ const stringToHslColor = (str) => {
     const h = hash % 360;
     return `hsl(${h}, 70%, 50%)`;
 };
+
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+};
+
+const isSameDay = (d1, d2) => {
+    const date1 = new Date(d1);
+    const date2 = new Date(d2);
+    return date1.getFullYear() === date2.getFullYear() &&
+        date1.getMonth() === date2.getMonth() &&
+        date1.getDate() === date2.getDate();
+};
+
+const formatDateSeparator = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (isSameDay(date, today)) return 'Today';
+    if (isSameDay(date, yesterday)) return 'Yesterday';
+    return date.toLocaleDateString([], { month: 'long', day: 'numeric' });
+};
+
 
 const ChatWindow = ({ token, onLogout }) => {
     const { chatId } = useParams();
@@ -55,7 +76,6 @@ const ChatWindow = ({ token, onLogout }) => {
     const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
     const [animatedHeart, setAnimatedHeart] = useState(null);
 
-
     useEffect(() => {
         if (token) {
             const userInfo = getUserInfoFromToken(token);
@@ -77,7 +97,6 @@ const ChatWindow = ({ token, onLogout }) => {
     const onMessageReceived = useCallback((message) => {
         setMessages(prevMessages => {
             const isSentByMe = message.sender.id === loggedInUser?.id;
-
             const optimisticMessageIndex = prevMessages.findIndex(m => m.id === message.clientMessageId);
             if (optimisticMessageIndex !== -1) {
                 const updatedMessages = [...prevMessages];
@@ -87,16 +106,13 @@ const ChatWindow = ({ token, onLogout }) => {
                 }
                 return updatedMessages;
             }
-
             const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
             if (existingMessageIndex !== -1) {
                 const updatedMessages = [...prevMessages];
                 updatedMessages[existingMessageIndex] = message;
                 return updatedMessages;
             }
-
             const newMessages = [...prevMessages, message];
-
             setTimeout(() => {
                 if (messageListRef.current) {
                     if (userIsAtBottomRef.current) {
@@ -106,12 +122,11 @@ const ChatWindow = ({ token, onLogout }) => {
                     }
                 }
             }, 0);
-
             return newMessages;
         });
     }, [loggedInUser]);
 
-    const { sendMessage, isConnected } = WebSocketComponent({ onMessageReceived, token, chatId });
+    const { sendMessage } = WebSocketComponent({ onMessageReceived, token, chatId });
 
     useEffect(() => {
         const fetchChatData = async () => {
@@ -121,16 +136,14 @@ const ChatWindow = ({ token, onLogout }) => {
                     fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } }),
                     fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
-                if (!messagesResponse.ok || !chatGroupsResponse.ok) {
-                    throw new Error('Failed to fetch chat data.');
-                }
+                if (!messagesResponse.ok || !chatGroupsResponse.ok) throw new Error('Failed to fetch chat data.');
                 const messagesData = await messagesResponse.json();
                 const groupsData = await chatGroupsResponse.json();
                 const currentGroup = groupsData.find(p => p.chatGroup.id === chatId)?.chatGroup;
                 if (currentGroup) {
                     setChatGroup(currentGroup);
                     setMessages(messagesData);
-                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                    messagesEndRef.current?.scrollIntoView();
                 } else {
                     throw new Error('Chat group not found.');
                 }
@@ -141,9 +154,7 @@ const ChatWindow = ({ token, onLogout }) => {
                 setLoading(false);
             }
         };
-        if (chatId && token) {
-            fetchChatData();
-        }
+        if (chatId && token) fetchChatData();
     }, [chatId, token, onLogout]);
 
     useEffect(() => {
@@ -179,45 +190,35 @@ const ChatWindow = ({ token, onLogout }) => {
 
     const handleReact = (reaction) => {
         if (loggedInUser && activeEmojiPicker) {
-            const payload = { messageId: activeEmojiPicker, reaction: reaction };
-            sendMessage(payload, `/app/chat/${chatId}/react`);
+            sendMessage({ messageId: activeEmojiPicker, reaction }, `/app/chat/${chatId}/react`);
         }
         setActiveEmojiPicker(null);
     };
 
     const handleOpenReactionsModal = (reactions) => setReactionsModalData(reactions);
     const handleCloseModal = () => setReactionsModalData(null);
-    const handleCancelReply = () => {
-        setReplyingTo(null);
-        inputRef.current?.focus();
-    };
+    const handleCancelReply = () => setReplyingTo(null);
     const handleBackClick = () => navigate('/chat');
     const handleClosePopups = () => setActiveEmojiPicker(null);
 
     const handleInteractionStart = (e, message) => {
-        pressTimer.current = setTimeout(() => {
-            setActiveEmojiPicker(message.id);
-        }, 500);
-        const clientX = e.clientX || e.touches[0].clientX;
-        dragStartXRef.current = clientX;
+        pressTimer.current = setTimeout(() => setActiveEmojiPicker(message.id), 500);
+        dragStartXRef.current = e.clientX || e.touches[0].clientX;
     };
+
     const handleDoubleClick = (message) => {
         if (!loggedInUser) return;
-        const payload = { messageId: message.id, reaction: '❤️' };
-        sendMessage(payload, `/app/chat/${chatId}/react`);
-        // Trigger the animation
+        sendMessage({ messageId: message.id, reaction: '❤️' }, `/app/chat/${chatId}/react`);
         setAnimatedHeart(message.id);
-        setTimeout(() => setAnimatedHeart(null), 500); // Animation duration
+        setTimeout(() => setAnimatedHeart(null), 500);
     };
 
     const handleInteractionEnd = (e, message) => {
         clearTimeout(pressTimer.current);
-
         if (activeEmojiPicker) {
             dragStartXRef.current = null;
             return;
         }
-
         const dragEndX = e.clientX || (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : null);
         if (dragEndX && dragEndX - dragStartXRef.current > DRAG_THRESHOLD) {
             setReplyingTo(message);
@@ -240,84 +241,98 @@ const ChatWindow = ({ token, onLogout }) => {
     };
 
     if (loading || !loggedInUser || !chatGroup) return <div className={styles.centeredMessage}>Loading messages...</div>;
+
     return (
         <div className={styles.chatWindow}>
             <header className={styles.chatHeader}>
                 <button onClick={handleBackClick} className={styles.backButton}>&larr;</button>
                 <h2>{chatGroup.name}</h2>
-                <div className={styles.headerPlaceholder}></div>
             </header>
             <main ref={messageListRef} className={styles.messageList} onScroll={handleScroll} onClick={handleClosePopups}>
-                {messages.map((msg) => {
+                {messages.map((msg, index) => {
+                    const prevMsg = messages[index - 1];
+                    const nextMsg = messages[index + 1];
                     const isSentByCurrentUser = Number(msg.sender.id) === loggedInUser.id;
+                    const isFirstInGroup = !prevMsg || prevMsg.sender.id !== msg.sender.id || !isSameDay(prevMsg.timestamp, msg.timestamp);
+                    const showDateSeparator = !prevMsg || !isSameDay(prevMsg.timestamp, msg.timestamp);
+
+                    const showTimestamp = !nextMsg || nextMsg.sender.id !== msg.sender.id || formatDate(nextMsg.timestamp) !== formatDate(msg.timestamp);
+
                     const reactionsCount = msg.reactions ? Object.values(msg.reactions).flat().length : 0;
                     const parentMessage = msg.parentMessageId ? messages.find(m => m.id === msg.parentMessageId) : null;
-                    const replyHeaderName = isSentByCurrentUser ? 'You replied to' : `Replied to`;
-
-                    const senderInitials = msg.sender.firstName.charAt(0).toUpperCase() +
-                        (msg.sender.lastName ? msg.sender.lastName.charAt(0).toUpperCase() : '');
+                    const senderInitials = msg.sender.firstName.charAt(0).toUpperCase() + (msg.sender.lastName ? msg.sender.lastName.charAt(0).toUpperCase() : '');
                     const avatarColor = stringToHslColor(msg.sender.id.toString());
 
                     return (
-                        <div key={msg.id} className={`${styles.message} ${isSentByCurrentUser ? styles.sent : styles.received}`}>
-                            {!isSentByCurrentUser && (
-                                <div className={styles.avatar} style={{ backgroundColor: avatarColor }}>
-                                    {senderInitials}
+                        <React.Fragment key={msg.id}>
+                            {showDateSeparator && (
+                                <div className={styles.dateSeparator}>
+                                    <span>{formatDateSeparator(msg.timestamp)}</span>
                                 </div>
                             )}
-                            <div className={styles.messageContent}>
-                                {parentMessage && (
-                                    <div className={styles.repliedMessageSnippet}>
-                                        <p className={styles.replyHeader}>
-                                            <span className={styles.replyIcon}>&larr;</span>
-                                            {replyHeaderName} {parentMessage.sender.firstName}:
-                                        </p>
-                                        <p>{parentMessage.text}</p>
+                            <div className={`${styles.messageWrapper} ${isSentByCurrentUser ? styles.sent : styles.received} ${isFirstInGroup ? '' : styles.grouped}`}>
+                                {!isSentByCurrentUser && (
+                                    <div className={styles.avatarContainer}>
+                                        {isFirstInGroup && (
+                                            <div className={styles.avatar} style={{ backgroundColor: avatarColor }}>
+                                                {senderInitials}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
-                                {activeEmojiPicker === msg.id && (
-                                    <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />
-                                )}
-                                <div
-                                    className={styles.messageBubble}
-                                    onMouseDown={(e) => handleInteractionStart(e, msg)}
-                                    onMouseUp={(e) => handleInteractionEnd(e, msg)}
-                                    onMouseMove={handleInteractionMove}
-                                    onMouseLeave={(e) => handleInteractionEnd(e, msg)}
-                                    onTouchStart={(e) => handleInteractionStart(e, msg)}
-                                    onTouchMove={handleInteractionMove}
-                                    onTouchEnd={(e) => handleInteractionEnd(e, msg)}
-                                    onDoubleClick={() => handleDoubleClick(msg)}
-                                    onDragStart={(e) => e.preventDefault()}
-                                >
-                                    <p className={styles.messageText}>{msg.text}</p>
+                                <div className={styles.messageContent}>
+                                    <div className={styles.bubbleContainer}>
+                                        {parentMessage && (
+                                            <div className={styles.repliedMessageSnippet}>
+                                                <p className={styles.replyHeader}>
+                                                    &larr; Replying to {parentMessage.sender.firstName}:
+                                                </p>
+                                                <p className={styles.replyText}>{parentMessage.text}</p>
+                                            </div>
+                                        )}
+                                        {activeEmojiPicker === msg.id && (
+                                            <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />
+                                        )}
+                                        <div
+                                            className={styles.messageBubble}
+                                            onMouseDown={(e) => handleInteractionStart(e, msg)}
+                                            onMouseUp={(e) => handleInteractionEnd(e, msg)}
+                                            onMouseMove={handleInteractionMove}
+                                            onMouseLeave={(e) => handleInteractionEnd(e, msg)}
+                                            onTouchStart={(e) => handleInteractionStart(e, msg)}
+                                            onTouchMove={handleInteractionMove}
+                                            onTouchEnd={(e) => handleInteractionEnd(e, msg)}
+                                            onDoubleClick={() => handleDoubleClick(msg)}
+                                            onDragStart={(e) => e.preventDefault()}
+                                        >
+                                            <p className={styles.messageText}>{msg.text}</p>
+                                        </div>
+                                        {reactionsCount > 0 && (
+                                            <div className={styles.reactionsContainer} onClick={(e) => { e.stopPropagation(); handleOpenReactionsModal(msg.reactions); }}>
+                                                {Object.entries(msg.reactions).map(([emoji]) => (
+                                                    <span key={emoji} className={styles.reactionEmoji}>{emoji}</span>
+                                                ))}
+                                                <span className={styles.totalReactionCount}>{reactionsCount}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {showTimestamp && <span className={styles.timestamp}>{formatDate(msg.timestamp)}</span>}
                                 </div>
-                                {reactionsCount > 0 && (
-                                    <div className={styles.reactionsContainer} onClick={(e) => { e.stopPropagation(); handleOpenReactionsModal(msg.reactions); }}>
-                                        {Object.entries(msg.reactions).map(([emoji]) => (
-                                            <span key={emoji} className={styles.reactionEmoji}>{emoji}</span>
-                                        ))}
-                                        <span className={styles.totalReactionCount}>{reactionsCount}</span>
-                                    </div>
+                                {animatedHeart === msg.id && (
+                                    <div className={`${styles.animatedHeart}`}>❤️</div>
                                 )}
                             </div>
-                            {/* Animated heart overlay */}
-                            {animatedHeart === msg.id && (
-                                <div className={`${styles.animatedHeart}`}>❤️</div>
-                            )}
-                        </div>
+                        </React.Fragment>
                     );
                 })}
                 <div ref={messagesEndRef} />
             </main>
             {hasUnreadMessages && (
-                <button className={styles.scrollToBottomIndicator} onClick={scrollToBottom}>
-                    ↓
-                </button>
+                <button className={styles.scrollToBottomIndicator} onClick={scrollToBottom}>↓</button>
             )}
             {replyingTo && (
                 <div className={styles.replyingToContext}>
-                    <div className={styles.replyingToInfo}>
+                    <div className={styles.replyContextContent}>
                         <p className={styles.replyingToTitle}>Replying to {replyingTo.sender.firstName}</p>
                         <p className={styles.replyingToText}>{replyingTo.text}</p>
                     </div>
@@ -326,8 +341,8 @@ const ChatWindow = ({ token, onLogout }) => {
             )}
             <footer className={styles.messageInputForm}>
                 <form onSubmit={handleSendMessage}>
-                    <input type="text" ref={inputRef} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className={styles.input} />
-                    <button type="submit" className={styles.sendButton}>Send</button>
+                    <input type="text" ref={inputRef} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." />
+                    <button type="submit">Send</button>
                 </form>
             </footer>
             <ReactionsModal reactions={reactionsModalData} onClose={handleCloseModal} />

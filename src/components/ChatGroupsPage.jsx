@@ -18,6 +18,7 @@ const ChatGroupsPage = ({ token, onLogout }) => {
                 const response = await fetch(`${API_BASE_URL}/api/chat/groups`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
+                        'ngrok-skip-browser-warning': 'true'
                     },
                 });
 

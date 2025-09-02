@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './LoginPage.module.css';
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const LoginPage = ({ onLoginSuccess }) => {
     const [formData, setFormData] = useState({
         username: '',
@@ -20,7 +20,7 @@ const LoginPage = ({ onLoginSuccess }) => {
         setError('');
 
         try {
-            const response = await fetch('http://192.168.1.3:8080/api/auth/login', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),

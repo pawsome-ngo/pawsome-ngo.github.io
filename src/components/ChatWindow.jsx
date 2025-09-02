@@ -6,8 +6,9 @@ import ReactionsModal from './ReactionsModal';
 import ReactionPicker from './ReactionPicker';
 import styles from './ChatWindow.module.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// --- Helper Functions ---
 const getUserInfoFromToken = (token) => {
     try {
         const decodedToken = jwtDecode(token);
@@ -51,7 +52,7 @@ const formatDateSeparator = (dateString) => {
     return date.toLocaleDateString([], { month: 'long', day: 'numeric' });
 };
 
-
+// --- Component ---
 const ChatWindow = ({ token, onLogout }) => {
     const { chatId } = useParams();
     const navigate = useNavigate();
@@ -68,6 +69,7 @@ const ChatWindow = ({ token, onLogout }) => {
     const [replyingTo, setReplyingTo] = useState(null);
     const pressTimer = useRef(null);
     const messageListRef = useRef(null);
+    const messageRefs = useRef({});
 
     const dragStartXRef = useRef(null);
     const DRAG_THRESHOLD = 50;
@@ -77,42 +79,35 @@ const ChatWindow = ({ token, onLogout }) => {
     const [animatedHeart, setAnimatedHeart] = useState(null);
 
     useEffect(() => {
-        if (token) {
-            const userInfo = getUserInfoFromToken(token);
-            setLoggedInUser(userInfo);
-        }
+        if (token) setLoggedInUser(getUserInfoFromToken(token));
     }, [token]);
 
     const handleScroll = () => {
         if (messageListRef.current) {
             const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
-            const isAtBottom = scrollHeight - scrollTop <= clientHeight + 100;
-            userIsAtBottomRef.current = isAtBottom;
-            if (isAtBottom) {
-                setHasUnreadMessages(false);
-            }
+            userIsAtBottomRef.current = scrollHeight - scrollTop <= clientHeight + 100;
+            if (userIsAtBottomRef.current) setHasUnreadMessages(false);
         }
     };
 
     const onMessageReceived = useCallback((message) => {
         setMessages(prevMessages => {
             const isSentByMe = message.sender.id === loggedInUser?.id;
-            const optimisticMessageIndex = prevMessages.findIndex(m => m.id === message.clientMessageId);
-            if (optimisticMessageIndex !== -1) {
-                const updatedMessages = [...prevMessages];
-                updatedMessages[optimisticMessageIndex] = message;
-                if (isSentByMe) {
-                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                }
-                return updatedMessages;
+            const optimisticIndex = prevMessages.findIndex(m => m.id === message.clientMessageId);
+            if (optimisticIndex !== -1) {
+                const updated = [...prevMessages];
+                updated[optimisticIndex] = message;
+                if (isSentByMe) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                return updated;
             }
+
             const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
             if (existingMessageIndex !== -1) {
-                const updatedMessages = [...prevMessages];
-                updatedMessages[existingMessageIndex] = message;
-                return updatedMessages;
+                const updated = [...prevMessages];
+                updated[existingMessageIndex] = message;
+                return updated;
             }
-            const newMessages = [...prevMessages, message];
+
             setTimeout(() => {
                 if (messageListRef.current) {
                     if (userIsAtBottomRef.current) {
@@ -122,7 +117,7 @@ const ChatWindow = ({ token, onLogout }) => {
                     }
                 }
             }, 0);
-            return newMessages;
+            return [...prevMessages, message];
         });
     }, [loggedInUser]);
 
@@ -132,13 +127,13 @@ const ChatWindow = ({ token, onLogout }) => {
         const fetchChatData = async () => {
             setLoading(true);
             try {
-                const [messagesResponse, chatGroupsResponse] = await Promise.all([
-                    fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } })
+                const [msgRes, grpRes] = await Promise.all([
+                    fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true'} }),
+                    fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } })
                 ]);
-                if (!messagesResponse.ok || !chatGroupsResponse.ok) throw new Error('Failed to fetch chat data.');
-                const messagesData = await messagesResponse.json();
-                const groupsData = await chatGroupsResponse.json();
+                if (!msgRes.ok || !grpRes.ok) throw new Error('Failed to fetch chat data.');
+                const messagesData = await msgRes.json();
+                const groupsData = await grpRes.json();
                 const currentGroup = groupsData.find(p => p.chatGroup.id === chatId)?.chatGroup;
                 if (currentGroup) {
                     setChatGroup(currentGroup);
@@ -159,7 +154,6 @@ const ChatWindow = ({ token, onLogout }) => {
 
     useEffect(() => {
         if (replyingTo) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
             inputRef.current?.focus();
         }
     }, [replyingTo]);
@@ -174,16 +168,14 @@ const ChatWindow = ({ token, onLogout }) => {
             sender: { id: loggedInUser.id, firstName: 'You', lastName: '' },
             timestamp: new Date().toISOString(),
             reactions: {},
-            seenBy: [],
             parentMessageId: replyingTo ? replyingTo.id : null,
         };
-        setMessages(prevMessages => [...prevMessages, optimisticMessage]);
-        const payload = {
+        setMessages(prev => [...prev, optimisticMessage]);
+        sendMessage({
             text: newMessage.trim(),
-            clientMessageId: clientMessageId,
+            clientMessageId,
             parentMessageId: replyingTo ? replyingTo.id : null,
-        };
-        sendMessage(payload, `/app/chat/${chatId}/send`);
+        }, `/app/chat/${chatId}/send`);
         setNewMessage('');
         setReplyingTo(null);
     };
@@ -195,22 +187,49 @@ const ChatWindow = ({ token, onLogout }) => {
         setActiveEmojiPicker(null);
     };
 
-    const handleOpenReactionsModal = (reactions) => setReactionsModalData(reactions);
-    const handleCloseModal = () => setReactionsModalData(null);
-    const handleCancelReply = () => setReplyingTo(null);
-    const handleBackClick = () => navigate('/chat');
-    const handleClosePopups = () => setActiveEmojiPicker(null);
+    const handleDoubleClick = (message) => {
+        if (!loggedInUser) return;
+
+        const reactionType = '❤️';
+
+        // Optimistically update the UI
+        setMessages(prevMessages => prevMessages.map(m => {
+            if (m.id === message.id) {
+                const newReactions = JSON.parse(JSON.stringify(m.reactions || {}));
+                if (!newReactions[reactionType]) {
+                    newReactions[reactionType] = [];
+                }
+
+                const userReactedIndex = newReactions[reactionType].findIndex(user => user.id === loggedInUser.id);
+
+                if (userReactedIndex === -1) {
+                    // If user hasn't reacted, add reaction
+                    newReactions[reactionType].push({
+                        id: loggedInUser.id,
+                        firstName: loggedInUser.username,
+                    });
+                }
+                // Optional: If you want double-click to also un-react, add an else block here to remove it.
+                // else {
+                //     newReactions[reactionType].splice(userReactedIndex, 1);
+                // }
+
+                return { ...m, reactions: newReactions };
+            }
+            return m;
+        }));
+
+        // Send the update to the server
+        sendMessage({ messageId: message.id, reaction: reactionType }, `/app/chat/${chatId}/react`);
+
+        // Trigger the animation
+        setAnimatedHeart(message.id);
+        setTimeout(() => setAnimatedHeart(null), 500);
+    };
 
     const handleInteractionStart = (e, message) => {
         pressTimer.current = setTimeout(() => setActiveEmojiPicker(message.id), 500);
         dragStartXRef.current = e.clientX || e.touches[0].clientX;
-    };
-
-    const handleDoubleClick = (message) => {
-        if (!loggedInUser) return;
-        sendMessage({ messageId: message.id, reaction: '❤️' }, `/app/chat/${chatId}/react`);
-        setAnimatedHeart(message.id);
-        setTimeout(() => setAnimatedHeart(null), 500);
     };
 
     const handleInteractionEnd = (e, message) => {
@@ -220,7 +239,7 @@ const ChatWindow = ({ token, onLogout }) => {
             return;
         }
         const dragEndX = e.clientX || (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : null);
-        if (dragEndX && dragEndX - dragStartXRef.current > DRAG_THRESHOLD) {
+        if (dragEndX && dragEndX - (dragStartXRef.current || 0) > DRAG_THRESHOLD) {
             setReplyingTo(message);
         }
         dragStartXRef.current = null;
@@ -235,64 +254,60 @@ const ChatWindow = ({ token, onLogout }) => {
         }
     };
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        setHasUnreadMessages(false);
+    const handleScrollToMessage = (messageId) => {
+        const messageElement = messageRefs.current[messageId];
+        if (messageElement) {
+            messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            messageElement.classList.add(styles.highlight);
+            setTimeout(() => {
+                messageElement.classList.remove(styles.highlight);
+            }, 1500);
+        }
     };
 
-    if (loading || !loggedInUser || !chatGroup) return <div className={styles.centeredMessage}>Loading messages...</div>;
+    if (loading || !loggedInUser || !chatGroup) return <div className={styles.centeredMessage}>Loading...</div>;
 
     return (
         <div className={styles.chatWindow}>
             <header className={styles.chatHeader}>
-                <button onClick={handleBackClick} className={styles.backButton}>&larr;</button>
+                <button onClick={() => navigate('/chat')} className={styles.backButton}>&larr;</button>
                 <h2>{chatGroup.name}</h2>
             </header>
-            <main ref={messageListRef} className={styles.messageList} onScroll={handleScroll} onClick={handleClosePopups}>
+            <main ref={messageListRef} className={styles.messageList} onScroll={handleScroll}>
                 {messages.map((msg, index) => {
                     const prevMsg = messages[index - 1];
                     const nextMsg = messages[index + 1];
                     const isSentByCurrentUser = Number(msg.sender.id) === loggedInUser.id;
                     const isFirstInGroup = !prevMsg || prevMsg.sender.id !== msg.sender.id || !isSameDay(prevMsg.timestamp, msg.timestamp);
                     const showDateSeparator = !prevMsg || !isSameDay(prevMsg.timestamp, msg.timestamp);
-
                     const showTimestamp = !nextMsg || nextMsg.sender.id !== msg.sender.id || formatDate(nextMsg.timestamp) !== formatDate(msg.timestamp);
 
-                    const reactionsCount = msg.reactions ? Object.values(msg.reactions).flat().length : 0;
                     const parentMessage = msg.parentMessageId ? messages.find(m => m.id === msg.parentMessageId) : null;
+                    const reactionsCount = msg.reactions ? Object.values(msg.reactions).flat().length : 0;
                     const senderInitials = msg.sender.firstName.charAt(0).toUpperCase() + (msg.sender.lastName ? msg.sender.lastName.charAt(0).toUpperCase() : '');
                     const avatarColor = stringToHslColor(msg.sender.id.toString());
 
                     return (
                         <React.Fragment key={msg.id}>
-                            {showDateSeparator && (
-                                <div className={styles.dateSeparator}>
-                                    <span>{formatDateSeparator(msg.timestamp)}</span>
-                                </div>
-                            )}
-                            <div className={`${styles.messageWrapper} ${isSentByCurrentUser ? styles.sent : styles.received} ${isFirstInGroup ? '' : styles.grouped}`}>
+                            {showDateSeparator && <div className={styles.dateSeparator}><span>{formatDateSeparator(msg.timestamp)}</span></div>}
+                            <div
+                                ref={el => messageRefs.current[msg.id] = el}
+                                className={`${styles.messageWrapper} ${isSentByCurrentUser ? styles.sent : styles.received} ${isFirstInGroup ? '' : styles.grouped}`}
+                            >
                                 {!isSentByCurrentUser && (
                                     <div className={styles.avatarContainer}>
-                                        {isFirstInGroup && (
-                                            <div className={styles.avatar} style={{ backgroundColor: avatarColor }}>
-                                                {senderInitials}
-                                            </div>
-                                        )}
+                                        {isFirstInGroup && <div className={styles.avatar} style={{ backgroundColor: avatarColor }}>{senderInitials}</div>}
                                     </div>
                                 )}
                                 <div className={styles.messageContent}>
                                     <div className={styles.bubbleContainer}>
                                         {parentMessage && (
-                                            <div className={styles.repliedMessageSnippet}>
-                                                <p className={styles.replyHeader}>
-                                                    &larr; Replying to {parentMessage.sender.firstName}:
-                                                </p>
+                                            <div className={styles.repliedMessageSnippet} onClick={() => handleScrollToMessage(parentMessage.id)}>
+                                                <p className={styles.replyHeader}>Replied to {parentMessage.sender.firstName}</p>
                                                 <p className={styles.replyText}>{parentMessage.text}</p>
                                             </div>
                                         )}
-                                        {activeEmojiPicker === msg.id && (
-                                            <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />
-                                        )}
+                                        {activeEmojiPicker === msg.id && <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />}
                                         <div
                                             className={styles.messageBubble}
                                             onMouseDown={(e) => handleInteractionStart(e, msg)}
@@ -308,44 +323,38 @@ const ChatWindow = ({ token, onLogout }) => {
                                             <p className={styles.messageText}>{msg.text}</p>
                                         </div>
                                         {reactionsCount > 0 && (
-                                            <div className={styles.reactionsContainer} onClick={(e) => { e.stopPropagation(); handleOpenReactionsModal(msg.reactions); }}>
-                                                {Object.entries(msg.reactions).map(([emoji]) => (
-                                                    <span key={emoji} className={styles.reactionEmoji}>{emoji}</span>
-                                                ))}
+                                            <div className={styles.reactionsContainer} onClick={() => setReactionsModalData(msg.reactions)}>
+                                                {Object.entries(msg.reactions).map(([emoji]) => (<span className={styles.reactionEmoji} key={emoji}>{emoji}</span>))}
                                                 <span className={styles.totalReactionCount}>{reactionsCount}</span>
                                             </div>
                                         )}
                                     </div>
                                     {showTimestamp && <span className={styles.timestamp}>{formatDate(msg.timestamp)}</span>}
                                 </div>
-                                {animatedHeart === msg.id && (
-                                    <div className={`${styles.animatedHeart}`}>❤️</div>
-                                )}
+                                {animatedHeart === msg.id && <div className={styles.animatedHeart}>❤️</div>}
                             </div>
                         </React.Fragment>
                     );
                 })}
                 <div ref={messagesEndRef} />
             </main>
-            {hasUnreadMessages && (
-                <button className={styles.scrollToBottomIndicator} onClick={scrollToBottom}>↓</button>
-            )}
+            {hasUnreadMessages && <button className={styles.scrollToBottomIndicator} onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}>↓</button>}
             {replyingTo && (
                 <div className={styles.replyingToContext}>
                     <div className={styles.replyContextContent}>
-                        <p className={styles.replyingToTitle}>Replying to {replyingTo.sender.firstName}</p>
+                        <p className={styles.replyingToTitle}>Replied to {replyingTo.sender.firstName}</p>
                         <p className={styles.replyingToText}>{replyingTo.text}</p>
                     </div>
-                    <button onClick={handleCancelReply} className={styles.cancelReplyButton}>&times;</button>
+                    <button onClick={() => setReplyingTo(null)} className={styles.cancelReplyButton}>&times;</button>
                 </div>
             )}
             <footer className={styles.messageInputForm}>
                 <form onSubmit={handleSendMessage}>
-                    <input type="text" ref={inputRef} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." />
+                    <input type="text" ref={inputRef} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Message..." />
                     <button type="submit">Send</button>
                 </form>
             </footer>
-            <ReactionsModal reactions={reactionsModalData} onClose={handleCloseModal} />
+            <ReactionsModal reactions={reactionsModalData} onClose={() => setReactionsModalData(null)} />
         </div>
     );
 };

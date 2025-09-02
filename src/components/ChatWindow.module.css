@@ -53,6 +53,18 @@
     flex-direction: column;
 }
 
+.messageWrapper {
+    display: flex;
+    max-width: 85%;
+    margin-bottom: 0.5rem;
+    transition: background-color 1s ease-out;
+}
+
+.highlight {
+    background-color: rgba(0, 122, 255, 0.1);
+    border-radius: 8px;
+}
+
 /* --- Date Separator --- */
 .dateSeparator {
     text-align: center;
@@ -68,12 +80,6 @@
 }
 
 /* --- Message Structure --- */
-.messageWrapper {
-    display: flex;
-    max-width: 85%;
-    margin-bottom: 0.5rem;
-}
-
 .avatarContainer {
     width: 34px;
     flex-shrink: 0;
@@ -101,7 +107,6 @@
     width: 100%;
 }
 
-/* ** NEW CONTAINER FOR BUBBLE + REACTIONS ** */
 .bubbleContainer {
     display: flex;
     flex-direction: column;
@@ -159,7 +164,7 @@
 /* --- Timestamp --- */
 .timestamp {
     font-size: 0.7rem;
-    color: #8a8a8e;
+    color: #6d6d72;
     margin-top: 0.25rem;
     padding: 0 0.25rem;
 }
@@ -168,7 +173,6 @@
 
 /* --- Reactions --- */
 .reactionsContainer {
-    /* ** REMOVED NEGATIVE MARGIN TO FIX OVERLAP ** */
     margin-top: 2px;
     margin-left: 0.5rem;
     z-index: 2;
@@ -186,11 +190,89 @@
     margin-left: 0;
     margin-right: 0.5rem;
 }
-.reactionEmoji { font-size: 0.8rem; }
+.reactionEmoji {
+    font-size: 0.8rem;
+}
 .totalReactionCount {
     font-size: 0.8rem;
-    color: #888;
+    font-weight: 600;
+    color: #333;
     margin-left: 4px;
+}
+
+/* --- Reply Snippet Styles --- */
+.repliedMessageSnippet {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.25rem;
+    border-radius: 12px 12px 8px 8px;
+    background-color: rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    cursor: pointer;
+}
+.repliedMessageSnippet:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+.replyHeader {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #555;
+    margin: 0 0 0.15rem 0;
+}
+.replyText {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sent .repliedMessageSnippet {
+    background-color: rgba(0, 0, 0, 0.15);
+}
+.sent .replyHeader, .sent .replyText {
+    color: #ffffff;
+}
+
+/* --- Reply Context Bar Styles --- */
+.replyingToContext {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: #f2f2f7;
+    border-top: 1px solid #dcdcdc;
+    animation: slideInUp 0.2s ease-out;
+}
+@keyframes slideInUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+.replyContextContent {
+    flex-grow: 1;
+    border-left: 3px solid #007aff;
+    padding-left: 0.75rem;
+    overflow: hidden;
+}
+.replyingToTitle {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #007aff;
+    margin: 0;
+}
+.replyingToText {
+    font-size: 0.9rem;
+    color: #333333;
+    margin: 0.1rem 0 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cancelReplyButton {
+    background: none;
+    border: none;
+    color: #8a8a8e;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
 }
 
 /* --- Input Form --- */
@@ -208,7 +290,7 @@
 .messageInputForm input {
     flex-grow: 1;
     padding: 0.6rem 1rem;
-    border: 1px solid #dcdcdc;
+    border: none;
     border-radius: 20px;
     background-color: #fff;
     color: #1c1c1e;
@@ -226,100 +308,7 @@
     transition: background-color 0.2s;
 }
 
-/* --- Style for the replied-to message snippet --- */
-/* --- Style for the replied-to message snippet --- */
-.repliedMessageSnippet {
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 0.25rem;
-    border-radius: 12px;
-    background-color: rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-}
-
-.repliedMessageSnippet p {
-    margin: 0;
-}
-
-/* Make the "Replying to..." header darker */
-.replyHeader {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #555; /* Changed from #666 */
-    margin-bottom: 2px;
-}
-
-/* Give the actual replied message text a dark color */
-.replyText {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #333; /* Added dark color for readability */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Specific background for reply snippets in sent messages */
-.sent .repliedMessageSnippet {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
-/* --- Timestamp --- */
-.timestamp {
-    font-size: 0.7rem;
-    color: #6d6d72; /* Changed from #8a8a8e to a darker gray */
-    margin-top: 0.25rem;
-    padding: 0 0.25rem;
-}
-
-/* --- Improved Reply Context Bar --- */
-.replyingToContext {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: #f2f2f7;
-    border-top: 1px solid #dcdcdc;
-    animation: slideInUp 0.2s ease-out;
-}
-
-@keyframes slideInUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-}
-
-.replyContextContent {
-    flex-grow: 1;
-    border-left: 3px solid #007aff;
-    padding-left: 0.75rem;
-    overflow: hidden;
-}
-
-.replyingToTitle {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #007aff; /* Bright blue for high contrast */
-    margin: 0;
-}
-
-.replyingToText {
-    font-size: 0.9rem;
-    color: #333333; /* Dark, readable text */
-    margin: 0.1rem 0 0 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.cancelReplyButton {
-    background: none;
-    border: none;
-    color: #8a8a8e; /* Visible gray for the 'x' */
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.25rem;
-}
-
-/* --- Fixed Reactions Modal Styles --- */
-/* --- Correct Reactions Modal Styles --- */
+/* --- Reactions Modal Styles --- */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -329,10 +318,9 @@
     background-color: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
-    align-items: flex-end; /* Align modal to the bottom */
+    align-items: flex-end;
     z-index: 1000;
 }
-
 .reactionsModal {
     background-color: #ffffff;
     width: 100%;
@@ -345,16 +333,10 @@
     box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
     animation: slide-up 0.3s ease-out;
 }
-
 @keyframes slide-up {
-    from {
-        transform: translateY(100%);
-    }
-    to {
-        transform: translateY(0);
-    }
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
 }
-
 .modalHeader {
     padding: 1rem;
     display: flex;
@@ -363,7 +345,6 @@
     border-bottom: 1px solid #e5e5e5;
     flex-shrink: 0;
 }
-
 .modalHeader h3 {
     margin: 0;
     color: #1c1c1e;
@@ -372,7 +353,6 @@
     text-align: center;
     flex-grow: 1;
 }
-
 .modalCloseButton {
     background: #e5e5ea;
     border: none;
@@ -388,12 +368,10 @@
     justify-content: center;
     line-height: 1;
 }
-
 .modalContent {
     overflow-y: auto;
     padding: 0.5rem 1rem;
 }
-
 .modalReactionItem {
     display: flex;
     align-items: center;
@@ -401,12 +379,29 @@
     color: #1c1c1e;
     border-bottom: 1px solid #f2f2f7;
 }
-
 .modalReactionItem:last-child {
     border-bottom: none;
 }
-
 .modalReactionEmoji {
     font-size: 1.5rem;
     margin-right: 1rem;
+}
+
+/* ... (Keep other miscellaneous styles like animatedHeart) ... */
+.animatedHeart {
+    position: absolute;
+    font-size: 3rem;
+    color: #ff3838;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: heart-pop 0.5s ease-out;
+    pointer-events: none;
+    z-index: 100;
+}
+
+@keyframes heart-pop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.5); opacity: 1; }
+    100% { transform: scale(0.5); opacity: 0; }
 }

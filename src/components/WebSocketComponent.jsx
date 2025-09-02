@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
     const stompClientRef = useRef(null);
@@ -22,6 +22,7 @@ const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
 
         const headers = {
             'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
         };
 
         if (stompClientRef.current) {

@@ -128,8 +128,8 @@ const ChatWindow = ({ token, onLogout }) => {
             setLoading(true);
             try {
                 const [msgRes, grpRes] = await Promise.all([
-                    fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true'} }),
-                    fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } })
+                    fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}`} }),
+                    fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
                 if (!msgRes.ok || !grpRes.ok) throw new Error('Failed to fetch chat data.');
                 const messagesData = await msgRes.json();

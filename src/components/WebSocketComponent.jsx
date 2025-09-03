@@ -22,7 +22,7 @@ const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
 
         const headers = {
             'Authorization': `Bearer ${token}`,
-            'ngrok-skip-browser-warning': 'true'
+            // 'ngrok-skip-browser-warning': 'true'
         };
 
         if (stompClientRef.current) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ChatGroupsPage.module.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const ChatGroupsPage = ({ token, onLogout }) => {
     const [chatGroups, setChatGroups] = useState([]);
@@ -18,7 +18,7 @@ const ChatGroupsPage = ({ token, onLogout }) => {
                 const response = await fetch(`${API_BASE_URL}/api/chat/groups`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'ngrok-skip-browser-warning': 'true'
+                        // 'ngrok-skip-browser-warning': 'true'
                     },
                 });
 

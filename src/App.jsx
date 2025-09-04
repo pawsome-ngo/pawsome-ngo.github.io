@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { HashRouter as Router, Routes, Route, useNavigate, Outlet, Navigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import './App.css';
 
 import LoginPage from './components/LoginPage';

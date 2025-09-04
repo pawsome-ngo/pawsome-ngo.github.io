@@ -82,22 +82,36 @@ const ChatWindow = ({ token, onLogout }) => {
         if (token) setLoggedInUser(getUserInfoFromToken(token));
     }, [token]);
 
+    // ** NEW, MORE RELIABLE SCROLLING LOGIC **
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages.length]); // This effect runs whenever a new message is added
+
     const handleScroll = () => {
         if (messageListRef.current) {
             const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
-            userIsAtBottomRef.current = scrollHeight - scrollTop <= clientHeight + 100;
-            if (userIsAtBottomRef.current) setHasUnreadMessages(false);
+            // Check if the user is close to the bottom
+            const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+            userIsAtBottomRef.current = isAtBottom;
+            if (isAtBottom) {
+                setHasUnreadMessages(false);
+            }
         }
     };
 
     const onMessageReceived = useCallback((message) => {
+        // If the user is not at the bottom, show the "new message" indicator
+        if (!userIsAtBottomRef.current) {
+            setHasUnreadMessages(true);
+        }
+
         setMessages(prevMessages => {
-            const isSentByMe = message.sender.id === loggedInUser?.id;
             const optimisticIndex = prevMessages.findIndex(m => m.id === message.clientMessageId);
             if (optimisticIndex !== -1) {
                 const updated = [...prevMessages];
                 updated[optimisticIndex] = message;
-                if (isSentByMe) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                 return updated;
             }
 
@@ -108,18 +122,9 @@ const ChatWindow = ({ token, onLogout }) => {
                 return updated;
             }
 
-            setTimeout(() => {
-                if (messageListRef.current) {
-                    if (userIsAtBottomRef.current) {
-                        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                    } else {
-                        setHasUnreadMessages(true);
-                    }
-                }
-            }, 0);
             return [...prevMessages, message];
         });
-    }, [loggedInUser]);
+    }, []);
 
     const { sendMessage } = WebSocketComponent({ onMessageReceived, token, chatId });
 
@@ -138,7 +143,8 @@ const ChatWindow = ({ token, onLogout }) => {
                 if (currentGroup) {
                     setChatGroup(currentGroup);
                     setMessages(messagesData);
-                    messagesEndRef.current?.scrollIntoView();
+                    // Initial scroll to bottom on load
+                    setTimeout(() => messagesEndRef.current?.scrollIntoView(), 0);
                 } else {
                     throw new Error('Chat group not found.');
                 }
@@ -191,38 +197,25 @@ const ChatWindow = ({ token, onLogout }) => {
         if (!loggedInUser) return;
 
         const reactionType = '❤️';
-
-        // Optimistically update the UI
         setMessages(prevMessages => prevMessages.map(m => {
             if (m.id === message.id) {
                 const newReactions = JSON.parse(JSON.stringify(m.reactions || {}));
                 if (!newReactions[reactionType]) {
                     newReactions[reactionType] = [];
                 }
-
                 const userReactedIndex = newReactions[reactionType].findIndex(user => user.id === loggedInUser.id);
-
                 if (userReactedIndex === -1) {
-                    // If user hasn't reacted, add reaction
                     newReactions[reactionType].push({
                         id: loggedInUser.id,
                         firstName: loggedInUser.username,
                     });
                 }
-                // Optional: If you want double-click to also un-react, add an else block here to remove it.
-                // else {
-                //     newReactions[reactionType].splice(userReactedIndex, 1);
-                // }
-
                 return { ...m, reactions: newReactions };
             }
             return m;
         }));
 
-        // Send the update to the server
         sendMessage({ messageId: message.id, reaction: reactionType }, `/app/chat/${chatId}/react`);
-
-        // Trigger the animation
         setAnimatedHeart(message.id);
         setTimeout(() => setAnimatedHeart(null), 500);
     };

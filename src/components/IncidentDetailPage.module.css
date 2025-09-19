@@ -1,0 +1,218 @@
+.pageContainer {
+    padding: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* --- Header --- */
+.header {
+    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 20px;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.backButton {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.headerContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.headerContent h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.tags {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.status, .animalTag {
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+}
+
+.status {
+    background-color: rgba(255,255,255,0.2);
+}
+
+.animalTag {
+    background-color: rgba(0,0,0,0.1);
+}
+
+.historyButton {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+/*.historyButtonPlaceholder {*/
+/*    width: 105px;*/
+/*    visibility: hidden;*/
+/*}*/
+
+/* --- Detail Grid --- */
+.detailGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 600px) {
+    .detailGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.detailCard {
+    background: white;
+    border-radius: 16px;
+    padding: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.iconWrapper {
+    background: #f0f8ff;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.icon {
+    font-size: 1.5rem;
+    color: #3498db;
+}
+
+.cardContent {
+    text-align: center;
+}
+
+.cardContent strong {
+    font-size: 0.8rem;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.25rem;
+    text-align: left; /* <-- Add this line */
+}
+
+.cardContent p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.fullWidth {
+    grid-column: 1 / -1;
+}
+
+.contactGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.contactGroup a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.copyButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #95a5a6;
+}
+
+/* --- Actions --- */
+.actionsContainer {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 600px) {
+    .actionsContainer {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+.actionButton {
+    padding: 1rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: white;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+}
+
+.actionButton:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.mediaButton { background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+.mapButton { background: linear-gradient(45deg, #3498db, #2980b9); }
+.updateButton { background: linear-gradient(45deg, #f39c12, #e67e22); }
+.interestButton { background: linear-gradient(45deg, #e74c3c, #c0392b); }
+.assignButton { background: linear-gradient(45deg, #2ecc71, #27ae60); }
+.closeButton { background: linear-gradient(45deg, #95a5a6, #7f8c8d); }
+.resolveButton { background: linear-gradient(45deg, #1abc9c, #16a085); }
+.viewTeamButton { background: linear-gradient(45deg, #34495e, #2c3e50); }
+
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

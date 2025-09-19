@@ -1,42 +1,167 @@
 .container {
     width: 100%;
-    margin: 0;
-    padding: 1rem;
-    background-color: #f4f7f6; /* A lighter background color */
-    border-radius: 0;
-    min-height: calc(100vh - 60px); /* Full height minus navbar */
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem; /* Adjusted padding */
+    background-color: transparent; /* Keep transparent to show global gradient */
+    min-height: calc(100vh - 60px);
     box-sizing: border-box;
-    overflow-x: hidden;
 }
 
-@media (min-width: 601px) {
-    .container {
-        max-width: 800px;
-        margin: 2rem auto;
-        padding: 0;
-        background-color: transparent;
-    }
+.loadingMessage, .errorMessage {
+    text-align: center;
+    color: #555;
+    font-size: 1.2rem;
+    margin-top: 4rem;
+}
+.errorMessage {
+    color: #e74c3c;
 }
 
-.groupList {
-    list-style: none;
-    padding: 0;
+.pageHeader {
+    text-align: center;
+    margin-bottom: 3rem; /* Increased margin */
 }
 
-.groupItem {
-    padding: 1.5rem;
-    background-color: #fff;
-    border-radius: 12px;
-    margin-bottom: 1rem;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.3s, transform 0.2s;
+.pageHeader h1 {
+    margin: 0;
     color: #2c3e50;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    text-align: left;
+    font-size: 2.5rem; /* Larger font size */
+    font-weight: 700;
 }
 
-.groupItem:hover {
-    background-color: #fdfdfd;
-    transform: translateY(-3px);
+.pageHeader p {
+    margin-top: 0.75rem; /* Increased margin */
+    color: #7f8c8d;
+    font-size: 1.2rem; /* Larger font size */
+}
+
+/* --- Card Grid Layout --- */
+.groupGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.groupCard {
+    /* Background color is set dynamically in JSX */
+    border-radius: 20px; /* More rounded corners */
+    padding: 1.8rem; /* Increased padding */
+    cursor: pointer;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Softer, larger shadow */
+    display: flex;
+    flex-direction: column; /* Stack content vertically */
+    align-items: flex-start; /* Align icon and text to the left */
+    color: white; /* White text for better contrast on colorful backgrounds */
+    position: relative; /* For potential future absolute positioning */
+    overflow: hidden; /* Ensure rounded corners clip content */
+}
+
+.groupCard::before { /* Subtle overlay for depth */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to top left, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+.groupCard:hover {
+    transform: translateY(-8px); /* More pronounced lift */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); /* More intense shadow on hover */
+}
+
+.groupCard:hover::before {
+    opacity: 1;
+}
+
+.cardIcon {
+    font-size: 2.5rem; /* Larger icon */
+    margin-bottom: 1rem; /* Space below icon */
+    color: rgba(255, 255, 255, 0.9); /* Slightly transparent white */
+    z-index: 1;
+}
+
+.cardContent {
+    z-index: 1; /* Ensure content is above the pseudo-element */
+}
+
+.cardTitle {
+    font-weight: 700; /* Bolder title */
+    font-size: 1.4rem; /* Larger title */
+    margin: 0;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2); /* Text shadow for readability */
+}
+
+.cardDetail { /* For future details like incident ID, member count */
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+}
+
+
+/* --- Empty State --- */
+.emptyState {
+    text-align: center;
+    margin-top: 4rem;
+    padding: 3rem 2rem; /* More generous padding */
+    background-color: #ffffff; /* White background for empty state box */
+    border-radius: 20px; /* Rounded corners */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Consistent shadow */
+}
+
+.emptyIcon {
+    font-size: 4rem; /* Larger icon */
+    color: #b0c4de; /* A softer, friendly blue-grey */
+    margin-bottom: 1.5rem;
+}
+
+.emptyState h2 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.emptyState p {
+    color: #7f8c8d;
+    max-width: 500px; /* Max width for readability */
+    margin: 0.75rem auto 0;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.actionArea {
+    margin-top: 2.5rem; /* More space above button */
+}
+
+.actionButton {
+    display: inline-flex; /* Use flex to align icon and text */
+    align-items: center;
+    gap: 0.75rem; /* Space between icon and text */
+    background: linear-gradient(45deg, #3498db, #2ecc71); /* Gradient button */
+    color: white;
+    padding: 0.9rem 2rem; /* Larger padding */
+    border-radius: 30px; /* Pill-shaped button */
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Shadow for lift */
+}
+
+.actionButton:hover {
+    transform: translateY(-3px); /* Lift higher on hover */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* More intense shadow */
+    background: linear-gradient(45deg, #2980b9, #27ae60); /* Darker gradient on hover */
+}
+
+.actionButton svg {
+    font-size: 1.2rem; /* Icon size in button */
 }

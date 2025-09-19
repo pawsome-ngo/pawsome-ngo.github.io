@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useNavigate, Outlet, Navigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 import './App.css';
 
 import LoginPage from './components/LoginPage';
@@ -10,8 +11,14 @@ import Navbar from './components/Navbar';
 import LivePage from './components/LivePage';
 import ReportPage from './components/ReportPage';
 import StandingsPage from './components/StandingsPage';
+import IncidentDetailPage from './components/IncidentDetailPage';
+import IncidentMediaPage from './components/IncidentMediaPage'; // Add this import
+import TeamAssignmentPage from './components/TeamAssignmentPage';
+import MyCasesPage from './components/MyCasesPage'; // Add this import
+// ... inside your <Routes>
 
-// This new component will act as a layout for all protected pages
+
+// This component acts as a layout for all protected pages
 const ProtectedLayout = ({ token, onLogout }) => {
     if (!token) {
         // If no token, redirect to the login page
@@ -57,9 +64,13 @@ const App = () => {
                     <Route path="/" element={<Navigate to="/chat" />} />
                     <Route path="/chat" element={<ChatGroupsPage token={token} onLogout={handleLogout} />} />
                     <Route path="/chat/:chatId" element={<ChatWindow token={token} onLogout={handleLogout} />} />
-                    <Route path="/live" element={<LivePage />} />
+                    <Route path="/my-cases" element={<MyCasesPage token={token} />} />
+                    <Route path="/live" element={<LivePage token={token} />} />
+                    <Route path="/incident/:incidentId" element={<IncidentDetailPage token={token} />} />
+                    <Route path="/incident/:incidentId/media" element={<IncidentMediaPage />} />
+                    <Route path="/incident/:incidentId/assign" element={<TeamAssignmentPage token={token} />} />
                     <Route path="/report" element={<ReportPage />} />
-                    <Route path="/standings" element={<StandingsPage />} />
+                    <Route path="/standings" element={<StandingsPage token={token} />} />
                 </Route>
             </Routes>
         </div>

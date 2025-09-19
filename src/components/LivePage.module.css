@@ -1,0 +1,145 @@
+.container {
+    padding: 1rem 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.pageHeader {
+    text-align: center;
+    margin-bottom: 1.0rem; /* Reduced margin */
+}
+
+.pageHeader h1 {
+    font-size: 2.2rem; /* Adjusted font size */
+    color: #2c3e50;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(45deg, #e74c3c, #9b59b6, #3498db);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding: 0.5rem;
+}
+
+/* --- Filter Dropdown --- */
+.filterContainer {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.customSelectWrapper {
+    width: 220px;
+}
+
+/* --- Card Grid Layout --- */
+.cardGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* --- Card Design --- */
+.card {
+    border-radius: 16px; /* Slightly less rounded */
+    color: white;
+    padding: 1rem; /* Reduced padding */
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Status-Specific Colors --- */
+.reported { background: linear-gradient(45deg, #e74c3c, #c0392b); }
+.assigned { background: linear-gradient(45deg, #3498db, #2980b9); }
+.in_progress { background: linear-gradient(45deg, #f39c12, #e67e22); }
+.ongoing { background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+.resolved { background: linear-gradient(45deg, #2ecc71, #27ae60); }
+.closed { background: linear-gradient(45deg, #95a5a6, #7f8c8d); }
+
+.caseCount {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.2);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 2;
+}
+
+.cardIcon {
+    font-size: 2rem; /* Smaller icon */
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.5rem; /* Reduced margin */
+}
+
+.cardContent {
+    flex-grow: 1;
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem; /* Reduced margin */
+}
+.cardHeader h2 {
+    margin: 0;
+    font-size: 1.1rem; /* Smaller title */
+    font-weight: 700;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+}
+
+.statusTag {
+    font-size: 0.7rem; /* Smaller tag */
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.2);
+    text-transform: uppercase;
+}
+
+.cardContent p {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+.cardContent p strong {
+    font-weight: 600;
+}
+
+.locationText {
+    font-style: italic;
+    font-size: 0.9rem !important;
+    margin-top: 0.5rem !important; /* Reduced margin */
+    opacity: 0.8;
+}
+
+.noIncidents {
+    text-align: center;
+    color: #7f8c8d;
+    margin-top: 4rem;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 12px;
+}
+
+.noIncidents h2 {
+    color: #34495e;
+}

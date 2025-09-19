@@ -1,0 +1,96 @@
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    padding: 1rem;
+}
+
+.modalContent {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    text-align: center;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.header {
+    margin-bottom: 1.5rem;
+}
+
+.successIcon {
+    font-size: 3.5rem;
+    color: #2ecc71;
+    margin-bottom: 1rem;
+}
+
+.header h2 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.details {
+    text-align: left;
+    color: #555;
+    margin-bottom: 2rem;
+}
+
+.details p {
+    background: #f9f9f9;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    border-left: 3px solid #eee;
+}
+
+.details strong {
+    color: #34495e;
+}
+
+.members {
+    margin-top: 1rem;
+}
+
+.members ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-top: 0.5rem;
+}
+
+.members li {
+    background: #f9f9f9;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.25rem;
+}
+
+.closeButton {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.closeButton:hover {
+    background-color: #2980b9;
+}

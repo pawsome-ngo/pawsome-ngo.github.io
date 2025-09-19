@@ -1,0 +1,74 @@
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 4000;
+}
+
+.modalContent {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+}
+
+.modalContent h2 {
+    margin-top: 0;
+    text-align: center;
+    color: #2c3e50;
+}
+
+.modalContent p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 1.5rem;
+}
+
+.modalContent textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    resize: vertical;
+    margin-bottom: 1.5rem;
+}
+
+.actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cancelButton, .submitButton {
+    flex: 1;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+
+.cancelButton {
+    background-color: #ecf0f1;
+    color: #555;
+}
+
+.submitButton {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+.submitButton:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}

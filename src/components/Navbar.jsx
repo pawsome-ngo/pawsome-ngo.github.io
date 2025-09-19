@@ -18,6 +18,7 @@ const Navbar = ({ onLogout }) => {
 
             <nav className={`${styles.nav} ${isMenuOpen ? styles.navOpen : ''}`}>
                 <NavLink to="/live" className={styles.navLink} onClick={closeMenu}>Live</NavLink>
+                <NavLink to="/my-cases" className={styles.navLink} onClick={closeMenu}>My Cases</NavLink>
                 <NavLink to="/report" className={styles.navLink} onClick={closeMenu}>Report</NavLink>
                 <NavLink to="/standings" className={styles.navLink} onClick={closeMenu}>Standings</NavLink>
                 <button onClick={() => { closeMenu(); onLogout(); }} className={`${styles.navLink} ${styles.logoutButton}`}>

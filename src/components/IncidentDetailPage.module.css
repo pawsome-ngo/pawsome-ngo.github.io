@@ -79,10 +79,10 @@
     flex-shrink: 0;
 }
 
-/*.historyButtonPlaceholder {*/
-/*    width: 105px;*/
-/*    visibility: hidden;*/
-/*}*/
+.historyButtonPlaceholder {
+    width: 105px; /* Same width as the history button */
+    visibility: hidden;
+}
 
 /* --- Detail Grid --- */
 .detailGrid {
@@ -124,7 +124,7 @@
 }
 
 .cardContent {
-    text-align: center;
+    text-align: left; /* Changed from 'center' to 'left' */
 }
 
 .cardContent strong {
@@ -133,7 +133,6 @@
     text-transform: uppercase;
     display: block;
     margin-bottom: 0.25rem;
-    text-align: left; /* <-- Add this line */
 }
 
 .cardContent p {

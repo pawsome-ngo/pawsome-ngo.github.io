@@ -1,0 +1,194 @@
+/* --- Form Container & Header --- */
+.formContainer {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2.5rem 3rem;
+    background-color: #fff;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.formHeader {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.formHeader h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+.formHeader p {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    margin-top: 0.5rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* --- Form Grid Layout --- */
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.75rem;
+    margin-bottom: 2.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroupFullWidth {
+    grid-column: 1 / -1;
+}
+
+.formLabel {
+    font-weight: 600;
+    color: #34495e;
+}
+
+.formInput,
+.formTextarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: #fdfdfd;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.formInput:focus,
+.formTextarea:focus {
+    outline: none;
+    border-color: #6a82fb;
+    box-shadow: 0 0 0 3px rgba(106, 130, 251, 0.2);
+}
+
+.formTextarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.locationStatus {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: #27ae60;
+    font-weight: 500;
+}
+
+/* --- Media and Audio Styles --- */
+.fileInput {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.fileInputLabel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.85rem;
+    border: 2px dashed #dcdcdc;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #555;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.fileInputLabel:hover {
+    border-color: #6a82fb;
+    color: #6a82fb;
+    background-color: #f8f9ff;
+}
+
+.recorderContainer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.recordButton {
+    padding: 0.8rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.3s;
+}
+.recordButton { background-color: #3498db; }
+.recordButton:hover { background-color: #2980b9; }
+.stopButton { background-color: #e74c3c; }
+.stopButton:hover { background-color: #c0392b; }
+
+.fileList {
+    list-style: none;
+    padding: 0;
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.fileList li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #333;
+}
+.fileList span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.deleteButton {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #95a5a6;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+.deleteButton:hover {
+    color: #e74c3c;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    .formContainer {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+    }
+    .formHeader h1 {
+        font-size: 2.2rem;
+    }
+    .formGrid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+}

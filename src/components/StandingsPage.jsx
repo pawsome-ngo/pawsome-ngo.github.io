@@ -39,7 +39,7 @@ const StandingsPage = ({ token }) => {
         if (rank === 1) return styles.gold;
         if (rank === 2) return styles.silver;
         if (rank === 3) return styles.bronze;
-        return '';
+        return styles.green; // Changed from '' to styles.green
     };
 
     if (loading) return <div className={styles.container}>Loading leaderboard...</div>;

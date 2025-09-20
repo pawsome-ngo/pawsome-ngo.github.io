@@ -1,110 +1,151 @@
 .container {
-    padding: 1rem;
+    padding: 1.5rem;
     max-width: 1200px;
     margin: 0 auto;
 }
 
-.container h1 {
-    text-align: center;
-    margin-bottom: 2rem;
-    color: #2c3e50;
+/* --- Vibrant & Compact Header --- */
+.header {
+    text-align: left; /* Changed from center */
+    margin-bottom: 2rem; /* Reduced margin */
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
 }
+
+.header h1 {
+    font-size: 2.2rem; /* Reduced font size */
+    font-weight: 700;
+    margin: 0;
+    /* Vibrant gradient text */
+    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block; /* Important for gradient to work properly */
+}
+
+.header p {
+    font-size: 1rem; /* Reduced font size */
+    color: #7f8c8d;
+    margin: 0.25rem 0 0 0; /* Adjusted margin */
+}
+
 
 .cardGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
 }
 
 .card {
     background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.07);
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
     text-decoration: none;
-    color: inherit;
-    border-left: 6px solid #bdc3c7;
-    transition: transform 0.2s, box-shadow 0.2s;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transform: translateY(-10px);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.15);
 }
 
-/* Status-Specific Card Colors */
-.assigned { border-left-color: #3498db; }
-.in_progress { border-left-color: #f39c12; }
-.resolved { border-left-color: #2ecc71; }
-.closed { border-left-color: #95a5a6; }
-.reported { border-left-color: #e74c3c; }
+.cardLink {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 1.5rem;
+}
 
-.cardContent {
-    padding: 1.25rem;
+
+/* --- Status-Specific Card Gradients --- */
+.assigned { background: linear-gradient(45deg, #3498db, #2980b9); }
+.in_progress { background: linear-gradient(45deg, #f39c12, #e67e22); }
+.ongoing { background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.cardIcon {
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.headerText h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.statusTag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.7rem;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.2);
+    text-transform: uppercase;
+    display: inline-block;
+    margin-top: 0.25rem;
+}
+
+.cardBody {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    font-size: 0.95rem;
+    opacity: 0.9;
 }
-
-.cardHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-}
-
-.cardHeader h2 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: #34495e;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.statusTag {
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 0.3rem 0.8rem;
-    border-radius: 16px;
-    color: #fff;
-    text-transform: uppercase;
-}
-
-.assignedTag { background-color: #3498db; }
-.in_progressTag { background-color: #f39c12; }
 
 .infoRow {
     display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    color: #7f8c8d;
-    font-size: 0.9rem;
+    align-items: flex-start;
+    gap: 0.75rem;
 }
 
 .infoRow svg {
-    color: #bdc3c7;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+.infoRow p {
+    margin: 0;
+    line-height: 1.5;
+    text-align: left; /* Ensures description text is left-aligned */
 }
 
-.infoRow span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+
+.cardFooter {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    opacity: 0.8;
 }
 
 .cardActions {
-    padding: 0 1.25rem 1.25rem 1.25rem;
+    padding: 0 1.5rem 1.5rem;
 }
 
-.initiateButton, .doneButton {
+.actionButton {
     width: 100%;
-    padding: 0.8rem;
-    color: white;
+    padding: 0.9rem;
+    color: #333;
+    background-color: rgba(255, 255, 255, 0.9);
     border: none;
-    border-radius: 8px;
-    font-weight: 600;
+    border-radius: 10px;
+    font-weight: 700;
     font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.2s, transform 0.2s;
@@ -113,27 +154,15 @@
     align-items: center;
 }
 
-.initiateButton:hover:not(:disabled), .doneButton:hover:not(:disabled) {
-    transform: translateY(-2px);
+.actionButton:hover:not(:disabled) {
+    background-color: white;
+    transform: scale(1.02);
 }
 
-.initiateButton {
-    background-color: #3498db; /* Blue to match 'Assigned' status */
-}
-.initiateButton:hover:not(:disabled) {
-    background-color: #2980b9;
-}
-
-.doneButton {
-    background-color: #f39c12; /* Orange to match 'In Progress' status */
-}
-.doneButton:hover:not(:disabled) {
-    background-color: #e67e22;
-}
-
-.initiateButton:disabled, .doneButton:disabled {
-    background-color: #95a5a6;
+.actionButton:disabled {
+    background-color: #bdc3c7;
     cursor: not-allowed;
+    color: #7f8c8d;
 }
 
 .spinner {
@@ -141,8 +170,33 @@
 }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-.noIncidents {
+/* --- Empty State --- */
+.emptyState {
     text-align: center;
+    margin-top: 4rem;
+    padding: 3rem 2rem;
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.emptyIcon {
+    font-size: 4rem;
+    color: #b0c4de;
+    margin-bottom: 1.5rem;
+}
+
+.emptyState h2 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.emptyState p {
     color: #7f8c8d;
-    margin-top: 3rem;
+    max-width: 500px;
+    margin: 0.75rem auto 2.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
 }

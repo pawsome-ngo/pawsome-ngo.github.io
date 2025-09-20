@@ -1,0 +1,180 @@
+.container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem; /* Added more bottom padding */
+    background: linear-gradient(to bottom, #fdfbfb, #ebedee); /* Subtle page background gradient */
+    min-height: 100%;
+}
+
+.centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem;
+}
+
+.spinner {
+    font-size: 2rem;
+    color: #6a82fb;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.error {
+    color: #e74c3c;
+    text-align: center;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 16px;
+}
+
+.profileHeader {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
+    color: white;
+    font-size: 3rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 1rem;
+    box-shadow: 0 10px 20px rgba(106, 130, 251, 0.3);
+}
+
+.profileHeader h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: #2c3e50;
+}
+
+.profileHeader p {
+    margin: 0.25rem 0 0 0;
+    color: #7f8c8d;
+    font-size: 1.1rem;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.card h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.2rem;
+    color: #34495e;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    text-align: center;
+}
+
+.statItem span {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.gradientText {
+    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.statItem p {
+    margin: 0.25rem 0 0 0;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.settingSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.settingSection h2 {
+    margin: 0;
+}
+
+.toggleButton {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.toggleButton svg {
+    font-size: 2.5rem;
+}
+
+.toggleOn { color: #2ecc71; }
+.toggleOff { color: #bdc3c7; }
+.statusOn { color: #2ecc71; }
+.statusOff { color: #7f8c8d; }
+
+.actionButton {
+    padding: 0.6rem 1.2rem;
+    background: #ecf0f1;
+    color: #34495e;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+.actionButton:hover {
+    background: #e0e6e8;
+}
+.actionButton:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.spinnerIcon {
+    animation: spin 1s linear infinite;
+}
+
+.message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+.message.success {
+    background-color: #eafaf1;
+    color: #2ecc71;
+}
+.message.error {
+    background-color: #fbeae5;
+    color: #e74c3c;
+}
+.message.info {
+    background-color: #eaf4ff;
+    color: #3498db;
+}

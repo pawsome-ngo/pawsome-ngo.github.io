@@ -55,6 +55,9 @@
 .silver .rank { color: #95a5a6; }
 .bronze { border-left-color: #cd7f32; }
 .bronze .rank { color: #cd7f32; }
+.green { border-left-color: #27ae60; } /* Added for other ranks */
+.green .rank { color: #27ae60; } /* Added for other ranks */
+
 
 .userName {
     font-size: 1rem; /* Smaller for single line */

@@ -4,11 +4,13 @@ import { jwtDecode } from 'jwt-decode';
 import WebSocketComponent from './WebSocketComponent';
 import ReactionsModal from './ReactionsModal';
 import ReactionPicker from './ReactionPicker';
+import ChatIncidentDetailModal from './ChatIncidentDetailModal';
 import styles from './ChatWindow.module.css';
+import { FaPaperPlane, FaInfoCircle } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// --- Helper Functions ---
+// --- Helper Functions (remain the same) ---
 const getUserInfoFromToken = (token) => {
     try {
         const decodedToken = jwtDecode(token);
@@ -60,7 +62,7 @@ const ChatWindow = ({ token, onLogout }) => {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef(null);
-    const inputRef = useRef(null);
+    const textareaRef = useRef(null);
     const [loggedInUser, setLoggedInUser] = useState(null);
 
     const [chatGroup, setChatGroup] = useState(null);
@@ -77,22 +79,21 @@ const ChatWindow = ({ token, onLogout }) => {
     const userIsAtBottomRef = useRef(true);
     const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
     const [animatedHeart, setAnimatedHeart] = useState(null);
+    const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
 
     useEffect(() => {
         if (token) setLoggedInUser(getUserInfoFromToken(token));
     }, [token]);
 
-    // ** NEW, MORE RELIABLE SCROLLING LOGIC **
     useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        if (userIsAtBottomRef.current) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [messages.length]); // This effect runs whenever a new message is added
+    }, [messages.length]);
 
     const handleScroll = () => {
         if (messageListRef.current) {
             const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
-            // Check if the user is close to the bottom
             const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
             userIsAtBottomRef.current = isAtBottom;
             if (isAtBottom) {
@@ -102,13 +103,12 @@ const ChatWindow = ({ token, onLogout }) => {
     };
 
     const onMessageReceived = useCallback((message) => {
-        // If the user is not at the bottom, show the "new message" indicator
         if (!userIsAtBottomRef.current) {
             setHasUnreadMessages(true);
         }
 
         setMessages(prevMessages => {
-            const optimisticIndex = prevMessages.findIndex(m => m.id === message.clientMessageId);
+            const optimisticIndex = prevMessages.findIndex(m => m.clientMessageId && m.clientMessageId === message.clientMessageId);
             if (optimisticIndex !== -1) {
                 const updated = [...prevMessages];
                 updated[optimisticIndex] = message;
@@ -139,11 +139,10 @@ const ChatWindow = ({ token, onLogout }) => {
                 if (!msgRes.ok || !grpRes.ok) throw new Error('Failed to fetch chat data.');
                 const messagesData = await msgRes.json();
                 const groupsData = await grpRes.json();
-                const currentGroup = groupsData.find(p => p.chatGroup.id === chatId)?.chatGroup;
-                if (currentGroup) {
-                    setChatGroup(currentGroup);
+                const currentGroupData = groupsData.find(p => p.chatGroup.id === chatId)?.chatGroup;
+                if (currentGroupData) {
+                    setChatGroup(currentGroupData);
                     setMessages(messagesData);
-                    // Initial scroll to bottom on load
                     setTimeout(() => messagesEndRef.current?.scrollIntoView(), 0);
                 } else {
                     throw new Error('Chat group not found.');
@@ -159,10 +158,17 @@ const ChatWindow = ({ token, onLogout }) => {
     }, [chatId, token, onLogout]);
 
     useEffect(() => {
-        if (replyingTo) {
-            inputRef.current?.focus();
+        if (replyingTo && textareaRef.current) {
+            textareaRef.current.focus();
         }
     }, [replyingTo]);
+
+    // Auto-resize textarea
+    const handleTextareaInput = (e) => {
+        setNewMessage(e.target.value);
+        e.target.style.height = 'auto';
+        e.target.style.height = `${e.target.scrollHeight}px`;
+    };
 
     const handleSendMessage = (event) => {
         event.preventDefault();
@@ -170,6 +176,7 @@ const ChatWindow = ({ token, onLogout }) => {
         const clientMessageId = `temp-${Date.now()}`;
         const optimisticMessage = {
             id: clientMessageId,
+            clientMessageId: clientMessageId,
             text: newMessage.trim(),
             sender: { id: loggedInUser.id, firstName: 'You', lastName: '' },
             timestamp: new Date().toISOString(),
@@ -184,6 +191,16 @@ const ChatWindow = ({ token, onLogout }) => {
         }, `/app/chat/${chatId}/send`);
         setNewMessage('');
         setReplyingTo(null);
+        if(textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage(e);
+        }
     };
 
     const handleReact = (reaction) => {
@@ -258,13 +275,19 @@ const ChatWindow = ({ token, onLogout }) => {
         }
     };
 
+
     if (loading || !loggedInUser || !chatGroup) return <div className={styles.centeredMessage}>Loading...</div>;
 
     return (
         <div className={styles.chatWindow}>
             <header className={styles.chatHeader}>
                 <button onClick={() => navigate('/chat')} className={styles.backButton}>&larr;</button>
-                <h2>{chatGroup.name}</h2>
+                <button onClick={() => setIsIncidentModalOpen(true)} className={styles.headerButton}>
+                    <h2>{chatGroup.name}</h2>
+                    <FaInfoCircle className={styles.headerIcon} />
+                </button>
+                {/* This empty div balances the back button to center the title perfectly */}
+                <div className={styles.headerSpacer}></div>
             </header>
             <main ref={messageListRef} className={styles.messageList} onScroll={handleScroll}>
                 {messages.map((msg, index) => {
@@ -343,10 +366,28 @@ const ChatWindow = ({ token, onLogout }) => {
             )}
             <footer className={styles.messageInputForm}>
                 <form onSubmit={handleSendMessage}>
-                    <input type="text" ref={inputRef} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Message..." />
-                    <button type="submit">Send</button>
+                    <textarea
+                        ref={textareaRef}
+                        value={newMessage}
+                        onChange={handleTextareaInput}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Message..."
+                        rows="1"
+                    />
+                    <button type="submit" disabled={!newMessage.trim()}>
+                        <FaPaperPlane />
+                    </button>
                 </form>
             </footer>
+
+            {isIncidentModalOpen && (
+                <ChatIncidentDetailModal
+                    incidentId={chatGroup.purposeId}
+                    token={token}
+                    onClose={() => setIsIncidentModalOpen(false)}
+                />
+            )}
+
             <ReactionsModal reactions={reactionsModalData} onClose={() => setReactionsModalData(null)} />
         </div>
     );

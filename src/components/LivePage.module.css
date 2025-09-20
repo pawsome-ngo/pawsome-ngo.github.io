@@ -69,8 +69,8 @@
 .caseCount {
     position: absolute;
     top: 10px;
-    left: 10px;
-    background-color: rgba(0, 0, 0, 0.2);
+    right: 10px; /* Changed from 'left' to 'right' */
+    background-color: rgba(0, 0, 0, 0.25);
     color: white;
     border-radius: 50%;
     width: 24px;

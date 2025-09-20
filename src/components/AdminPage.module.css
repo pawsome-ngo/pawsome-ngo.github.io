@@ -1,0 +1,181 @@
+.container {
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.centered {
+    display: flex;
+    justify-content: center;
+    padding-top: 4rem;
+}
+
+.spinner {
+    font-size: 2.5rem;
+    color: #6a82fb;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.error {
+    color: #e74c3c;
+    text-align: center;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header p {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    margin-top: 0.5rem;
+}
+
+.userGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.userCard {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+}
+
+.cardHeader {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.cardHeader h3 {
+    margin: 0;
+    color: #34495e;
+}
+.cardHeader span {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    background-color: #ecf0f1;
+    color: #7f8c8d;
+}
+
+.motivation {
+    padding: 1.5rem;
+    font-style: italic;
+    color: #555;
+    border-bottom: 1px solid #f0f0f0;
+    flex-grow: 1;
+}
+
+.userDetails {
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+.userDetails p {
+    margin: 0.25rem 0;
+}
+.userDetails strong {
+    color: #34495e;
+}
+
+.cardActions {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.cardActions button {
+    flex-grow: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: transform 0.2s;
+}
+.cardActions button:hover {
+    transform: scale(1.03);
+}
+
+.authorizeButton {
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+    color: white;
+}
+.denyButton {
+    background-color: #ecf0f1;
+    color: #e74c3c;
+}
+
+/* --- Empty State --- */
+.emptyState {
+    text-align: center;
+    margin-top: 4rem;
+    color: #7f8c8d;
+}
+.emptyState svg {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+}
+.emptyState h2 {
+    color: #2c3e50;
+}
+
+/* --- Confirmation Modal --- */
+.modalOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+.modalContent {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    max-width: 400px;
+    text-align: center;
+}
+.modalContent p {
+    font-size: 1.1rem;
+    color: #333;
+    margin: 0 0 1.5rem 0;
+}
+.modalActions {
+    display: flex;
+    gap: 1rem;
+}
+.modalActions button {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+.cancelButton { background-color: #ecf0f1; color: #555; }
+.confirmButton { background-color: #e74c3c; color: white; }

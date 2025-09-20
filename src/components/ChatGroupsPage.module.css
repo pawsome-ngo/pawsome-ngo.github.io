@@ -2,8 +2,8 @@
     width: 100%;
     max-width: 900px;
     margin: 0 auto;
-    padding: 2rem 1.5rem; /* Adjusted padding */
-    background-color: transparent; /* Keep transparent to show global gradient */
+    padding: 2rem 1.5rem;
+    background-color: transparent;
     min-height: calc(100vh - 60px);
     box-sizing: border-box;
 }
@@ -18,23 +18,30 @@
     color: #e74c3c;
 }
 
+/* --- New Vibrant & Compact Header --- */
 .pageHeader {
     text-align: center;
-    margin-bottom: 3rem; /* Increased margin */
+    margin-bottom: 2.5rem; /* Adjusted margin */
 }
 
 .pageHeader h1 {
     margin: 0;
-    color: #2c3e50;
-    font-size: 2.5rem; /* Larger font size */
+    font-size: 2.2rem; /* Slightly smaller for compactness */
     font-weight: 700;
+    /* Vibrant Gradient Text Effect */
+    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block; /* Necessary for the gradient to apply correctly */
+    padding-bottom: 0.25rem; /* Adds a little space below the text */
 }
 
 .pageHeader p {
-    margin-top: 0.75rem; /* Increased margin */
+    margin-top: 0.5rem; /* Reduced top margin */
     color: #7f8c8d;
-    font-size: 1.2rem; /* Larger font size */
+    font-size: 1.1rem;
 }
+
 
 /* --- Card Grid Layout --- */
 .groupGrid {
@@ -44,21 +51,20 @@
 }
 
 .groupCard {
-    /* Background color is set dynamically in JSX */
-    border-radius: 20px; /* More rounded corners */
-    padding: 1.8rem; /* Increased padding */
+    border-radius: 20px;
+    padding: 1.8rem;
     cursor: pointer;
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Softer, larger shadow */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     display: flex;
-    flex-direction: column; /* Stack content vertically */
-    align-items: flex-start; /* Align icon and text to the left */
-    color: white; /* White text for better contrast on colorful backgrounds */
-    position: relative; /* For potential future absolute positioning */
-    overflow: hidden; /* Ensure rounded corners clip content */
+    flex-direction: column;
+    align-items: flex-start;
+    color: white;
+    position: relative;
+    overflow: hidden;
 }
 
-.groupCard::before { /* Subtle overlay for depth */
+.groupCard::before {
     content: '';
     position: absolute;
     top: 0;
@@ -72,8 +78,8 @@
 }
 
 .groupCard:hover {
-    transform: translateY(-8px); /* More pronounced lift */
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); /* More intense shadow on hover */
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
 .groupCard:hover::before {
@@ -81,25 +87,25 @@
 }
 
 .cardIcon {
-    font-size: 2.5rem; /* Larger icon */
-    margin-bottom: 1rem; /* Space below icon */
-    color: rgba(255, 255, 255, 0.9); /* Slightly transparent white */
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.9);
     z-index: 1;
 }
 
 .cardContent {
-    z-index: 1; /* Ensure content is above the pseudo-element */
+    z-index: 1;
 }
 
 .cardTitle {
-    font-weight: 700; /* Bolder title */
-    font-size: 1.4rem; /* Larger title */
+    font-weight: 700;
+    font-size: 1.4rem;
     margin: 0;
     color: white;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.2); /* Text shadow for readability */
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
 }
 
-.cardDetail { /* For future details like incident ID, member count */
+.cardDetail {
     font-size: 0.9rem;
     opacity: 0.9;
     margin-top: 0.5rem;
@@ -110,15 +116,15 @@
 .emptyState {
     text-align: center;
     margin-top: 4rem;
-    padding: 3rem 2rem; /* More generous padding */
-    background-color: #ffffff; /* White background for empty state box */
-    border-radius: 20px; /* Rounded corners */
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Consistent shadow */
+    padding: 3rem 2rem;
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .emptyIcon {
-    font-size: 4rem; /* Larger icon */
-    color: #b0c4de; /* A softer, friendly blue-grey */
+    font-size: 4rem;
+    color: #b0c4de;
     margin-bottom: 1.5rem;
 }
 
@@ -131,37 +137,37 @@
 
 .emptyState p {
     color: #7f8c8d;
-    max-width: 500px; /* Max width for readability */
+    max-width: 500px;
     margin: 0.75rem auto 0;
     font-size: 1.1rem;
     line-height: 1.6;
 }
 
 .actionArea {
-    margin-top: 2.5rem; /* More space above button */
+    margin-top: 2.5rem;
 }
 
 .actionButton {
-    display: inline-flex; /* Use flex to align icon and text */
+    display: inline-flex;
     align-items: center;
-    gap: 0.75rem; /* Space between icon and text */
-    background: linear-gradient(45deg, #3498db, #2ecc71); /* Gradient button */
+    gap: 0.75rem;
+    background: linear-gradient(45deg, #3498db, #2ecc71);
     color: white;
-    padding: 0.9rem 2rem; /* Larger padding */
-    border-radius: 30px; /* Pill-shaped button */
+    padding: 0.9rem 2rem;
+    border-radius: 30px;
     text-decoration: none;
     font-weight: 700;
     font-size: 1.1rem;
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Shadow for lift */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .actionButton:hover {
-    transform: translateY(-3px); /* Lift higher on hover */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* More intense shadow */
-    background: linear-gradient(45deg, #2980b9, #27ae60); /* Darker gradient on hover */
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(45deg, #2980b9, #27ae60);
 }
 
 .actionButton svg {
-    font-size: 1.2rem; /* Icon size in button */
+    font-size: 1.2rem;
 }

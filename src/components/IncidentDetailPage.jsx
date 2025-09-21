@@ -237,6 +237,7 @@ const IncidentDetailPage = ({ token }) => {
             if (response.ok) {
                 const data = await response.json();
                 setIncidentHistory(data);
+                // Only open the modal AFTER the data has been successfully set
                 setIsHistoryModalOpen(true);
             } else {
                 throw new Error("Could not fetch incident history.");

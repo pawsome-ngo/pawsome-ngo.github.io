@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './MyCasesPage.module.css';
-import { FaSpinner, FaPaw, FaUser, FaInfoCircle, FaDog, FaCat, FaDove, FaAngleRight } from 'react-icons/fa';
-import MarkAsDoneModal from './MarkAsDoneModal'; // Import the modal
+import { FaSpinner, FaPaw, FaUser, FaInfoCircle, FaDog, FaCat, FaDove, FaAngleRight, FaInbox, FaUsers } from 'react-icons/fa';
+import MarkAsDoneModal from './MarkAsDoneModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// Animal Icon component for visual representation of the animal type
+// Animal Icon component
 const AnimalIcon = ({ type }) => {
     switch (type) {
         case 'DOG': return <FaDog />;
@@ -16,13 +16,10 @@ const AnimalIcon = ({ type }) => {
     }
 };
 
-
 const MyCasesPage = ({ token }) => {
     const [cases, setCases] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    // State to manage the modal and button loading states
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedIncident, setSelectedIncident] = useState(null);
     const [initiatingCaseId, setInitiatingCaseId] = useState(null);
@@ -38,12 +35,11 @@ const MyCasesPage = ({ token }) => {
                 const response = await fetch(`${API_BASE_URL}/api/cases/my-cases`, {
                     headers: { 'Authorization': `Bearer ${token}` },
                 });
-                if (!response.ok) throw new Error('Failed to fetch cases.');
+                if (!response.ok) throw new Error('Failed to fetch your assigned cases.');
                 const data = await response.json();
                 setCases(data);
             } catch (err) {
-                setError('Could not connect to the server.');
-                console.error(err);
+                setError(err.message || 'Could not connect to the server.');
             } finally {
                 setLoading(false);
             }
@@ -53,7 +49,7 @@ const MyCasesPage = ({ token }) => {
 
     const handleInitiateCase = async (incidentId, e) => {
         e.preventDefault();
-        e.stopPropagation(); // Prevent card's Link navigation
+        e.stopPropagation();
         setInitiatingCaseId(incidentId);
 
         try {
@@ -63,7 +59,6 @@ const MyCasesPage = ({ token }) => {
             });
 
             if (response.ok) {
-                // Update the status in the UI for instant feedback
                 setCases(prevCases => prevCases.map(c =>
                     c.id === incidentId ? { ...c, status: 'IN_PROGRESS' } : c
                 ));
@@ -87,18 +82,13 @@ const MyCasesPage = ({ token }) => {
     };
 
     const handleCaseCompleted = (completedIncidentId) => {
-        // Find the case that was completed
-        const completedCase = cases.find(c => c.id === completedIncidentId);
-        if (completedCase) {
-            // Update its status to ONGOING for instant UI feedback
-            setCases(prevCases => prevCases.map(c =>
-                c.id === completedIncidentId ? { ...c, status: 'ONGOING' } : c
-            ));
-        }
+        setCases(prevCases => prevCases.map(c =>
+            c.id === completedIncidentId ? { ...c, status: 'ONGOING' } : c
+        ));
     };
 
-    if (loading) return <div className={styles.container}>Loading your cases...</div>;
-    if (error) return <div className={styles.container} style={{ color: 'red' }}>{error}</div>;
+    if (loading) return <div className={styles.container}><div className={styles.centered}><FaSpinner className={styles.spinner} /></div></div>;
+    if (error) return <div className={styles.container}><p className={styles.error}>{error}</p></div>;
 
     return (
         <div className={styles.container}>
@@ -166,7 +156,7 @@ const MyCasesPage = ({ token }) => {
                     <FaInbox className={styles.emptyIcon} />
                     <h2>No Active Cases</h2>
                     <p>It looks like you haven't been assigned to any rescue cases yet. Great job staying on top of things!</p>
-                    <Link to="/live" className={styles.actionButton}>
+                    <Link to="/live" className={styles.actionButtonLink}>
                         <FaUsers /> View Live Incidents
                     </Link>
                 </div>

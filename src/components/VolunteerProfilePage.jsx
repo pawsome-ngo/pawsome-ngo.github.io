@@ -32,8 +32,8 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
     const [feedback, setFeedback] = useState('');
     const [feedbackType, setFeedbackType] = useState('');
 
-    const isSuperAdmin = useMemo(() => currentUser?.roles.includes('SUPER_ADMIN'), [currentUser]);
-    const isAdmin = useMemo(() => currentUser?.roles.includes('ADMIN') || isSuperAdmin, [currentUser, isSuperAdmin]);
+    const isSuperAdmin = useMemo(() => currentUser?.roles.includes('ROLE_SUPER_ADMIN'), [currentUser]);
+    const isAdmin = useMemo(() => currentUser?.roles.includes('ROLE_ADMIN'), [currentUser]);
 
     const fetchUserDetails = useCallback(async () => {
         setLoading(true);
@@ -80,6 +80,15 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
         setFeedback('Saving changes...');
         setFeedbackType('');
         try {
+            // Function to handle API response, which might be empty
+            const getResponseData = async (response) => {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.indexOf('application/json') !== -1) {
+                    return await response.json();
+                }
+                return { message: 'Changes saved successfully.' }; // Default message for non-JSON responses
+            };
+
             // Only Super Admins can update the position
             if (isSuperAdmin) {
                 const positionResponse = await fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/position`, {
@@ -87,9 +96,10 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ position: selectedPosition }),
                 });
+
+                const responseData = await getResponseData(positionResponse);
                 if (!positionResponse.ok) {
-                    const positionError = await positionResponse.text();
-                    throw new Error(`Failed to save position: ${positionError}`);
+                    throw new Error(responseData.message || 'Failed to save position.');
                 }
             }
 
@@ -100,17 +110,16 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                 body: JSON.stringify(selectedRoles),
             });
 
+            const responseData = await getResponseData(rolesResponse);
             if (!rolesResponse.ok) {
-                const rolesError = await rolesResponse.text();
-                throw new Error(`Failed to save roles: ${rolesError}`);
+                throw new Error(responseData.message || 'Failed to save roles.');
             }
 
-            setFeedback('Changes saved successfully!');
+            setFeedback(responseData.message);
             setFeedbackType('success');
-            setTimeout(() => {
-                fetchUserDetails(); // Re-fetch details to show updated info
-                setFeedback('');
-            }, 1500);
+
+            await fetchUserDetails(); // Immediately re-fetch details to show updated info
+            setTimeout(() => setFeedback(''), 1500);
 
         } catch (err) {
             console.error("Error saving changes:", err);
@@ -134,6 +143,11 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
             </div>
         );
     }
+    const isTargetSuperAdmin = details.roles.includes('SUPER_ADMIN');
+    const isTargetAdmin = details.roles.includes('ADMIN');
+
+    // Determine if the current user can see the admin controls
+    const canViewAdminControls = isSuperAdmin || (isAdmin && !isTargetAdmin && !isTargetSuperAdmin);
 
     const fullName = details?.firstName && details?.lastName ? `${details.firstName} ${details.lastName}` : 'Volunteer';
     const avatarLetter = fullName.charAt(0);
@@ -175,7 +189,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                 </div>
             </div>
 
-            {isAdmin && (
+            {canViewAdminControls && (
                 <div className={styles.adminSection}>
                     <h4 className={styles.adminTitle}><FaShieldAlt /> Admin Controls</h4>
 
@@ -195,7 +209,13 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                         <label className={styles.formLabel}>Update Roles</label>
                         <div className={styles.rolesContainer}>
                             {allRoles.map(role => {
-                                const isDisabled = !isSuperAdmin && (role === 'ADMIN' || role === 'SUPER_ADMIN');
+                                // Super Admin role is never editable via UI
+                                const isSuperAdminCheckbox = role === 'SUPER_ADMIN';
+                                // For regular admins, they can't change other admins' roles
+                                const isAdminCheckbox = role === 'ADMIN';
+
+                                const isDisabled = isSuperAdminCheckbox || (isAdmin && isAdminCheckbox && !isSuperAdmin);
+
                                 return (
                                     <label key={role} className={`${styles.checkboxLabel} ${isDisabled ? styles.disabled : ''}`}>
                                         <input

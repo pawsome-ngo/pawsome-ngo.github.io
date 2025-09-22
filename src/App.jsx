@@ -92,12 +92,12 @@ const App = () => {
                     <Route path="/live" element={<LivePage token={token} />} />
                     <Route path="/incident/:incidentId" element={<IncidentDetailPage token={token} />} />
                     <Route path="/incident/:incidentId/media" element={<IncidentMediaPage />} />
-                    <Route path="/incident/:incidentId/assign" element={<TeamAssignmentPage token={token} />} />
+                    <Route path="/incident/:incidentId/assign" element={<TeamAssignmentPage token={token} currentUser={user} />} />
                     <Route path="/report" element={<ReportIncidentPage />} />
                     <Route path="/standings" element={<StandingsPage token={token} />} />
                     <Route path="/adoptions" element={<AdoptionsPage />} />
                     <Route path="/events" element={<EventsPage />} />
-                    <Route path="/volunteers" element={<VolunteersPage token={token} currentUser={user} />} /> {/* <-- ADD THIS LINE */}
+                    <Route path="/volunteers" element={<VolunteersPage token={token} currentUser={user} />} />
                     <Route path="/volunteer/:volunteerId" element={<VolunteerProfilePage token={token} currentUser={user} />} />
                     <Route path="/admin" element={<AdminPage token={token} />} />
                     <Route path="/profile" element={<ProfilePage token={token} />} />

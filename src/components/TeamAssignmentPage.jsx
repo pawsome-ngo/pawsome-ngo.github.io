@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import styles from './TeamAssignmentPage.module.css';
 import { FaArrowLeft, FaMotorcycle, FaMedkit, FaHeart, FaExclamationCircle, FaHistory } from 'react-icons/fa';
 import CustomSelect from './CustomSelect';
 import AssignmentSuccessModal from "./AssignmentSuccessModal.jsx";
+import UnauthorizedModal from "./UnauthorizedModal.jsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -15,7 +16,7 @@ const experienceOrder = {
     'Expert': 4
 };
 
-const TeamAssignmentPage = ({ token }) => {
+const TeamAssignmentPage = ({ token, currentUser }) => {
     const { incidentId } = useParams();
     const navigate = useNavigate();
     const [volunteers, setVolunteers] = useState([]);
@@ -25,6 +26,15 @@ const TeamAssignmentPage = ({ token }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [sortOrder, setSortOrder] = useState('default');
     const [assignmentResult, setAssignmentResult] = useState(null);
+    const [isUnauthorizedModalOpen, setIsUnauthorizedModalOpen] = useState(false);
+
+    // FIX: Check for all valid roles
+    const canAssignTeam = useMemo(() =>
+            currentUser?.roles.includes('ROLE_RESCUE_CAPTAIN') ||
+            currentUser?.roles.includes('ROLE_ADMIN') ||
+            currentUser?.roles.includes('ROLE_SUPER_ADMIN'),
+        [currentUser]
+    );
 
     useEffect(() => {
         const fetchVolunteers = async () => {
@@ -69,6 +79,16 @@ const TeamAssignmentPage = ({ token }) => {
     };
 
     const handleAssignTeam = async () => {
+        // Log the current user and their roles for debugging
+        console.log("Current User:", currentUser);
+        console.log("Can Assign Team:", canAssignTeam);
+
+        // FIX: Use the new, more inclusive check
+        if (!canAssignTeam) {
+            setIsUnauthorizedModalOpen(true);
+            return;
+        }
+
         setIsSubmitting(true);
         const payload = { userIds: Array.from(selectedVolunteers) };
         try {
@@ -174,6 +194,14 @@ const TeamAssignmentPage = ({ token }) => {
                 <AssignmentSuccessModal
                     result={assignmentResult}
                     onClose={closeModalAndNavigate}
+                />
+            )}
+
+            {isUnauthorizedModalOpen && (
+                <UnauthorizedModal
+                    isOpen={isUnauthorizedModalOpen}
+                    onClose={() => setIsUnauthorizedModalOpen(false)}
+                    message="You need to have the 'Rescue Captain' or a higher role to assign a team to a case."
                 />
             )}
         </>

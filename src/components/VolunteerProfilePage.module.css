@@ -1,0 +1,225 @@
+.pageContainer {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    background: linear-gradient(to bottom, #fdfbfb, #ebedee);
+    min-height: 100%;
+}
+
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+}
+
+.centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem;
+}
+.spinner {
+    font-size: 2.5rem;
+    color: #6a82fb;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Profile Header */
+.profileHeader {
+    background: linear-gradient(135deg, #6a82fb 0%, #fc5c7d 100%);
+    padding: 1.5rem;
+    color: white;
+    border-radius: 20px;
+    position: relative;
+    text-align: center;
+    margin-top: 4rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(106, 130, 251, 0.3);
+}
+
+.avatar {
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(45deg, #1abc9c, #2ecc71);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    border: 5px solid white;
+}
+
+.profileHeader h2 {
+    margin-top: 50px;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.currentPosition {
+    font-size: 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: capitalize;
+    margin: 0.25rem 0 0 0;
+}
+
+.profileBody {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.detailGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    text-align: left;
+}
+@media (min-width: 600px) {
+    .detailGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.detailItem {
+    position: relative;
+    padding: 1rem;
+}
+
+.detailIcon {
+    position: absolute;
+    top: 1rem;
+    left: 0;
+    font-size: 1.2rem;
+    color: #ccc;
+}
+
+.detailItem strong {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    font-weight: 600;
+    margin-left: 2rem;
+}
+
+.detailItem p {
+    margin: 0.25rem 0 0 2rem;
+    font-size: 1rem;
+    color: #34495e;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+/* Admin Section */
+.adminSection {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.adminTitle {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.formGroup {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.formLabel {
+    display: block;
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+/* --- New Checkbox Roles Styles --- */
+.rolesContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: 1px solid #eee;
+}
+.checkboxLabel:hover {
+    background-color: #f1f3f5;
+}
+
+.checkboxLabel input {
+    margin-right: 0.75rem;
+    width: 18px;
+    height: 18px;
+    accent-color: #6a82fb;
+}
+
+.checkboxLabel span {
+    color: #34495e;
+    font-weight: 500;
+}
+
+
+/* Feedback and Save Button */
+.feedbackMessage {
+    margin-top: 1.5rem;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-align: center;
+}
+.feedbackMessage.success { background-color: #e6ffee; color: #27ae60; }
+.feedbackMessage.error { background-color: #ffe6e6; color: #e74c3c; }
+
+
+.saveButton {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(90deg, #2ecc71 0%, #3498db 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1.5rem;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+}
+
+.saveButton:hover {
+    opacity: 0.9;
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+    transform: translateY(-2px);
+}

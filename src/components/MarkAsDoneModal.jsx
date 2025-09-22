@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import styles from './MarkAsDoneModal.module.css';
-import { FaMapMarkerAlt, FaSpinner, FaExclamationTriangle, FaMicrophone, FaStop, FaTrash } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -10,13 +10,6 @@ const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
     const [mediaFiles, setMediaFiles] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState('');
-
-    // --- NEW: State for audio recording ---
-    const [isRecording, setIsRecording] = useState(false);
-    const [audioURL, setAudioURL] = useState('');
-    const [audioFile, setAudioFile] = useState(null);
-    const mediaRecorder = useRef(null);
-    const audioChunks = useRef([]);
 
     const isLocationMissing = incident.latitude === null;
 
@@ -42,39 +35,6 @@ const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
         setMediaFiles([...e.target.files]);
     };
 
-    // --- NEW: Audio Recording Functions ---
-    const startRecording = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder.current = new MediaRecorder(stream);
-            mediaRecorder.current.ondataavailable = event => {
-                audioChunks.current.push(event.data);
-            };
-            mediaRecorder.current.onstop = () => {
-                const audioBlob = new Blob(audioChunks.current, { type: 'audio/wav' });
-                const url = URL.createObjectURL(audioBlob);
-                setAudioURL(url);
-                setAudioFile(new File([audioBlob], `voice-note-${Date.now()}.wav`, { type: 'audio/wav' }));
-                audioChunks.current = [];
-            };
-            mediaRecorder.current.start();
-            setIsRecording(true);
-        } catch (err) {
-            alert("Could not access microphone. Please check your browser permissions.");
-        }
-    };
-
-    const stopRecording = () => {
-        mediaRecorder.current.stop();
-        setIsRecording(false);
-    };
-
-    const deleteAudio = () => {
-        setAudioURL('');
-        setAudioFile(null);
-    };
-
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -92,11 +52,6 @@ const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
             formData.append('mediaFiles', file);
         });
 
-        // --- NEW: Append voice note if it exists ---
-        if (audioFile) {
-            formData.append('voiceNote', audioFile);
-        }
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/cases/${incident.id}/close`, {
                 method: 'POST',
@@ -104,14 +59,15 @@ const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
                 body: formData,
             });
 
-            if (!response.ok) throw new Error('Failed to complete the case.');
-
-            setFeedback('Case completed successfully!');
-            setTimeout(() => {
-                onCaseCompleted(incident.id);
-                onClose();
-            }, 1500);
-
+            if (response.ok) {
+                setFeedback('Case completed successfully!');
+                setTimeout(() => {
+                    onCaseCompleted(incident.id);
+                    onClose();
+                }, 1500);
+            } else {
+                throw new Error('Failed to complete the case.');
+            }
         } catch (err) {
             console.error(err);
             setFeedback('An error occurred. Please try again.');
@@ -125,36 +81,15 @@ const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
                 <h2>Complete Case #{incident.id}</h2>
                 <form onSubmit={handleSubmit}>
                     <div className={styles.formGroup}>
-                        <label htmlFor="resolutionNotes">Resolution Notes (Optional)</label>
+                        <label htmlFor="resolutionNotes">Resolution Notes</label>
                         <textarea
                             id="resolutionNotes"
                             value={resolutionNotes}
                             onChange={(e) => setResolutionNotes(e.target.value)}
                             placeholder="e.g., Animal was given first aid and taken to the shelter."
                             rows="4"
+                            required
                         />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label>Record a Voice Note (Optional)</label>
-                        <div className={styles.recorderContainer}>
-                            {!isRecording && !audioURL && (
-                                <button type="button" onClick={startRecording} className={styles.recordButton}>
-                                    <FaMicrophone /> Start Recording
-                                </button>
-                            )}
-                            {isRecording && (
-                                <button type="button" onClick={stopRecording} className={`${styles.recordButton} ${styles.stopButton}`}>
-                                    <FaStop /> Stop Recording
-                                </button>
-                            )}
-                            {audioURL && (
-                                <div className={styles.audioPlayerContainer}>
-                                    <audio src={audioURL} controls />
-                                    <button type="button" onClick={deleteAudio} className={styles.deleteButton}><FaTrash /></button>
-                                </div>
-                            )}
-                        </div>
                     </div>
 
                     <div className={styles.formGroup}>
@@ -179,7 +114,9 @@ const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
                         <input type="file" id="mediaFiles" multiple onChange={handleFileChange} />
                     </div>
 
-                    <div className={styles.feedbackArea}>{feedback && <p>{feedback}</p>}</div>
+                    <div className={styles.feedbackArea}>
+                        {feedback && <p>{feedback}</p>}
+                    </div>
 
                     <div className={styles.actions}>
                         <button type="button" onClick={onClose} className={styles.cancelButton} disabled={isSubmitting}>Cancel</button>

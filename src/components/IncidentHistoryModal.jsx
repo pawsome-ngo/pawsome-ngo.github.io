@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './IncidentHistoryModal.module.css';
-import { FaArchive, FaUsers, FaUserCheck, FaFileAlt, FaUserCircle, FaClock, FaVolumeUp } from 'react-icons/fa';
+import { FaArchive, FaUsers, FaUserCheck, FaFileAlt, FaUserCircle, FaClock } from 'react-icons/fa';
 
 const IncidentHistoryModal = ({ isOpen, onClose, history }) => {
     if (!isOpen) {
@@ -36,16 +36,6 @@ const IncidentHistoryModal = ({ isOpen, onClose, history }) => {
                                     <FaFileAlt />
                                     <span>Resolution Notes: <em>{caseItem.resolutionNotes || 'No notes provided.'}</em></span>
                                 </div>
-
-                                {caseItem.voiceNoteUrl && (
-                                    <div className={styles.audioPlayerSection}>
-                                        <h4><FaVolumeUp /> Voice Note</h4>
-                                        <audio controls src={caseItem.voiceNoteUrl}>
-                                            Your browser does not support the audio element.
-                                        </audio>
-                                    </div>
-                                )}
-
                                 <div className={styles.teamSection}>
                                     <h4><FaUsers /> {caseItem.teamName}</h4>
                                     <ul>

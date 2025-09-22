@@ -102,6 +102,10 @@
     color: #f39c12;
 }
 
+.historyIcon {
+    color: #6a82fb;
+}
+
 /* --- Footer and Button Styles --- */
 .footer {
     position: sticky;

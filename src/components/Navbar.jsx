@@ -27,10 +27,10 @@ const Navbar = ({ user, onLogout }) => {
                 <NavLink to="/my-cases" className={styles.navLink} onClick={closeMenu}>My Cases</NavLink>
                 <NavLink to="/report" className={styles.navLink} onClick={closeMenu}>Report</NavLink>
                 <NavLink to="/standings" className={styles.navLink} onClick={closeMenu}>Standings</NavLink>
+                <NavLink to="/volunteers" className={styles.navLink} onClick={closeMenu}>Volunteers</NavLink> {/* <-- ADD THIS LINE */}
                 <NavLink to="/adoptions" className={styles.navLink} onClick={closeMenu}>Adoptions</NavLink>
                 <NavLink to="/events" className={styles.navLink} onClick={closeMenu}>Events</NavLink>
 
-                {/* Conditionally render the Admin tab */}
                 {isAdmin && (
                     <NavLink to="/admin" className={styles.navLink} onClick={closeMenu}>Admin</NavLink>
                 )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import styles from './TeamAssignmentPage.module.css';
-import { FaArrowLeft, FaMotorcycle, FaMedkit, FaHeart, FaExclamationCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaMotorcycle, FaMedkit, FaHeart, FaExclamationCircle, FaHistory } from 'react-icons/fa';
 import CustomSelect from './CustomSelect';
 import AssignmentSuccessModal from "./AssignmentSuccessModal.jsx";
 
@@ -149,6 +149,7 @@ const TeamAssignmentPage = ({ token }) => {
                                 </div>
                             </div>
                             <div className={styles.volunteerIcons}>
+                                {v.hasPreviouslyWorkedOnIncident && <FaHistory className={styles.historyIcon} title="Previously worked on this incident" />}
                                 {v.isEngagedInActiveCase && <FaExclamationCircle className={styles.engagedIcon} title="Engaged in another case" />}
                                 {v.hasShownInterest && <FaHeart className={styles.interestIcon} title="Has shown interest" />}
                                 {v.hasVehicle && <FaMotorcycle title="Has two-wheeler" />}

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './IncidentDetailPage.module.css';
 import {
     FaArrowLeft, FaSpinner, FaCopy, FaHeart, FaRegHeart,
-    FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaImages, FaUsers, FaHistory
+    FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaImages, FaUsers, FaHistory, FaTrash, FaUndo
 } from 'react-icons/fa';
 import { jwtDecode } from 'jwt-decode';
 import CloseIncidentModal from './CloseIncidentModal';
@@ -11,6 +11,18 @@ import TeamDetailsModal from './TeamDetailsModal';
 import IncidentHistoryModal from './IncidentHistoryModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
+const ConfirmationModal = ({ onConfirm, onCancel, message, confirmText, cancelText }) => (
+    <div className={styles.modalOverlay}>
+        <div className={styles.confirmationModalContent}>
+            <p>{message}</p>
+            <div className={styles.confirmationModalActions}>
+                <button onClick={onCancel} className={styles.cancelButton}>{cancelText || 'Cancel'}</button>
+                <button onClick={onConfirm} className={styles.confirmButton}>{confirmText || 'Confirm'}</button>
+            </div>
+        </div>
+    </div>
+);
 
 const IncidentDetailPage = ({ token }) => {
     const { incidentId } = useParams();
@@ -26,6 +38,7 @@ const IncidentDetailPage = ({ token }) => {
     const [teamDetails, setTeamDetails] = useState(null);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [incidentHistory, setIncidentHistory] = useState(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const [isInterested, setIsInterested] = useState(false);
     const [interestLoading, setInterestLoading] = useState(false);
@@ -248,6 +261,55 @@ const IncidentDetailPage = ({ token }) => {
         }
     };
 
+    const handleReactivate = async () => {
+        setIsUpdating(true);
+        setUpdateMessage('Reactivating incident...');
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/incidents/${incident.id}/reactivate`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (response.ok) {
+                await fetchIncident(); // Re-fetch data to show updated status
+                setUpdateMessage('Incident has been reactivated to ONGOING.');
+            } else {
+                const errorData = await response.text();
+                throw new Error(errorData || 'Failed to reactivate incident.');
+            }
+        } catch (err) {
+            console.error(err);
+            setUpdateMessage(`Error: ${err.message}`);
+        } finally {
+            setIsUpdating(false);
+            setTimeout(() => setUpdateMessage(''), 3000);
+        }
+    };
+
+    const handleDelete = async () => {
+        setIsDeleteModalOpen(false);
+        setIsUpdating(true);
+        setUpdateMessage('Deleting incident...');
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/incidents/${incident.id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (response.ok) {
+                setUpdateMessage('Incident deleted successfully. Redirecting...');
+                setTimeout(() => navigate('/live'), 2000);
+            } else {
+                const errorData = await response.text();
+                throw new Error(errorData || 'Failed to delete incident.');
+            }
+        } catch (err) {
+            console.error(err);
+            setUpdateMessage(`Error: ${err.message}`);
+            setIsUpdating(false);
+            setTimeout(() => setUpdateMessage(''), 3000);
+        }
+    };
+
+
     const formatDateTime = (dateTimeString) => {
         if (!dateTimeString) return 'N/A';
         const date = new Date(dateTimeString);
@@ -362,16 +424,19 @@ const IncidentDetailPage = ({ token }) => {
                     </Link>
                 )}
 
-                {incident.latitude && incident.longitude ? (
+                {incident.latitude && incident.longitude && (
                     <a href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
                         <FaMapMarkerAlt />
                         <span>View on Map</span>
                     </a>
-                ) : (
+                )}
+
+                {!incident.latitude && !incident.longitude && incident.status !== 'CLOSED' && incident.status !== 'RESOLVED' && (
                     <button onClick={handleUpdateLocation} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
                         {isUpdating ? <FaSpinner className={styles.spinner} /> : 'Update Location'}
                     </button>
                 )}
+
 
                 {updateMessage && <p className={styles.updateMessage}>{updateMessage}</p>}
 
@@ -396,7 +461,23 @@ const IncidentDetailPage = ({ token }) => {
                     </>
                 )}
 
-                {(incident.status === 'ASSIGNED' || incident.status === 'IN_PROGRESS') && (
+                {(incident.status === 'ASSIGNED') && (
+                    <>
+                        <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
+                            <FaUsers />
+                            <span>View Team</span>
+                        </button>
+                        <Link
+                            to={`/incident/${incident.id}/assign`}
+                            className={`${styles.actionButton} ${styles.assignButton}`}
+                        >
+                            <FaUsers />
+                            <span>Reassign Team</span>
+                        </Link>
+                    </>
+                )}
+
+                {(incident.status === 'IN_PROGRESS') && (
                     <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
                         <FaUsers />
                         <span>View Team</span>
@@ -421,6 +502,25 @@ const IncidentDetailPage = ({ token }) => {
                         </button>
                     </>
                 )}
+                {incident.status === 'RESOLVED' && (
+                    <>
+                        <button onClick={handleReactivate} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
+                            <FaUndo />
+                            <span>Reactivate</span>
+                        </button>
+                        <button onClick={() => setIsDeleteModalOpen(true)} disabled={isUpdating} className={`${styles.actionButton} ${styles.interestButton}`}>
+                            <FaTrash />
+                            <span>Delete Incident</span>
+                        </button>
+                    </>
+                )}
+
+                {incident.status === 'CLOSED' && (
+                    <button onClick={() => setIsDeleteModalOpen(true)} disabled={isUpdating} className={`${styles.actionButton} ${styles.interestButton}`}>
+                        <FaTrash />
+                        <span>Delete Incident</span>
+                    </button>
+                )}
             </div>
             <CloseIncidentModal
                 isOpen={isCloseModalOpen}
@@ -439,6 +539,15 @@ const IncidentDetailPage = ({ token }) => {
                     isOpen={isHistoryModalOpen}
                     onClose={() => setIsHistoryModalOpen(false)}
                     history={incidentHistory}
+                />
+            )}
+            {isDeleteModalOpen && (
+                <ConfirmationModal
+                    message="Are you sure you want to permanently delete this incident and all its related data (cases, chats, media)? This action cannot be undone."
+                    onConfirm={handleDelete}
+                    onCancel={() => setIsDeleteModalOpen(false)}
+                    confirmText="Yes, Delete"
+                    cancelText="No, Keep It"
                 />
             )}
         </div>

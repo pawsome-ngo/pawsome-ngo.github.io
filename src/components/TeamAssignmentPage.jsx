@@ -37,17 +37,32 @@ const TeamAssignmentPage = ({ token, currentUser }) => {
     );
 
     useEffect(() => {
-        const fetchVolunteers = async () => {
+        const fetchVolunteersAndTeam = async () => {
             if (!token || !incidentId) return;
+            setLoading(true);
             try {
-                const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}/assignment/volunteers`, {
-                    headers: { 'Authorization': `Bearer ${token}` },
-                });
-                if (response.ok) {
-                    const data = await response.json();
+                const [volunteersResponse, teamResponse] = await Promise.all([
+                    fetch(`${API_BASE_URL}/api/incidents/${incidentId}/assignment/volunteers`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                    }),
+                    fetch(`${API_BASE_URL}/api/incidents/${incidentId}/assignment/team`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                    })
+                ]);
+
+                if (volunteersResponse.ok) {
+                    const data = await volunteersResponse.json();
                     setVolunteers(data);
                 } else {
                     setError('Failed to fetch volunteer list.');
+                }
+
+                if (teamResponse.ok) {
+                    const data = await teamResponse.json();
+                    if (data && data.teamMembers) {
+                        const memberIds = new Set(data.teamMembers.map(m => m.userId));
+                        setSelectedVolunteers(memberIds);
+                    }
                 }
             } catch (err) {
                 setError('Could not connect to the server.');
@@ -55,7 +70,7 @@ const TeamAssignmentPage = ({ token, currentUser }) => {
                 setLoading(false);
             }
         };
-        fetchVolunteers();
+        fetchVolunteersAndTeam();
     }, [token, incidentId]);
 
     const sortedVolunteers = useMemo(() => {

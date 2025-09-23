@@ -215,3 +215,43 @@
 }
 
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* --- Confirmation Modal --- */
+.modalOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 7000;
+}
+.confirmationModalContent {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+}
+.confirmationModalContent p {
+    font-size: 1.1rem;
+    color: #333;
+    margin: 0 0 1.5rem 0;
+    line-height: 1.6;
+}
+.confirmationModalActions {
+    display: flex;
+    gap: 1rem;
+}
+.confirmationModalActions button {
+    flex: 1;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-size: 1rem;
+}
+.cancelButton { background-color: #ecf0f1; color: #555; }
+.confirmButton { background-color: #e74c3c; color: white; }

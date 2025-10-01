@@ -1,0 +1,26 @@
+.modalOverlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 8000; padding: 1rem;
+}
+.modalContent {
+    background: white; padding: 2rem; border-radius: 12px;
+    max-width: 450px; text-align: center;
+}
+.modalContent p { font-size: 1.1rem; color: #333; margin: 0 0 1.5rem 0; }
+.modalActions { display: flex; gap: 1rem; }
+.modalActions button {
+    flex: 1; padding: 0.8rem; border-radius: 8px; font-weight: 600;
+    cursor: pointer; border: none; font-size: 1rem;
+}
+.cancelButton { background-color: #ecf0f1; color: #555; }
+.confirmButton { background-color: #3498db; color: white; }
+.delete { background-color: #e74c3c; }
+
+/* Styles for ItemInUseModal */
+.header { text-align: center; margin-bottom: 1rem; }
+.warningIcon { font-size: 2rem; color: #f39c12; margin-bottom: 0.5rem; }
+.header h3 { margin: 0; color: #34495e; }
+.userList { list-style: none; padding: 0; margin: 1rem 0; text-align: left; background: #f9f9f9; border-radius: 8px; padding: 1rem; }
+.userList li { padding: 0.25rem 0; }

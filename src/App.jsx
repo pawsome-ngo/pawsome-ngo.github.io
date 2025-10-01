@@ -22,6 +22,8 @@ import EventsPage from './components/EventsPage';
 import AdminPage from './components/AdminPage';
 import VolunteersPage from "./components/VolunteersPage.jsx";
 import VolunteerProfilePage from "./components/VolunteerProfilePage.jsx";
+import InventoryPage from "./components/InventoryPage.jsx";
+import FirstAidKitPage from "./components/FirstAidKitPage.jsx";
 
 
 // This component acts as a layout for all protected pages
@@ -101,6 +103,8 @@ const App = () => {
                     <Route path="/volunteer/:volunteerId" element={<VolunteerProfilePage token={token} currentUser={user} />} />
                     <Route path="/admin" element={<AdminPage token={token} />} />
                     <Route path="/profile" element={<ProfilePage token={token} />} />
+                    <Route path="/inventory" element={<InventoryPage token={token} />} />
+                    <Route path="/profile/first-aid-kit/:userId" element={<FirstAidKitPage token={token} />} />
                 </Route>
             </Routes>
         </div>

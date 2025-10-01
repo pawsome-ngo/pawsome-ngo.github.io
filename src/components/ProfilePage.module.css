@@ -139,10 +139,11 @@
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     transition: background-color 0.2s;
+    text-decoration: none;
 }
 .actionButton:hover {
     background: #e0e6e8;
@@ -177,4 +178,11 @@
 .message.info {
     background-color: #eaf4ff;
     color: #3498db;
+}
+
+.manageKitContainer {
+    margin-top: 1.5rem;
+    border-top: 1px solid #eee;
+    padding-top: 1.5rem;
+    text-align: right;
 }

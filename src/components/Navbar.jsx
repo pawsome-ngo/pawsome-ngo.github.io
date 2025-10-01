@@ -23,6 +23,7 @@ const Navbar = ({ user, onLogout }) => {
     const closeMenu = () => setIsMenuOpen(false);
 
     const isAdmin = user && user.roles.includes('ROLE_ADMIN');
+    const isInventoryManager = user && (user.roles.includes('ROLE_INVENTORY_MANAGER') || user.roles.includes('ROLE_SUPER_ADMIN'));
 
     // Function to apply active styles to NavLink
     const getNavLinkClass = ({ isActive }) => {
@@ -54,6 +55,9 @@ const Navbar = ({ user, onLogout }) => {
                 <NavLink to="/events" className={getNavLinkClass} onClick={closeMenu}>Events</NavLink>
                 {isAdmin && (
                     <NavLink to="/admin" className={getNavLinkClass} onClick={closeMenu}>Admin</NavLink>
+                )}
+                {isInventoryManager && (
+                    <NavLink to="/inventory" className={getNavLinkClass} onClick={closeMenu}>Inventory</NavLink>
                 )}
                 <NavLink to="/profile" className={getNavLinkClass} onClick={closeMenu}>Profile</NavLink>
 

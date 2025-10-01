@@ -82,9 +82,9 @@ const MyCasesPage = ({ token }) => {
     };
 
     const handleCaseCompleted = (completedIncidentId) => {
-        setCases(prevCases => prevCases.map(c =>
-            c.id === completedIncidentId ? { ...c, status: 'ONGOING' } : c
-        ));
+        // --- THIS IS THE FIX ---
+        // Instead of updating the item's status, we filter it out of the list.
+        setCases(prevCases => prevCases.filter(c => c.id !== completedIncidentId));
     };
 
     if (loading) return <div className={styles.container}><div className={styles.centered}><FaSpinner className={styles.spinner} /></div></div>;

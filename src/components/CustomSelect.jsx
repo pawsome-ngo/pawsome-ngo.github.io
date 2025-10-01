@@ -27,10 +27,14 @@ const CustomSelect = ({ options, value, onChange, name }) => {
         };
     }, []);
 
+    // Find the label for the current value (which is an ID) to display it
+    const selectedOption = options.find(option => option.value == value);
+    const displayValue = selectedOption ? selectedOption.label : 'Select...';
+
     return (
         <div className={styles.customSelect} ref={selectRef}>
             <button type="button" className={styles.selectButton} onClick={handleSelectClick}>
-                <span>{value}</span>
+                <span>{displayValue}</span>
                 <FaChevronDown className={`${styles.arrowIcon} ${isOpen ? styles.arrowIconOpen : ''}`} />
             </button>
             {isOpen && (

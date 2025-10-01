@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styles from './ProfilePage.module.css';
-import { FaUser, FaShieldAlt, FaToggleOn, FaToggleOff, FaSpinner, FaCheckCircle, FaExclamationCircle, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaUser, FaShieldAlt, FaToggleOn, FaToggleOff, FaSpinner, FaCheckCircle, FaExclamationCircle, FaMapMarkerAlt, FaFirstAid } from 'react-icons/fa';
 import UpdatePasswordModal from './UpdatePasswordModal';
+import { Link } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -51,6 +52,25 @@ const ProfilePage = ({ token }) => {
             // Revert on error
             setProfile({ ...profile, availabilityStatus: profile.availabilityStatus });
             alert('Failed to update availability. Please try again.');
+        }
+    };
+
+    const handleMedicineBoxToggle = async () => {
+        const newStatus = !profile.hasMedicineBox;
+        try {
+            setProfile({ ...profile, hasMedicineBox: newStatus }); // Optimistic UI update
+            await fetch(`${API_BASE_URL}/api/profile/medicine-box`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ hasMedicineBox: newStatus }),
+            });
+        } catch (err) {
+            // Revert on error
+            setProfile({ ...profile, hasMedicineBox: profile.hasMedicineBox });
+            alert('Failed to update first-aid kit status. Please try again.');
         }
     };
 
@@ -146,6 +166,22 @@ const ProfilePage = ({ token }) => {
                         <div className={`${styles.message} ${styles[locationMessage.type]}`}>
                             {locationMessage.type === 'success' ? <FaCheckCircle /> : locationMessage.type === 'error' ? <FaExclamationCircle /> : <FaSpinner className={styles.spinnerIcon} />}
                             {locationMessage.text}
+                        </div>
+                    )}
+                </div>
+
+                <div className={styles.card}>
+                    <div className={styles.settingSection}>
+                        <h2><FaFirstAid /> I have a First-Aid Kit</h2>
+                        <button onClick={handleMedicineBoxToggle} className={styles.toggleButton}>
+                            {profile.hasMedicineBox ? <FaToggleOn className={styles.toggleOn} /> : <FaToggleOff className={styles.toggleOff} />}
+                        </button>
+                    </div>
+                    {profile.hasMedicineBox && (
+                        <div className={styles.manageKitContainer}>
+                            <Link to={`/profile/first-aid-kit/${profile.id}`} className={styles.actionButton}>
+                                Manage Kit
+                            </Link>
                         </div>
                     )}
                 </div>

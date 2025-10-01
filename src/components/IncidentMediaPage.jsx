@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import styles from './IncidentMediaPage.module.css';
-import { FaArrowLeft, FaPhotoVideo, FaImage, FaVideo, FaVolumeUp, FaFileAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaPhotoVideo, FaImage, FaVideo, FaVolumeUp, FaFileAlt, FaFolder, FaFolderOpen } from 'react-icons/fa';
 
 // A helper component to show the correct icon based on media type
 const MediaIcon = ({ type }) => {
@@ -16,7 +16,21 @@ const MediaIcon = ({ type }) => {
 const IncidentMediaPage = () => {
     const { incidentId } = useParams();
     const location = useLocation();
-    const { incident } = location.state || {}; // Get incident data passed from the previous page
+    const { incident } = location.state || {};
+
+    const categorizedMedia = useMemo(() => {
+        if (!incident?.mediaFiles) return {};
+
+        return incident.mediaFiles.reduce((acc, mediaItem) => {
+            const key = mediaItem.caseId ? `Case #${mediaItem.caseId}` : 'Initial Report';
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+            acc[key].push(mediaItem);
+            return acc;
+        }, {});
+    }, [incident]);
+
 
     // Robust check for missing incident data
     if (!incident) {
@@ -46,19 +60,30 @@ const IncidentMediaPage = () => {
                 <h1>Media for Incident #{incident.id}</h1>
             </header>
 
-            {incident.mediaFiles && incident.mediaFiles.length > 0 ? (
-                <div className={styles.linkList}>
-                    {incident.mediaFiles.map(mediaItem => (
-                        <a
-                            key={mediaItem.id}
-                            href={mediaItem.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.linkItem}
-                        >
-                            <MediaIcon type={mediaItem.mediaType} />
-                            <span>Download Media File ({mediaItem.mediaType.toLowerCase()})</span>
-                        </a>
+            {Object.keys(categorizedMedia).length > 0 ? (
+                <div className={styles.categoryList}>
+                    {Object.entries(categorizedMedia).map(([category, mediaItems]) => (
+                        <details key={category} open className={styles.categorySection}>
+                            <summary className={styles.categoryHeader}>
+                                <FaFolderOpen className={styles.folderIconOpen} />
+                                <FaFolder className={styles.folderIconClosed} />
+                                <span>{category}</span>
+                            </summary>
+                            <div className={styles.linkList}>
+                                {mediaItems.map(mediaItem => (
+                                    <a
+                                        key={mediaItem.id}
+                                        href={mediaItem.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={styles.linkItem}
+                                    >
+                                        <MediaIcon type={mediaItem.mediaType} />
+                                        <span>Download Media File ({mediaItem.mediaType.toLowerCase()})</span>
+                                    </a>
+                                ))}
+                            </div>
+                        </details>
                     ))}
                 </div>
             ) : (

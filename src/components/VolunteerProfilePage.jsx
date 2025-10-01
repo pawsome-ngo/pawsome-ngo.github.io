@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import styles from './VolunteerProfilePage.module.css';
-import { FaTimes, FaSpinner, FaShieldAlt, FaUser, FaClock, FaPhone, FaArrowLeft } from 'react-icons/fa';
+import { FaTimes, FaSpinner, FaShieldAlt, FaUser, FaClock, FaPhone, FaArrowLeft, FaFirstAid, FaUserCircle } from 'react-icons/fa';
 import CustomSelect from './CustomSelect';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// Constants are defined outside the component for better performance
 const positionOptions = [
     { value: 'FOUNDER', label: 'Founder' },
     { value: 'CO_FOUNDER', label: 'Co-Founder' },
@@ -21,7 +20,7 @@ const positionOptions = [
     { value: 'ADOPTION_COORDINATOR', label: 'Adoption Coordinator' },
 ];
 
-const allRoles = ['MEMBER', 'RESCUE_CAPTAIN', 'ADMIN', 'SUPER_ADMIN'];
+const allRoles = ['MEMBER', 'RESCUE_CAPTAIN', 'INVENTORY_MANAGER', 'ADMIN', 'SUPER_ADMIN'];
 
 const VolunteerProfilePage = ({ token, currentUser }) => {
     const { volunteerId } = useParams();
@@ -31,9 +30,11 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
     const [selectedRoles, setSelectedRoles] = useState([]);
     const [feedback, setFeedback] = useState('');
     const [feedbackType, setFeedbackType] = useState('');
+    const [firstAidKit, setFirstAidKit] = useState(null);
 
     const isSuperAdmin = useMemo(() => currentUser?.roles.includes('ROLE_SUPER_ADMIN'), [currentUser]);
     const isAdmin = useMemo(() => currentUser?.roles.includes('ROLE_ADMIN'), [currentUser]);
+    const isRescueCaptain = useMemo(() => currentUser?.roles.includes('ROLE_RESCUE_CAPTAIN'), [currentUser]);
 
     const fetchUserDetails = useCallback(async () => {
         setLoading(true);
@@ -61,6 +62,16 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
             setSelectedPosition(detailedUser.position || 'MEMBER');
             setSelectedRoles(detailedUser.roles || ['MEMBER']);
 
+            if (isRescueCaptain || isAdmin || isSuperAdmin) {
+                const kitResponse = await fetch(`${API_BASE_URL}/api/first-aid-kit/${volunteerId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (kitResponse.ok) {
+                    const kitData = await kitResponse.json();
+                    setFirstAidKit(kitData);
+                }
+            }
+
         } catch (err) {
             console.error("Failed to fetch user details:", err);
             setFeedback("Failed to load user details.");
@@ -68,7 +79,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
         } finally {
             setLoading(false);
         }
-    }, [volunteerId, token]);
+    }, [volunteerId, token, isRescueCaptain, isAdmin, isSuperAdmin]);
 
     useEffect(() => {
         if (volunteerId) {
@@ -80,16 +91,14 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
         setFeedback('Saving changes...');
         setFeedbackType('');
         try {
-            // Function to handle API response, which might be empty
             const getResponseData = async (response) => {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.indexOf('application/json') !== -1) {
                     return await response.json();
                 }
-                return { message: 'Changes saved successfully.' }; // Default message for non-JSON responses
+                return { message: 'Changes saved successfully.' };
             };
 
-            // Only Super Admins can update the position
             if (isSuperAdmin) {
                 const positionResponse = await fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/position`, {
                     method: 'PUT',
@@ -103,7 +112,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                 }
             }
 
-            // Both Admins and Super Admins can call the roles endpoint
             const rolesResponse = await fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/roles`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -118,7 +126,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
             setFeedback(responseData.message);
             setFeedbackType('success');
 
-            await fetchUserDetails(); // Immediately re-fetch details to show updated info
+            await fetchUserDetails();
             setTimeout(() => setFeedback(''), 1500);
 
         } catch (err) {
@@ -146,7 +154,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
     const isTargetSuperAdmin = details.roles.includes('SUPER_ADMIN');
     const isTargetAdmin = details.roles.includes('ADMIN');
 
-    // Determine if the current user can see the admin controls
     const canViewAdminControls = isSuperAdmin || (isAdmin && !isTargetAdmin && !isTargetSuperAdmin);
 
     const fullName = details?.firstName && details?.lastName ? `${details.firstName} ${details.lastName}` : 'Volunteer';
@@ -189,6 +196,33 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                 </div>
             </div>
 
+            {(isRescueCaptain || isAdmin || isSuperAdmin) && (
+                <div className={styles.firstAidKitSection}>
+                    <h4><FaFirstAid /> First-Aid Kit</h4>
+                    {firstAidKit && firstAidKit.items.length > 0 ? (
+                        <div className={styles.kitGrid}>
+                            {firstAidKit.items.map(item => (
+                                <div key={item.id} className={styles.kitItemCard}>
+                                    <div className={styles.cardContent}>
+                                        <h3>{item.inventoryItemName}</h3>
+                                        <div className={styles.quantity}>
+                                            {item.quantity}
+                                        </div>
+                                    </div>
+                                    {item.personallyProcured && (
+                                        <div className={styles.cardFooter}>
+                                            <span className={styles.personalTag}><FaUserCircle/> Personal</span>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className={styles.emptyMessage}>No first-aid kit items found for this volunteer.</p>
+                    )}
+                </div>
+            )}
+
             {canViewAdminControls && (
                 <div className={styles.adminSection}>
                     <h4 className={styles.adminTitle}><FaShieldAlt /> Admin Controls</h4>
@@ -209,12 +243,9 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                         <label className={styles.formLabel}>Update Roles</label>
                         <div className={styles.rolesContainer}>
                             {allRoles.map(role => {
-                                // Super Admin role is never editable via UI
-                                const isSuperAdminCheckbox = role === 'SUPER_ADMIN';
-                                // For regular admins, they can't change other admins' roles
-                                const isAdminCheckbox = role === 'ADMIN';
-
-                                const isDisabled = isSuperAdminCheckbox || (isAdmin && isAdminCheckbox && !isSuperAdmin);
+                                const isDisabled =
+                                    role === 'SUPER_ADMIN' ||
+                                    (!isSuperAdmin && (role === 'ADMIN' || role === 'INVENTORY_MANAGER'));
 
                                 return (
                                     <label key={role} className={`${styles.checkboxLabel} ${isDisabled ? styles.disabled : ''}`}>
@@ -225,7 +256,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                                             onChange={() => handleRoleChange(role)}
                                             disabled={isDisabled}
                                         />
-                                        <span>{role.replace('_', ' ')}</span>
+                                        <span>{role.replace(/_/g, ' ')}</span>
                                     </label>
                                 );
                             })}

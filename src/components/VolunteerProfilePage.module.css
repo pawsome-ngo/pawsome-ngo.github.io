@@ -2,8 +2,8 @@
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem 1.5rem 4rem;
-    background: linear-gradient(to bottom, #fdfbfb, #ebedee);
-    min-height: 100%;
+    background: #f8f9fa;
+    min-height: 100vh;
 }
 
 .backLink {
@@ -32,15 +32,15 @@
 
 /* Profile Header */
 .profileHeader {
-    background: linear-gradient(135deg, #6a82fb 0%, #fc5c7d 100%);
+    background: white;
     padding: 1.5rem;
-    color: white;
+    color: #2c3e50;
     border-radius: 20px;
     position: relative;
     text-align: center;
     margin-top: 4rem;
     margin-bottom: 2rem;
-    box-shadow: 0 10px 30px rgba(106, 130, 251, 0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.07);
 }
 
 .avatar {
@@ -50,7 +50,7 @@
     transform: translateX(-50%);
     width: 100px;
     height: 100px;
-    background: linear-gradient(45deg, #1abc9c, #2ecc71);
+    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -71,14 +71,15 @@
 .currentPosition {
     font-size: 1rem;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
+    color: #7f8c8d;
     text-transform: capitalize;
     margin: 0.25rem 0 0 0;
 }
 
+/* --- REDESIGNED PROFILE BODY DETAILS --- */
 .profileBody {
     background: #fff;
-    padding: 1.5rem;
+    padding: 1.5rem; /* Adjusted padding to ensure space around the grid */
     border-radius: 20px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     margin-bottom: 2rem;
@@ -87,7 +88,7 @@
 .detailGrid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1rem; /* Slightly reduced gap between items */
     text-align: left;
 }
 @media (min-width: 600px) {
@@ -97,34 +98,144 @@
 }
 
 .detailItem {
-    position: relative;
-    padding: 1rem;
+    position: relative; /* Keep relative for icon positioning */
+    padding: 1rem 1.5rem 1rem 3.5rem; /* Adjust padding for icon and content */
+    background-color: #fdfdfd; /* Very light background for each item */
+    border-radius: 10px;
+    border: 1px solid #eee; /* Subtle border */
+    transition: all 0.2s ease-in-out;
+    min-height: 80px; /* Ensure a minimum height for consistency */
+    display: flex; /* Use flex to align label and value more precisely */
+    flex-direction: column;
+    justify-content: center;
+}
+
+.detailItem:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transform: translateY(-2px);
 }
 
 .detailIcon {
     position: absolute;
-    top: 1rem;
-    left: 0;
-    font-size: 1.2rem;
-    color: #ccc;
+    top: 50%; /* Center vertically */
+    left: 1.25rem; /* Position from left */
+    transform: translateY(-50%); /* Adjust for perfect vertical centering */
+    font-size: 1.4rem; /* Slightly larger icon */
+    color: #6a82fb; /* More vibrant color for icons */
 }
 
 .detailItem strong {
-    font-size: 0.9rem;
+    font-size: 0.95rem; /* Slightly larger label */
     color: #7f8c8d;
     font-weight: 600;
-    margin-left: 2rem;
+    margin: 0; /* Reset margins */
 }
 
 .detailItem p {
-    margin: 0.25rem 0 0 2rem;
-    font-size: 1rem;
+    margin: 0.25rem 0 0 0; /* Small margin-top for separation, reset others */
+    font-size: 1.05rem; /* Slightly larger value */
     color: #34495e;
     font-weight: 500;
+    line-height: 1.4;
     text-transform: capitalize;
+    /* Word break for long role lists */
+    word-break: break-word;
+    white-space: pre-wrap; /* Preserve formatting for roles if multi-line */
 }
 
-/* Admin Section */
+/* Specific adjustment for Current Roles to handle long strings */
+.detailItem:last-child p {
+    text-transform: none; /* Don't capitalize roles string as it's already comma-separated */
+}
+
+
+/* --- FIRST-AID KIT SECTION (from previous update) --- */
+.firstAidKitSection {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.firstAidKitSection h4 {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+    font-weight: 700;
+}
+.emptyMessage {
+    color: #7f8c8d;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.kitGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.kitItemCard {
+    background: linear-gradient(135deg, #1abc9c, #16a085);
+    color: white;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cardContent {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.cardContent h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.quantity {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    background: rgba(255,255,255,0.2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+}
+
+.cardFooter {
+    display: flex;
+    align-items: center;
+}
+
+.personalTag {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+
+/* Admin Section (unchanged from previous update) */
 .adminSection {
     background: #fff;
     padding: 2rem;
@@ -157,7 +268,6 @@
     font-weight: 600;
 }
 
-/* --- New Checkbox Roles Styles --- */
 .rolesContainer {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -173,6 +283,10 @@
     cursor: pointer;
     transition: background-color 0.2s;
     border: 1px solid #eee;
+}
+.checkboxLabel.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 .checkboxLabel:hover {
     background-color: #f1f3f5;
@@ -190,8 +304,6 @@
     font-weight: 500;
 }
 
-
-/* Feedback and Save Button */
 .feedbackMessage {
     margin-top: 1.5rem;
     padding: 0.8rem;
@@ -201,7 +313,6 @@
 }
 .feedbackMessage.success { background-color: #e6ffee; color: #27ae60; }
 .feedbackMessage.error { background-color: #ffe6e6; color: #e74c3c; }
-
 
 .saveButton {
     width: 100%;

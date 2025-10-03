@@ -79,7 +79,7 @@
 /* --- REDESIGNED PROFILE BODY DETAILS --- */
 .profileBody {
     background: #fff;
-    padding: 1.5rem; /* Adjusted padding to ensure space around the grid */
+    padding: 1.5rem;
     border-radius: 20px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     margin-bottom: 2rem;
@@ -88,7 +88,7 @@
 .detailGrid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 1rem; /* Slightly reduced gap between items */
+    gap: 1rem;
     text-align: left;
 }
 @media (min-width: 600px) {
@@ -98,14 +98,14 @@
 }
 
 .detailItem {
-    position: relative; /* Keep relative for icon positioning */
-    padding: 1rem 1.5rem 1rem 3.5rem; /* Adjust padding for icon and content */
-    background-color: #fdfdfd; /* Very light background for each item */
+    position: relative;
+    padding: 1rem 1.5rem 1rem 3.5rem;
+    background-color: #fdfdfd;
     border-radius: 10px;
-    border: 1px solid #eee; /* Subtle border */
+    border: 1px solid #eee;
     transition: all 0.2s ease-in-out;
-    min-height: 80px; /* Ensure a minimum height for consistency */
-    display: flex; /* Use flex to align label and value more precisely */
+    min-height: 80px;
+    display: flex;
     flex-direction: column;
     justify-content: center;
 }
@@ -117,39 +117,53 @@
 
 .detailIcon {
     position: absolute;
-    top: 50%; /* Center vertically */
-    left: 1.25rem; /* Position from left */
-    transform: translateY(-50%); /* Adjust for perfect vertical centering */
-    font-size: 1.4rem; /* Slightly larger icon */
-    color: #6a82fb; /* More vibrant color for icons */
+    top: 50%;
+    left: 1.25rem;
+    transform: translateY(-50%);
+    font-size: 1.4rem;
+    color: #6a82fb;
 }
 
 .detailItem strong {
-    font-size: 0.95rem; /* Slightly larger label */
+    font-size: 0.95rem;
     color: #7f8c8d;
     font-weight: 600;
-    margin: 0; /* Reset margins */
+    margin: 0;
 }
 
 .detailItem p {
-    margin: 0.25rem 0 0 0; /* Small margin-top for separation, reset others */
-    font-size: 1.05rem; /* Slightly larger value */
+    margin: 0.25rem 0 0 0;
+    font-size: 1.05rem;
     color: #34495e;
     font-weight: 500;
     line-height: 1.4;
     text-transform: capitalize;
-    /* Word break for long role lists */
-    word-break: break-word;
-    white-space: pre-wrap; /* Preserve formatting for roles if multi-line */
 }
 
-/* Specific adjustment for Current Roles to handle long strings */
-.detailItem:last-child p {
-    text-transform: none; /* Don't capitalize roles string as it's already comma-separated */
+/* --- NEW STYLES FOR ROLES --- */
+.rolesItem {
+    grid-column: 1 / -1; /* Make roles section span full width */
+}
+
+.rolesContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.roleTag {
+    background-color: #eaf4ff;
+    color: #3498db;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
 }
 
 
-/* --- FIRST-AID KIT SECTION (from previous update) --- */
+/* --- FIRST-AID KIT SECTION --- */
 .firstAidKitSection {
     background: #fff;
     padding: 1.5rem;
@@ -235,7 +249,7 @@
 }
 
 
-/* Admin Section (unchanged from previous update) */
+/* Admin Section */
 .adminSection {
     background: #fff;
     padding: 2rem;
@@ -268,7 +282,7 @@
     font-weight: 600;
 }
 
-.rolesContainer {
+.checkboxRolesContainer {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;

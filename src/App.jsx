@@ -19,7 +19,7 @@ import MyCasesPage from './components/MyCasesPage';
 import ProfilePage from './components/ProfilePage';
 import AdoptionsPage from './components/AdoptionsPage';
 import EventsPage from './components/EventsPage';
-import AdminPage from './components/AdminPage';
+import ApprovalsPage from './components/ApprovalsPage.jsx';
 import VolunteersPage from "./components/VolunteersPage.jsx";
 import VolunteerProfilePage from "./components/VolunteerProfilePage.jsx";
 import InventoryPage from "./components/InventoryPage.jsx";
@@ -101,7 +101,7 @@ const App = () => {
                     <Route path="/events" element={<EventsPage />} />
                     <Route path="/volunteers" element={<VolunteersPage token={token} currentUser={user} />} />
                     <Route path="/volunteer/:volunteerId" element={<VolunteerProfilePage token={token} currentUser={user} />} />
-                    <Route path="/admin" element={<AdminPage token={token} />} />
+                    <Route path="/approvals" element={<ApprovalsPage token={token} />} />
                     <Route path="/profile" element={<ProfilePage token={token} />} />
                     <Route path="/inventory" element={<InventoryPage token={token} />} />
                     <Route path="/profile/first-aid-kit/:userId" element={<FirstAidKitPage token={token} />} />

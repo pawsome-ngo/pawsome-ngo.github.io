@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import styles from './AdminPage.module.css';
-import { FaSpinner, FaCheck, FaTimes, FaUserSlash } from 'react-icons/fa';
+import styles from './ApprovalsPage.module.css';
+import { FaSpinner, FaCheck, FaTimes, FaUserSlash, FaPhone, FaMapMarkerAlt, FaCar, FaHome, FaFirstAid } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -17,7 +17,7 @@ const ConfirmationModal = ({ onConfirm, onCancel, message }) => (
     </div>
 );
 
-const AdminPage = ({ token }) => {
+const ApprovalsPage = ({ token }) => {
     const [pendingUsers, setPendingUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -65,7 +65,7 @@ const AdminPage = ({ token }) => {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <h1>Admin Dashboard</h1>
+                <h1>Approvals Dashboard</h1>
                 <p>Review and manage new volunteer sign-ups.</p>
             </header>
 
@@ -81,15 +81,32 @@ const AdminPage = ({ token }) => {
                         <div key={user.userId} className={styles.userCard}>
                             <div className={styles.cardHeader}>
                                 <h3>{user.firstName} {user.lastName}</h3>
-                                <span>{user.experienceLevel}</span>
+                                <span className={styles.experienceTag}>{user.experienceLevel}</span>
                             </div>
-                            <p className={styles.motivation}>"{user.motivation || 'No motivation provided.'}"</p>
-                            <div className={styles.userDetails}>
-                                <p><strong>Phone:</strong> {user.phoneNumber}</p>
-                                <p><strong>Address:</strong> {user.address || 'N/A'}</p>
-                                <p><strong>Vehicle:</strong> {user.hasVehicle ? (user.vehicleType || 'Yes') : 'No'}</p>
-                                <p><strong>Shelter:</strong> {user.canProvideShelter ? 'Yes' : 'No'}</p>
-                                <p><strong>First-Aid:</strong> {user.hasMedicineBox ? 'Yes' : 'No'}</p>
+                            <blockquote className={styles.motivation}>
+                                {user.motivation || 'No motivation provided.'}
+                            </blockquote>
+                            <div className={styles.userDetailsGrid}>
+                                <div className={styles.detailItem}>
+                                    <FaPhone />
+                                    <span>{user.phoneNumber}</span>
+                                </div>
+                                <div className={`${styles.detailItem} ${styles.fullWidth}`}>
+                                    <FaMapMarkerAlt />
+                                    <span>{user.address || 'No address provided'}</span>
+                                </div>
+                                <div className={styles.detailItem}>
+                                    <FaCar />
+                                    <span>Vehicle: <strong>{user.hasVehicle ? (user.vehicleType || 'Yes') : 'No'}</strong></span>
+                                </div>
+                                <div className={styles.detailItem}>
+                                    <FaHome />
+                                    <span>Shelter: <strong>{user.canProvideShelter ? 'Yes' : 'No'}</strong></span>
+                                </div>
+                                <div className={`${styles.detailItem} ${styles.fullWidth}`}>
+                                    <FaFirstAid />
+                                    <span>First-Aid Kit: <strong>{user.hasMedicineBox ? 'Yes' : 'No'}</strong></span>
+                                </div>
                             </div>
                             <div className={styles.cardActions}>
                                 <button onClick={() => setShowConfirm(user.userId)} className={styles.denyButton}><FaTimes /> Deny</button>
@@ -111,4 +128,4 @@ const AdminPage = ({ token }) => {
     );
 };
 
-export default AdminPage;
+export default ApprovalsPage;

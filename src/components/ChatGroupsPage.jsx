@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import { FaComments, FaInbox, FaUsers } from 'react-icons/fa'; // Added FaUsers for card icon
+import { FaComments, FaInbox, FaUsers } from 'react-icons/fa';
 import styles from './ChatGroupsPage.module.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Function to get a consistent color for a chat group based on its ID
 const getColorForChatGroup = (chatGroupId) => {
     const colors = [
-        '#FF6B6B', // Reddish
-        '#4ECDC4', // Teal
-        '#4F88C9', // Blue
-        '#FFC659', // Yellow
-        '#A0D8B3', // Greenish
-        '#9C88FF'  // Purple
+        '#FF6B6B', '#4ECDC4', '#4F88C9', '#FFC659', '#A0D8B3', '#9C88FF'
     ];
     const hash = chatGroupId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
@@ -36,9 +30,7 @@ const ChatGroupsPage = ({ token, onLogout }) => {
                 setUsername(decodedToken.sub);
 
                 const response = await fetch(`${API_BASE_URL}/api/chat/groups`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
+                    headers: { 'Authorization': `Bearer ${token}` },
                 });
 
                 if (response.ok) {
@@ -94,12 +86,13 @@ const ChatGroupsPage = ({ token, onLogout }) => {
                             className={styles.groupCard}
                             style={{ backgroundColor: getColorForChatGroup(participant.chatGroup.id) }}
                         >
+                            {participant.hasUnreadMessages && <div className={styles.unreadIndicator}></div>}
                             <FaComments className={styles.cardIcon} />
                             <div className={styles.cardContent}>
                                 <h3 className={styles.cardTitle}>{participant.chatGroup.name}</h3>
-                                {/* Add more details if available, e.g., latest message, members */}
-                                {/* <p className={styles.cardDetail}>Incident #{participant.chatGroup.incidentId}</p> */}
-                                {/* <p className={styles.cardDetail}>{participant.chatGroup.membersCount} members</p> */}
+                                {participant.lastMessage && (
+                                    <p className={styles.lastMessage}>{participant.lastMessage}</p>
+                                )}
                             </div>
                         </div>
                     ))}

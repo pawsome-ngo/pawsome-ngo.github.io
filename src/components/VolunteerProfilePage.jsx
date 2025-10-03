@@ -34,7 +34,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
 
     const isSuperAdmin = useMemo(() => currentUser?.roles.includes('ROLE_SUPER_ADMIN'), [currentUser]);
     const isAdmin = useMemo(() => currentUser?.roles.includes('ROLE_ADMIN'), [currentUser]);
-    const isRescueCaptain = useMemo(() => currentUser?.roles.includes('ROLE_RESCUE_CAPTAIN'), [currentUser]);
 
     const fetchUserDetails = useCallback(async () => {
         setLoading(true);
@@ -62,7 +61,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
             setSelectedPosition(detailedUser.position || 'MEMBER');
             setSelectedRoles(detailedUser.roles || ['MEMBER']);
 
-            if (isRescueCaptain || isAdmin || isSuperAdmin) {
+            if (detailedUser.hasMedicineBox) {
                 const kitResponse = await fetch(`${API_BASE_URL}/api/first-aid-kit/${volunteerId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -70,6 +69,8 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                     const kitData = await kitResponse.json();
                     setFirstAidKit(kitData);
                 }
+            } else {
+                setFirstAidKit(null); // Ensure kit is cleared if user has no medicine box
             }
 
         } catch (err) {
@@ -79,7 +80,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
         } finally {
             setLoading(false);
         }
-    }, [volunteerId, token, isRescueCaptain, isAdmin, isSuperAdmin]);
+    }, [volunteerId, token]);
 
     useEffect(() => {
         if (volunteerId) {
@@ -188,15 +189,25 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                         <strong>Experience</strong>
                         <p>{(details.experienceLevel || 'N/A').replace('_', ' ')}</p>
                     </div>
-                    <div className={styles.detailItem}>
+                    <div className={`${styles.detailItem} ${styles.rolesItem}`}>
                         <FaShieldAlt className={styles.detailIcon}/>
                         <strong>Current Roles</strong>
-                        <p>{(details.roles || []).map(role => role.replace('_', ' ')).join(', ') || 'N/A'}</p>
+                        <div className={styles.rolesContainer}>
+                            {(details.roles && details.roles.length > 0) ? (
+                                details.roles.map(role => (
+                                    <span key={role} className={styles.roleTag}>
+                                        {role.replace(/_/g, ' ')}
+                                    </span>
+                                ))
+                            ) : (
+                                <span>N/A</span>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {(isRescueCaptain || isAdmin || isSuperAdmin) && (
+            {details.hasMedicineBox && (
                 <div className={styles.firstAidKitSection}>
                     <h4><FaFirstAid /> First-Aid Kit</h4>
                     {firstAidKit && firstAidKit.items.length > 0 ? (
@@ -241,7 +252,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
 
                     <div className={styles.formGroup}>
                         <label className={styles.formLabel}>Update Roles</label>
-                        <div className={styles.rolesContainer}>
+                        <div className={styles.checkboxRolesContainer}>
                             {allRoles.map(role => {
                                 const isDisabled =
                                     role === 'SUPER_ADMIN' ||

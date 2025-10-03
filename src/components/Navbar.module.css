@@ -24,20 +24,20 @@
     transform: scale(1.05);
 }
 
-/* ✨ IDEA: A softer, more inviting gradient for the logo */
 .logoIcon {
     font-size: 2.2rem;
     margin-right: 0.75rem;
-    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
+    background: linear-gradient(45deg, #800000, #c0392b);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
-/* ✨ IDEA: Using a dark, rich blue instead of black for text */
 .logoText {
     font-size: 1.6rem;
     font-weight: 700;
-    color: #2c3e50; /* Dark Slate Blue */
+    background: linear-gradient(45deg, #800000, #c0392b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 

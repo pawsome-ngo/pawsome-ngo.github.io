@@ -6,11 +6,11 @@ import ReactionsModal from './ReactionsModal';
 import ReactionPicker from './ReactionPicker';
 import ChatIncidentDetailModal from './ChatIncidentDetailModal';
 import styles from './ChatWindow.module.css';
-import { FaPaperPlane, FaInfoCircle } from 'react-icons/fa';
+import { FaPaperPlane, FaInfoCircle, FaCheckDouble } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// --- Helper Functions (remain the same) ---
+// --- Helper Functions ---
 const getUserInfoFromToken = (token) => {
     try {
         const decodedToken = jwtDecode(token);
@@ -81,24 +81,18 @@ const ChatWindow = ({ token, onLogout }) => {
     const [animatedHeart, setAnimatedHeart] = useState(null);
     const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
 
+    const readObserver = useRef(null);
+
     useEffect(() => {
         if (token) setLoggedInUser(getUserInfoFromToken(token));
     }, [token]);
 
-    useEffect(() => {
-        if (userIsAtBottomRef.current) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [messages.length]);
-
-    const handleScroll = () => {
+    const scrollToBottom = (behavior = 'smooth') => {
         if (messageListRef.current) {
-            const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
-            const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
-            userIsAtBottomRef.current = isAtBottom;
-            if (isAtBottom) {
-                setHasUnreadMessages(false);
-            }
+            messageListRef.current.scrollTo({
+                top: messageListRef.current.scrollHeight,
+                behavior
+            });
         }
     };
 
@@ -126,6 +120,13 @@ const ChatWindow = ({ token, onLogout }) => {
         });
     }, []);
 
+    useEffect(() => {
+        if (userIsAtBottomRef.current) {
+            scrollToBottom();
+        }
+    }, [messages]);
+
+
     const { sendMessage } = WebSocketComponent({ onMessageReceived, token, chatId });
 
     useEffect(() => {
@@ -143,7 +144,7 @@ const ChatWindow = ({ token, onLogout }) => {
                 if (currentGroupData) {
                     setChatGroup(currentGroupData);
                     setMessages(messagesData);
-                    setTimeout(() => messagesEndRef.current?.scrollIntoView(), 0);
+                    setTimeout(() => scrollToBottom('auto'), 0);
                 } else {
                     throw new Error('Chat group not found.');
                 }
@@ -157,17 +158,50 @@ const ChatWindow = ({ token, onLogout }) => {
         if (chatId && token) fetchChatData();
     }, [chatId, token, onLogout]);
 
-    useEffect(() => {
-        if (replyingTo && textareaRef.current) {
-            textareaRef.current.focus();
-        }
-    }, [replyingTo]);
+    const handleMarkAsRead = useCallback((messageId) => {
+        sendMessage({ messageId }, `/app/chat/${chatId}/read`);
+    }, [sendMessage, chatId]);
 
-    // Auto-resize textarea
-    const handleTextareaInput = (e) => {
-        setNewMessage(e.target.value);
-        e.target.style.height = 'auto';
-        e.target.style.height = `${e.target.scrollHeight}px`;
+    useEffect(() => {
+        if (readObserver.current) readObserver.current.disconnect();
+
+        const observerCallback = (entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const messageId = entry.target.dataset.messageId;
+                    const message = messages.find(m => m.id === messageId);
+
+                    if (message && message.sender.id !== loggedInUser?.id) {
+                        const alreadyReadByMe = message.seenBy?.some(user => user.id === loggedInUser.id);
+                        if (!alreadyReadByMe) {
+                            handleMarkAsRead(messageId);
+                        }
+                    }
+                    readObserver.current.unobserve(entry.target);
+                }
+            });
+        };
+
+        readObserver.current = new IntersectionObserver(observerCallback, {
+            root: messageListRef.current,
+            threshold: 0.8
+        });
+
+        return () => {
+            if (readObserver.current) readObserver.current.disconnect();
+        };
+    }, [messages, loggedInUser, handleMarkAsRead]);
+
+
+    const handleScroll = () => {
+        if (messageListRef.current) {
+            const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
+            const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+            userIsAtBottomRef.current = isAtBottom;
+            if (isAtBottom) {
+                setHasUnreadMessages(false);
+            }
+        }
     };
 
     const handleSendMessage = (event) => {
@@ -181,6 +215,7 @@ const ChatWindow = ({ token, onLogout }) => {
             sender: { id: loggedInUser.id, firstName: 'You', lastName: '' },
             timestamp: new Date().toISOString(),
             reactions: {},
+            seenBy: [],
             parentMessageId: replyingTo ? replyingTo.id : null,
         };
         setMessages(prev => [...prev, optimisticMessage]);
@@ -194,6 +229,13 @@ const ChatWindow = ({ token, onLogout }) => {
         if(textareaRef.current) {
             textareaRef.current.style.height = 'auto';
         }
+        setTimeout(() => scrollToBottom('smooth'), 100);
+    };
+
+    const handleTextareaInput = (e) => {
+        setNewMessage(e.target.value);
+        e.target.style.height = 'auto';
+        e.target.style.height = `${e.target.scrollHeight}px`;
     };
 
     const handleKeyDown = (e) => {
@@ -214,24 +256,6 @@ const ChatWindow = ({ token, onLogout }) => {
         if (!loggedInUser) return;
 
         const reactionType = '❤️';
-        setMessages(prevMessages => prevMessages.map(m => {
-            if (m.id === message.id) {
-                const newReactions = JSON.parse(JSON.stringify(m.reactions || {}));
-                if (!newReactions[reactionType]) {
-                    newReactions[reactionType] = [];
-                }
-                const userReactedIndex = newReactions[reactionType].findIndex(user => user.id === loggedInUser.id);
-                if (userReactedIndex === -1) {
-                    newReactions[reactionType].push({
-                        id: loggedInUser.id,
-                        firstName: loggedInUser.username,
-                    });
-                }
-                return { ...m, reactions: newReactions };
-            }
-            return m;
-        }));
-
         sendMessage({ messageId: message.id, reaction: reactionType }, `/app/chat/${chatId}/react`);
         setAnimatedHeart(message.id);
         setTimeout(() => setAnimatedHeart(null), 500);
@@ -286,7 +310,6 @@ const ChatWindow = ({ token, onLogout }) => {
                     <h2>{chatGroup.name}</h2>
                     <FaInfoCircle className={styles.headerIcon} />
                 </button>
-                {/* This empty div balances the back button to center the title perfectly */}
                 <div className={styles.headerSpacer}></div>
             </header>
             <main ref={messageListRef} className={styles.messageList} onScroll={handleScroll}>
@@ -296,18 +319,26 @@ const ChatWindow = ({ token, onLogout }) => {
                     const isSentByCurrentUser = Number(msg.sender.id) === loggedInUser.id;
                     const isFirstInGroup = !prevMsg || prevMsg.sender.id !== msg.sender.id || !isSameDay(prevMsg.timestamp, msg.timestamp);
                     const showDateSeparator = !prevMsg || !isSameDay(prevMsg.timestamp, msg.timestamp);
-                    const showTimestamp = !nextMsg || nextMsg.sender.id !== msg.sender.id || formatDate(nextMsg.timestamp) !== formatDate(msg.timestamp);
+                    const showTimestamp = !nextMsg || nextMsg.sender.id !== msg.sender.id || formatDate(nextMsg.timestamp) !== formatDate(msg.timestamp) || msg.seenBy?.length > 0;
 
                     const parentMessage = msg.parentMessageId ? messages.find(m => m.id === msg.parentMessageId) : null;
                     const reactionsCount = msg.reactions ? Object.values(msg.reactions).flat().length : 0;
                     const senderInitials = msg.sender.firstName.charAt(0).toUpperCase() + (msg.sender.lastName ? msg.sender.lastName.charAt(0).toUpperCase() : '');
                     const avatarColor = stringToHslColor(msg.sender.id.toString());
 
+                    const messageNodeRef = (node) => {
+                        if (node && readObserver.current) {
+                            readObserver.current.observe(node);
+                        }
+                        messageRefs.current[msg.id] = node;
+                    };
+
                     return (
                         <React.Fragment key={msg.id}>
                             {showDateSeparator && <div className={styles.dateSeparator}><span>{formatDateSeparator(msg.timestamp)}</span></div>}
                             <div
-                                ref={el => messageRefs.current[msg.id] = el}
+                                ref={messageNodeRef}
+                                data-message-id={msg.id}
                                 className={`${styles.messageWrapper} ${isSentByCurrentUser ? styles.sent : styles.received} ${isFirstInGroup ? '' : styles.grouped}`}
                             >
                                 {!isSentByCurrentUser && (
@@ -345,7 +376,17 @@ const ChatWindow = ({ token, onLogout }) => {
                                             </div>
                                         )}
                                     </div>
-                                    {showTimestamp && <span className={styles.timestamp}>{formatDate(msg.timestamp)}</span>}
+                                    {showTimestamp && (
+                                        <div className={styles.timestampContainer}>
+                                            <span className={styles.timestamp}>{formatDate(msg.timestamp)}</span>
+                                            {isSentByCurrentUser && msg.seenBy && msg.seenBy.length > 0 && (
+                                                <FaCheckDouble
+                                                    className={styles.seenIcon}
+                                                    title={`Seen by ${msg.seenBy.map(u => u.firstName).join(', ')}`}
+                                                />
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                                 {animatedHeart === msg.id && <div className={styles.animatedHeart}>❤️</div>}
                             </div>
@@ -354,7 +395,7 @@ const ChatWindow = ({ token, onLogout }) => {
                 })}
                 <div ref={messagesEndRef} />
             </main>
-            {hasUnreadMessages && <button className={styles.scrollToBottomIndicator} onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}>↓</button>}
+            {hasUnreadMessages && <button className={styles.scrollToBottomIndicator} onClick={() => scrollToBottom('smooth')}>↓</button>}
             {replyingTo && (
                 <div className={styles.replyingToContext}>
                     <div className={styles.replyContextContent}>

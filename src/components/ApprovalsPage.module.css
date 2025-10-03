@@ -28,7 +28,7 @@
 }
 
 .header h1 {
-    font-size: 2.5rem;
+    font-size: 2.0rem;
     font-weight: 700;
     margin: 0;
     background: linear-gradient(45deg, #6a82fb, #fc5c7d);
@@ -54,6 +54,7 @@
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
+    border: 1px solid #f0f0f0;
 }
 
 .cardHeader {
@@ -66,41 +67,68 @@
 .cardHeader h3 {
     margin: 0;
     color: #34495e;
+    font-size: 1.2rem;
 }
-.cardHeader span {
+.experienceTag {
     font-size: 0.8rem;
     font-weight: 600;
-    padding: 0.2rem 0.6rem;
-    border-radius: 12px;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
     background-color: #ecf0f1;
     color: #7f8c8d;
+    text-transform: capitalize;
 }
 
 .motivation {
     padding: 1.5rem;
-    font-style: italic;
-    color: #555;
     border-bottom: 1px solid #f0f0f0;
     flex-grow: 1;
+    margin: 0;
+    background-color: #fdfdfd;
+    font-style: italic;
+    color: #555;
+    position: relative;
+    border-left: 4px solid #6a82fb;
 }
 
-.userDetails {
-    padding: 1rem 1.5rem;
+.userDetailsGrid {
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 400px) {
+    .userDetailsGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.detailItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     font-size: 0.9rem;
-    line-height: 1.6;
-}
-.userDetails p {
-    margin: 0.25rem 0;
-}
-.userDetails strong {
     color: #34495e;
+}
+.detailItem svg {
+    color: #6a82fb;
+    flex-shrink: 0;
+}
+.detailItem strong {
+    font-weight: 600;
+}
+.fullWidth {
+    grid-column: 1 / -1;
 }
 
 .cardActions {
     display: flex;
     gap: 1rem;
     padding: 1rem 1.5rem;
+    background-color: #f8f9fa;
     border-top: 1px solid #f0f0f0;
+    border-radius: 0 0 16px 16px;
 }
 
 .cardActions button {
@@ -109,15 +137,18 @@
     border: none;
     border-radius: 8px;
     font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
+
 .cardActions button:hover {
-    transform: scale(1.03);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .authorizeButton {
@@ -125,8 +156,9 @@
     color: white;
 }
 .denyButton {
-    background-color: #ecf0f1;
+    background-color: #fff;
     color: #e74c3c;
+    border: 1px solid #f2d7d5;
 }
 
 /* --- Empty State --- */

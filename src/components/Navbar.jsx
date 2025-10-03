@@ -54,7 +54,7 @@ const Navbar = ({ user, onLogout }) => {
                 <NavLink to="/adoptions" className={getNavLinkClass} onClick={closeMenu}>Adoptions</NavLink>
                 <NavLink to="/events" className={getNavLinkClass} onClick={closeMenu}>Events</NavLink>
                 {isAdmin && (
-                    <NavLink to="/admin" className={getNavLinkClass} onClick={closeMenu}>Admin</NavLink>
+                    <NavLink to="/approvals" className={getNavLinkClass} onClick={closeMenu}>Approvals</NavLink>
                 )}
                 {isInventoryManager && (
                     <NavLink to="/inventory" className={getNavLinkClass} onClick={closeMenu}>Inventory</NavLink>

@@ -77,13 +77,11 @@
 /* --- Message List --- */
 .messageList {
     flex-grow: 1;
-    padding: 1rem 0.75rem;
+    padding: 1rem 0.75rem; /* Re-added padding */
     overflow-y: auto;
     display: flex;
     flex-direction: column;
 }
-
-/* ... The rest of the CSS is the same as the previous turn ... */
 
 .messageWrapper {
     display: flex;
@@ -192,11 +190,10 @@
 .timestamp {
     font-size: 0.7rem;
     color: #6d6d72;
-    margin-top: 0.25rem;
     padding: 0 0.25rem;
 }
-.sent .timestamp { align-self: flex-end; }
-.received .timestamp { align-self: flex-start; }
+.sent .timestampContainer { align-self: flex-end; }
+.received .timestampContainer { align-self: flex-start; }
 
 .repliedMessageSnippet {
     padding: 0.5rem 0.75rem;
@@ -442,4 +439,17 @@
     0% { transform: scale(0); opacity: 0; }
     50% { transform: scale(1.5); opacity: 1; }
     100% { transform: scale(0.5); opacity: 0; }
+}
+
+/* --- NEW STYLES FOR READ RECEIPTS --- */
+.timestampContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.seenIcon {
+    font-size: 0.75rem;
+    color: #4fc3f7; /* Light blue color for seen */
 }

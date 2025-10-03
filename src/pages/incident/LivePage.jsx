@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './LivePage.module.css';
-import CustomSelect from './CustomSelect';
+import CustomSelect from '../../components/common/CustomSelect.jsx';
 import { FaDog, FaCat, FaPaw, FaDove } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -44,8 +44,17 @@ const LivePage = ({ token }) => {
                     headers: { 'Authorization': `Bearer ${token}` },
                 });
                 if (response.ok) {
-                    const data = await response.json();
-                    if (statusFilter !== 'ALL' && statusFilter !== 'LIVE') {
+                    let data = await response.json();
+
+                    if (statusFilter === 'LIVE') {
+                        // Sort to show 'REPORTED' incidents first
+                        data.sort((a, b) => {
+                            if (a.status === 'REPORTED' && b.status !== 'REPORTED') return -1;
+                            if (a.status !== 'REPORTED' && b.status === 'REPORTED') return 1;
+                            return 0;
+                        });
+                        setIncidents(data);
+                    } else if (statusFilter !== 'ALL') {
                         setIncidents(data.filter(incident => incident.status === statusFilter));
                     } else {
                         setIncidents(data);
@@ -64,7 +73,7 @@ const LivePage = ({ token }) => {
 
     const statusOptions = [
         { value: 'LIVE', label: 'Live' },
-        { value: 'ALL', label: 'All Statuses' },
+        { value: 'ALL', label: 'All' },
         { value: 'REPORTED', label: 'Reported' },
         { value: 'ASSIGNED', label: 'Assigned' },
         { value: 'IN_PROGRESS', label: 'In Progress' },

@@ -4,7 +4,7 @@ import { Stomp } from '@stomp/stompjs';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
+const useWebSocket = ({ onMessageReceived, token, chatId }) => {
     const stompClientRef = useRef(null);
     const [isConnected, setIsConnected] = useState(false);
 
@@ -22,7 +22,6 @@ const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
 
         const headers = {
             'Authorization': `Bearer ${token}`,
-            // 'ngrok-skip-browser-warning': 'true'
         };
 
         if (stompClientRef.current) {
@@ -50,7 +49,6 @@ const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
         };
     }, [onMessageReceived, token, chatId]);
 
-    // Updated sendMessage to accept a destination
     const sendMessage = (message, destination) => {
         if (stompClientRef.current && isConnected) {
             stompClientRef.current.send(destination, {}, JSON.stringify(message));
@@ -60,4 +58,4 @@ const WebSocketComponent = ({ onMessageReceived, token, chatId }) => {
     return { sendMessage, isConnected };
 };
 
-export default WebSocketComponent;
+export default useWebSocket;

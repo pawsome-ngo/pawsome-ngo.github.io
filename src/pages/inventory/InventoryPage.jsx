@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styles from './InventoryPage.module.css';
 import { FaPlus, FaTags, FaSpinner, FaBoxOpen, FaClipboardList, FaTruck, FaExclamationTriangle, FaEdit, FaTrash } from 'react-icons/fa';
-import AddItemModal from './AddItemModal';
-import CategoryManager from './CategoryManager';
-import ConfirmationModal from './ConfirmationModal';
-import ItemInUseModal from './ItemInUseModal';
+import AddItemModal from '../../components/common/AddItemModal.jsx';
+import CategoryManager from '../../components/common/CategoryManager.jsx';
+import ConfirmationModal from '../../components/common/ConfirmationModal.jsx';
+import ItemInUseModal from '../../components/common/ItemInUseModal.jsx';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 

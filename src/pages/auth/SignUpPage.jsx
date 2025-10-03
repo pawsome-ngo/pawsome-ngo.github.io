@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
-import SignUpModal from './SignUpModal';
-import CustomSelect from './CustomSelect';
+import SignUpModal from '../../components/common/SignUpModal.jsx';
+import CustomSelect from '../../components/common/CustomSelect.jsx';
 import styles from './SignUpPage.module.css';
-import appStyles from '../App.module.css';
+import appStyles from '../../App.module.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 

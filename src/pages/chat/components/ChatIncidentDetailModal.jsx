@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './ChatIncidentDetailModal.module.css';
 import { FaSpinner, FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaTimes, FaUsers } from 'react-icons/fa';
-import TeamDetailsModal from './TeamDetailsModal'; // Import the TeamDetailsModal
+import TeamDetailsModal from '../../incident/components/TeamDetailsModal.jsx'; // Import the TeamDetailsModal
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 

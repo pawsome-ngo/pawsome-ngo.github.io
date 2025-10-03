@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './AddItemToKitModal.module.css';
 import { FaTimes } from 'react-icons/fa';
-import CustomSelect from './CustomSelect';
+import CustomSelect from './CustomSelect.jsx';
 
 const AddItemToKitModal = ({ inventoryItems, onClose, onSave }) => {
     const [selectedItem, setSelectedItem] = useState({

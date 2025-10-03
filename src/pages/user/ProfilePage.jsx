@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './ProfilePage.module.css';
 import { FaUser, FaShieldAlt, FaToggleOn, FaToggleOff, FaSpinner, FaCheckCircle, FaExclamationCircle, FaMapMarkerAlt, FaFirstAid } from 'react-icons/fa';
-import UpdatePasswordModal from './UpdatePasswordModal';
+import UpdatePasswordModal from '../../components/common/UpdatePasswordModal.jsx';
 import { Link } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';

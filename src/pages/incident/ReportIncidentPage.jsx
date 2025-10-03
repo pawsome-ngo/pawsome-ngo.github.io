@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaMicrophone, FaStop, FaTrash, FaFileAlt, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
-import CustomSelect from './CustomSelect';
-import SignUpModal from './SignUpModal';
+import CustomSelect from '../../components/common/CustomSelect.jsx';
+import SignUpModal from '../../components/common/SignUpModal.jsx';
 import styles from './ReportIncidentPage.module.css';
-import appStyles from '../App.module.css';
+import appStyles from '../../App.module.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 

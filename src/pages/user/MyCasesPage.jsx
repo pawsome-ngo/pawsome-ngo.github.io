@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './MyCasesPage.module.css';
 import { FaSpinner, FaPaw, FaUser, FaInfoCircle, FaDog, FaCat, FaDove, FaAngleRight, FaInbox, FaUsers } from 'react-icons/fa';
-import MarkAsDoneModal from './MarkAsDoneModal';
+import MarkAsDoneModal from './components/MarkAsDoneModal.jsx';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 

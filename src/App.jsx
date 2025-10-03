@@ -4,26 +4,26 @@ import { jwtDecode } from 'jwt-decode';
 import styles from './App.module.css';
 
 // Import all components
-import LoginPage from './components/LoginPage';
-import SignUpPage from './components/SignUpPage';
-import ChatGroupsPage from './components/ChatGroupsPage';
-import ChatWindow from './components/ChatWindow';
-import Navbar from './components/Navbar';
-import LivePage from './components/LivePage';
-import ReportIncidentPage from './components/ReportIncidentPage';
-import StandingsPage from './components/StandingsPage';
-import IncidentDetailPage from './components/IncidentDetailPage';
-import IncidentMediaPage from './components/IncidentMediaPage';
-import TeamAssignmentPage from './components/TeamAssignmentPage';
-import MyCasesPage from './components/MyCasesPage';
-import ProfilePage from './components/ProfilePage';
-import AdoptionsPage from './components/AdoptionsPage';
-import EventsPage from './components/EventsPage';
-import ApprovalsPage from './components/ApprovalsPage.jsx';
-import VolunteersPage from "./components/VolunteersPage.jsx";
-import VolunteerProfilePage from "./components/VolunteerProfilePage.jsx";
-import InventoryPage from "./components/InventoryPage.jsx";
-import FirstAidKitPage from "./components/FirstAidKitPage.jsx";
+import LoginPage from './pages/auth/LoginPage.jsx';
+import SignUpPage from './pages/auth/SignUpPage.jsx';
+import ChatGroupsPage from './pages/chat/ChatGroupsPage.jsx';
+import ChatWindow from './pages/chat/ChatWindow.jsx';
+import Navbar from './components/layout/Navbar.jsx';
+import LivePage from './pages/incident/LivePage.jsx';
+import ReportIncidentPage from './pages/incident/ReportIncidentPage.jsx';
+import StandingsPage from './pages/user/StandingsPage.jsx';
+import IncidentDetailPage from './pages/incident/IncidentDetailPage.jsx';
+import IncidentMediaPage from './pages/incident/IncidentMediaPage.jsx';
+import TeamAssignmentPage from './pages/incident/components/TeamAssignmentPage.jsx';
+import MyCasesPage from './pages/user/MyCasesPage.jsx';
+import ProfilePage from './pages/user/ProfilePage.jsx';
+import AdoptionsPage from './pages/static/AdoptionsPage.jsx';
+import EventsPage from './pages/static/EventsPage.jsx';
+import ApprovalsPage from './pages/admin/ApprovalsPage.jsx';
+import VolunteersPage from "./pages/user/VolunteersPage.jsx";
+import VolunteerProfilePage from "./pages/user/VolunteerProfilePage.jsx";
+import InventoryPage from "./pages/inventory/InventoryPage.jsx";
+import FirstAidKitPage from "./pages/inventory/FirstAidKitPage.jsx";
 
 
 // This component acts as a layout for all protected pages

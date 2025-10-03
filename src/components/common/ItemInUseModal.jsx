@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './ConfirmationModal.module.css'; // Reusing styles for consistency
+import styles from './ConfirmationModal.module.css';
 import { FaExclamationTriangle } from 'react-icons/fa';
 
 const ItemInUseModal = ({ info, onClose }) => {

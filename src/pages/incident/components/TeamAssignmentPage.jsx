@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import styles from './TeamAssignmentPage.module.css';
 import { FaArrowLeft, FaMotorcycle, FaMedkit, FaHeart, FaExclamationCircle, FaHistory } from 'react-icons/fa';
-import CustomSelect from './CustomSelect';
+import CustomSelect from '../../../components/common/CustomSelect.jsx';
 import AssignmentSuccessModal from "./AssignmentSuccessModal.jsx";
-import UnauthorizedModal from "./UnauthorizedModal.jsx";
+import UnauthorizedModal from "../../../components/common/UnauthorizedModal.jsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -152,7 +152,7 @@ const TeamAssignmentPage = ({ token, currentUser }) => {
                         <span>Back to Incident</span>
                     </Link>
                     <div className={styles.sortContainer}>
-                        <label htmlFor="sort-order">Sort By:</label>
+                        <label htmlFor="sort-order">     </label>
                         <CustomSelect
                             name="sortOrder"
                             options={sortOptions}

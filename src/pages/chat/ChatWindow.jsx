@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import WebSocketComponent from './WebSocketComponent';
-import ReactionsModal from './ReactionsModal';
-import ReactionPicker from './ReactionPicker';
-import ChatIncidentDetailModal from './ChatIncidentDetailModal';
+import useWebSocket from '../../hooks/useWebSocket.js';
+import ReactionsModal from './components/ReactionsModal.jsx';
+import ReactionPicker from './components/ReactionPicker.jsx';
+import ChatIncidentDetailModal from './components/ChatIncidentDetailModal.jsx';
 import styles from './ChatWindow.module.css';
 import { FaPaperPlane, FaInfoCircle, FaCheckDouble } from 'react-icons/fa';
 
@@ -127,7 +127,7 @@ const ChatWindow = ({ token, onLogout }) => {
     }, [messages]);
 
 
-    const { sendMessage } = WebSocketComponent({ onMessageReceived, token, chatId });
+    const { sendMessage } = useWebSocket({ onMessageReceived, token, chatId });
 
     useEffect(() => {
         const fetchChatData = async () => {

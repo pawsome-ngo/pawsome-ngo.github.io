@@ -1,8 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './MarkAsDoneModal.module.css';
-import { FaMapMarkerAlt, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaSpinner, FaExclamationTriangle, FaClipboard } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
+// A helper function for robust copying to clipboard
+const copyToClipboard = (text) => {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        return new Promise((res, rej) => {
+            document.execCommand('copy') ? res() : rej();
+            document.body.removeChild(textArea);
+        });
+    }
+};
 
 const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
     const [resolutionNotes, setResolutionNotes] = useState('');
@@ -10,8 +28,68 @@ const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
     const [mediaFiles, setMediaFiles] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState('');
+    const [isCopied, setIsCopied] = useState(false);
+    const [teamDetails, setTeamDetails] = useState(null);
 
     const isLocationMissing = incident.latitude === null;
+
+    useEffect(() => {
+        const fetchTeamDetails = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/incidents/${incident.id}/assignment/team`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setTeamDetails(data);
+                }
+            } catch (err) {
+                console.error("Could not fetch team details for modal.", err);
+            }
+        };
+
+        if (incident) {
+            fetchTeamDetails();
+        }
+    }, [incident, token]);
+
+
+    const handleCopyDetails = () => {
+        if (!resolutionNotes.trim()) {
+            setFeedback('Please write the resolution notes before copying.');
+            return;
+        }
+
+        const teamMembers = teamDetails?.teamMembers
+            ?.map(member => `- @${member.fullName}`)
+            .join('\n') || 'N/A';
+
+        const formattedDetails = `
+       ✅ CASE COMPLETED ✅
+
+🔹 Incident ID: ${incident.id}
+🐾 Animal: ${incident.animalType}
+📍 Location: ${incident.location}
+
+👥 Team: ${teamDetails?.teamName || 'N/A'}
+Members:
+${teamMembers}
+
+📝 Resolution Notes:
+${resolutionNotes}
+
+Team has successfully attended the issue. The case is now closed. 🙏
+        `.trim();
+
+        copyToClipboard(formattedDetails).then(() => {
+            setIsCopied(true);
+            setFeedback('Report copied to clipboard!');
+            setTimeout(() => setIsCopied(false), 2000);
+        }).catch(err => {
+            console.error('Failed to copy details: ', err);
+            setFeedback('Failed to copy details.');
+        });
+    };
 
     const handleGetLocation = () => {
         if (!navigator.geolocation) {
@@ -120,6 +198,9 @@ const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
 
                     <div className={styles.actions}>
                         <button type="button" onClick={onClose} className={styles.cancelButton} disabled={isSubmitting}>Cancel</button>
+                        <button type="button" onClick={handleCopyDetails} className={styles.copyButton} disabled={!resolutionNotes.trim() || !teamDetails}>
+                            <FaClipboard /> {isCopied ? 'Copied!' : 'Copy for Report'}
+                        </button>
                         <button type="submit" disabled={isSubmitting} className={styles.submitButton}>
                             {isSubmitting ? <FaSpinner className={styles.spinner} /> : 'Mark as Done'}
                         </button>
@@ -131,3 +212,4 @@ const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
 };
 
 export default MarkAsDoneModal;
+

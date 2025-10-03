@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import styles from './FirstAidKitPage.module.css';
 import { FaPlus, FaShoppingCart, FaCheck, FaTrash, FaSpinner, FaUserCircle, FaBoxes } from 'react-icons/fa';
-import CustomSelect from './CustomSelect';
-import ConfirmationModal from './ConfirmationModal';
+import CustomSelect from '../../components/common/CustomSelect.jsx';
+import ConfirmationModal from '../../components/common/ConfirmationModal.jsx';
 import { jwtDecode } from 'jwt-decode';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';

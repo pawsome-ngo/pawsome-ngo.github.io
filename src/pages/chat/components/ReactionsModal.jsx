@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './ChatWindow.module.css';
+import styles from '../ChatWindow.module.css';
 
 const ReactionsModal = ({ reactions, onClose }) => {
     if (!reactions) return null;

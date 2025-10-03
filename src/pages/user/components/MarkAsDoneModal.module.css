@@ -118,11 +118,11 @@
 
 .actions {
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem;
     margin-top: 1.5rem;
 }
 
-.cancelButton, .submitButton {
+.cancelButton, .submitButton, .copyButton {
     flex: 1;
     padding: 0.9rem;
     border-radius: 8px;
@@ -131,6 +131,10 @@
     cursor: pointer;
     border: none;
     transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .cancelButton {
@@ -149,7 +153,15 @@
     background-color: #27ae60;
 }
 
-.submitButton:disabled {
+.copyButton {
+    background-color: #3498db;
+    color: #fff;
+}
+.copyButton:hover {
+    background-color: #2980b9;
+}
+
+.submitButton:disabled, .copyButton:disabled {
     background-color: #95a5a6;
     cursor: not-allowed;
 }
@@ -158,56 +170,3 @@
     animation: spin 1s linear infinite;
 }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-/* --- New Audio Recorder Styles --- */
-.recorderContainer {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.recordButton {
-    padding: 0.8rem 1.2rem;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: background-color 0.3s;
-}
-
-.recordButton { background-color: #3498db; }
-.recordButton:hover { background-color: #2980b9; }
-.stopButton { background-color: #e74c3c; }
-.stopButton:hover { background-color: #c0392b; }
-
-.audioPlayerContainer {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    width: 100%;
-}
-
-.audioPlayerContainer audio {
-    flex-grow: 1;
-}
-
-.deleteButton {
-    background: none;
-    border: none;
-    color: #c0392b;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.deleteButton:hover {
-    background-color: #f1f1f1;
-}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import styles from './VolunteerProfilePage.module.css';
 import { FaTimes, FaSpinner, FaShieldAlt, FaUser, FaClock, FaPhone, FaArrowLeft, FaFirstAid, FaUserCircle } from 'react-icons/fa';
-import CustomSelect from './CustomSelect';
+import CustomSelect from '../../components/common/CustomSelect.jsx';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 

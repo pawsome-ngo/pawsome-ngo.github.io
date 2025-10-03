@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './AddItemModal.module.css';
 import { FaTimes } from 'react-icons/fa';
-import CustomSelect from './CustomSelect';
+import CustomSelect from './CustomSelect.jsx';
 
 const AddItemModal = ({ itemToEdit, categories, onClose, onSave }) => {
     const [item, setItem] = useState({

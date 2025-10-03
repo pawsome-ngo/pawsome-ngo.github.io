@@ -3,14 +3,36 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './IncidentDetailPage.module.css';
 import {
     FaArrowLeft, FaSpinner, FaCopy, FaHeart, FaRegHeart,
-    FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaImages, FaUsers, FaHistory, FaTrash, FaUndo
+    FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaImages, FaUsers, FaHistory, FaTrash, FaUndo, FaClipboard
 } from 'react-icons/fa';
 import { jwtDecode } from 'jwt-decode';
-import CloseIncidentModal from './CloseIncidentModal';
-import TeamDetailsModal from './TeamDetailsModal';
-import IncidentHistoryModal from './IncidentHistoryModal';
+import CloseIncidentModal from "../../components/common/CloseIncidentModal.jsx";
+import TeamDetailsModal from "./components/TeamDetailsModal.jsx";
+import IncidentHistoryModal from "./components/IncidentHistoryModal.jsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
+// A helper function for robust copying to clipboard
+const copyToClipboard = (text) => {
+    // Modern way: Clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    }
+    // Fallback for older browsers
+    else {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed'; // Avoid scrolling to bottom
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        return new Promise((res, rej) => {
+            document.execCommand('copy') ? res() : rej();
+            document.body.removeChild(textArea);
+        });
+    }
+};
+
 
 const ConfirmationModal = ({ onConfirm, onCancel, message, confirmText, cancelText }) => (
     <div className={styles.modalOverlay}>
@@ -33,6 +55,7 @@ const IncidentDetailPage = ({ token }) => {
     const [isUpdating, setIsUpdating] = useState(false);
     const [updateMessage, setUpdateMessage] = useState('');
     const [isCopied, setIsCopied] = useState(false);
+    const [isDetailsCopied, setIsDetailsCopied] = useState(false);
     const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
     const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
     const [teamDetails, setTeamDetails] = useState(null);
@@ -86,9 +109,72 @@ const IncidentDetailPage = ({ token }) => {
         }
     };
 
+    const fetchTeamDetails = async () => {
+        if (teamDetails) return teamDetails; // Return cached details if available
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}/assignment/team`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setTeamDetails(data);
+                return data;
+            } else {
+                throw new Error("Could not fetch team details.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert(err.message);
+            return null;
+        }
+    };
+
+
     useEffect(() => {
         fetchIncident();
     }, [token, incidentId, loggedInUser]);
+
+    const handleCopyDetails = async () => {
+        const currentTeamDetails = await fetchTeamDetails();
+        if (!incident || !currentTeamDetails) return;
+
+        const teamMembers = currentTeamDetails.teamMembers
+            .map(member => `- @${member.fullName}`)
+            .join('\n');
+
+        const formattedDetails = `
+🚨 RESCUE ALERT 🚨
+
+🔹 Incident ID: ${incident.id}
+🐾 Animal: ${incident.animalType}
+
+👤 Informer Details:
+  - Name: ${incident.informerName}
+  - Contact: ${incident.contactNumber}
+
+📍 Location:
+${incident.location}
+
+📝 Description:
+${incident.description}
+
+------------------------------------
+
+👥 Assigned Team: ${currentTeamDetails.teamName}
+Members:
+${teamMembers}
+
+Please coordinate and proceed to the location. Thank you! 🙏
+        `.trim();
+
+        copyToClipboard(formattedDetails).then(() => {
+            setIsDetailsCopied(true);
+            setTimeout(() => setIsDetailsCopied(false), 2000);
+        }).catch(err => {
+            console.error('Failed to copy details: ', err);
+            alert('Failed to copy details. Please try again.');
+        });
+    };
 
     const handleInterestToggle = async () => {
         setInterestLoading(true);
@@ -113,9 +199,12 @@ const IncidentDetailPage = ({ token }) => {
 
     const handleCopyContact = () => {
         if (incident?.contactNumber) {
-            navigator.clipboard.writeText(incident.contactNumber).then(() => {
+            copyToClipboard(incident.contactNumber).then(() => {
                 setIsCopied(true);
                 setTimeout(() => setIsCopied(false), 2000);
+            }).catch(err => {
+                console.error('Failed to copy contact: ', err);
+                alert('Failed to copy contact. Please try again.');
             });
         }
     };
@@ -223,21 +312,9 @@ const IncidentDetailPage = ({ token }) => {
     };
 
     const handleViewTeam = async () => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/incidents/${incident.id}/assignment/team`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setTeamDetails(data);
-                setIsTeamModalOpen(true);
-            } else {
-                throw new Error("Could not fetch team details.");
-            }
-        } catch (err) {
-            console.error(err);
-            alert(err.message);
+        const details = await fetchTeamDetails();
+        if (details) {
+            setIsTeamModalOpen(true);
         }
     };
 
@@ -425,7 +502,7 @@ const IncidentDetailPage = ({ token }) => {
                 )}
 
                 {incident.latitude && incident.longitude && (
-                    <a href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
+                    <a href={`https://maps.google.com/?q=${incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
                         <FaMapMarkerAlt />
                         <span>View on Map</span>
                     </a>
@@ -466,6 +543,10 @@ const IncidentDetailPage = ({ token }) => {
                         <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
                             <FaUsers />
                             <span>View Team</span>
+                        </button>
+                        <button onClick={handleCopyDetails} className={`${styles.actionButton} ${styles.copyDetailsButton}`}>
+                            <FaClipboard />
+                            <span>{isDetailsCopied ? 'Copied!' : 'Copy Details'}</span>
                         </button>
                         <Link
                             to={`/incident/${incident.id}/assign`}

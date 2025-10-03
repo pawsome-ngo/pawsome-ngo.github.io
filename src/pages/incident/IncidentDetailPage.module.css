@@ -208,6 +208,7 @@
 .closeButton { background: linear-gradient(45deg, #95a5a6, #7f8c8d); }
 .resolveButton { background: linear-gradient(45deg, #1abc9c, #16a085); }
 .viewTeamButton { background: linear-gradient(45deg, #34495e, #2c3e50); }
+.copyDetailsButton { background: linear-gradient(45deg, #8e44ad, #9b59b6); }
 
 
 .spinner {

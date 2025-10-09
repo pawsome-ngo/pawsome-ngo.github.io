@@ -155,7 +155,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
     const isTargetSuperAdmin = details.roles.includes('SUPER_ADMIN');
     const isTargetAdmin = details.roles.includes('ADMIN');
 
-    const canViewAdminControls = isSuperAdmin || (isAdmin && !isTargetAdmin && !isTargetSuperAdmin);
+    const canViewAdminControls = isSuperAdmin || isAdmin;
 
     const fullName = details?.firstName && details?.lastName ? `${details.firstName} ${details.lastName}` : 'Volunteer';
     const avatarLetter = fullName.charAt(0);
@@ -256,7 +256,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                             {allRoles.map(role => {
                                 const isDisabled =
                                     role === 'SUPER_ADMIN' ||
-                                    (!isSuperAdmin && (role === 'ADMIN' || role === 'INVENTORY_MANAGER'));
+                                    (!isSuperAdmin && (role === 'ADMIN' || isTargetSuperAdmin || role === 'INVENTORY_MANAGER'));
 
                                 return (
                                     <label key={role} className={`${styles.checkboxLabel} ${isDisabled ? styles.disabled : ''}`}>

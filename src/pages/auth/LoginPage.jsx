@@ -71,11 +71,11 @@ const LoginPage = ({ onLoginSuccess }) => {
                     {error && <p className={styles.errorMessage}>{error}</p>}
                     <button type="submit" className={styles.loginButton}>Log In</button>
                 </form>
-                {/*<div className={styles.signUpLink}>*/}
-                {/*    <p>*/}
-                {/*        Don't have an account? <Link to="/signup">Sign Up</Link>*/}
-                {/*    </p>*/}
-                {/*</div>*/}
+                <div className={styles.signUpLink}>
+                    <p>
+                        Don't have an account? <Link to="/signup">Sign Up</Link>
+                    </p>
+                </div>
             </div>
         </div>
     );

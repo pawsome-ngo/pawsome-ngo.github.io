@@ -74,14 +74,26 @@ const TeamAssignmentPage = ({ token, currentUser }) => {
     }, [token, incidentId]);
 
     const sortedVolunteers = useMemo(() => {
-        const sorted = [...volunteers];
-        if (sortOrder === 'proximity') {
-            sorted.sort((a, b) => (a.distanceFromIncident || Infinity) - (b.distanceFromIncident || Infinity));
-        } else if (sortOrder === 'experience') {
-            sorted.sort((a, b) => (experienceOrder[b.experienceLevel] || 0) - (experienceOrder[a.experienceLevel] || 0));
+        // Create a new array to avoid mutating the original state
+        const listToSort = [...volunteers];
+
+        // Apply sorting based on the selected order
+        switch (sortOrder) {
+            case 'proximity':
+                listToSort.sort((a, b) => (a.distanceFromIncident ?? Infinity) - (b.distanceFromIncident ?? Infinity));
+                break;
+            case 'experience':
+                listToSort.sort((a, b) => (experienceOrder[b.experienceLevel] || 0) - (experienceOrder[a.experienceLevel] || 0));
+                break;
+            case 'default':
+            default:
+                // For 'default', we use the pre-sorted list from the backend, so no extra sort is needed.
+                break;
         }
-        return sorted;
+
+        return listToSort;
     }, [volunteers, sortOrder]);
+
 
     const handleSelectVolunteer = (userId) => {
         const newSelection = new Set(selectedVolunteers);

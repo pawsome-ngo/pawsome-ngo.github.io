@@ -24,6 +24,8 @@ const ReportIncidentPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
+    const [formErrors, setFormErrors] = useState({});
+
 
     // State for audio recording
     const [isRecording, setIsRecording] = useState(false);
@@ -31,9 +33,24 @@ const ReportIncidentPage = () => {
     const mediaRecorder = useRef(null);
     const audioChunks = useRef([]);
 
+    const validatePhoneNumber = (number) => {
+        if (!/^\d{10}$/.test(number)) {
+            setFormErrors(prev => ({ ...prev, contactNumber: 'Phone number must be 10 digits.' }));
+        } else {
+            setFormErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.contactNumber;
+                return newErrors;
+            });
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prevState => ({ ...prevState, [name]: value }));
+        if (name === 'contactNumber') {
+            validatePhoneNumber(value);
+        }
     };
 
     const handleFileChange = (e) => {
@@ -98,6 +115,9 @@ const ReportIncidentPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (Object.keys(formErrors).length > 0) {
+            return;
+        }
         setIsSubmitting(true);
 
         const data = new FormData();
@@ -164,6 +184,7 @@ const ReportIncidentPage = () => {
                         <div className={styles.formGroup}>
                             <label htmlFor="contactNumber" className={styles.formLabel}>Contact Number</label>
                             <input type="tel" id="contactNumber" name="contactNumber" className={styles.formInput} value={formData.contactNumber} onChange={handleChange} required />
+                            {formErrors.contactNumber && <p className={styles.errorText}>{formErrors.contactNumber}</p>}
                         </div>
                         <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
                             <label htmlFor="location" className={styles.formLabel}>
@@ -205,23 +226,6 @@ const ReportIncidentPage = () => {
                             </label>
                         </div>
 
-                        {/*<div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>*/}
-                        {/*    <label className={styles.formLabel}>Record a Voice Note (Optional)</label>*/}
-                        {/*    <div className={styles.recorderContainer}>*/}
-                        {/*        {!isRecording && !audioURL && (*/}
-                        {/*            <button type="button" onClick={startRecording} className={styles.recordButton}>*/}
-                        {/*                <FaMicrophone /> Start Recording*/}
-                        {/*            </button>*/}
-                        {/*        )}*/}
-                        {/*        {isRecording && (*/}
-                        {/*            <button type="button" onClick={stopRecording} className={`${styles.recordButton} ${styles.stopButton}`}>*/}
-                        {/*                <FaStop /> Stop Recording*/}
-                        {/*            </button>*/}
-                        {/*        )}*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
-
-
                         {mediaFiles.length > 0 && (
                             <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
                                 <label className={styles.formLabel}>Files to Upload</label>
@@ -246,7 +250,7 @@ const ReportIncidentPage = () => {
                             {locationStatus && <p className={styles.locationStatus}>{locationStatus}</p>}
                         </div>
                     </div>
-                    <button type="submit" className={`${appStyles.btn} ${appStyles.btnEmergency} ${appStyles.btnFullWidth}`} disabled={isSubmitting}>
+                    <button type="submit" className={`${appStyles.btn} ${appStyles.btnEmergency} ${appStyles.btnFullWidth}`} disabled={isSubmitting || Object.keys(formErrors).length > 0}>
                         {isSubmitting ? <FaSpinner className={appStyles.spinner} /> : 'Submit Emergency Report'}
                     </button>
                 </form>

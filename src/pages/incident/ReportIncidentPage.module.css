@@ -192,3 +192,9 @@
         gap: 1.25rem;
     }
 }
+
+.errorText {
+    color: #e74c3c;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaSpinner } from 'react-icons/fa';
 import SignUpModal from '../../components/common/SignUpModal.jsx';
 import CustomSelect from '../../components/common/CustomSelect.jsx';
 import styles from './SignUpPage.module.css';
@@ -16,33 +16,62 @@ const SignUpPage = () => {
         phoneNumber: '',
         username: '',
         password: '',
+        address: '',
+        motivation: '',
         hasVehicle: 'No',
+        vehicleType: 'Bike',
+        canProvideShelter: 'No',
         hasMedicineBox: 'No',
         experienceLevel: 'Beginner',
+        latitude: null,
+        longitude: null,
     });
+    const [formErrors, setFormErrors] = useState({});
     const [modalContent, setModalContent] = useState({ isOpen: false, message: '', isError: false });
     const [apiError, setApiError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const validatePhoneNumber = (number) => {
+        if (!/^\d{10}$/.test(number)) {
+            setFormErrors(prev => ({ ...prev, phoneNumber: 'Phone number must be 10 digits.' }));
+        } else {
+            setFormErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.phoneNumber;
+                return newErrors;
+            });
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prevState => ({ ...prevState, [name]: value }));
+        if (name === 'phoneNumber') {
+            validatePhoneNumber(value);
+        }
     };
 
-    // New useEffect hook to pre-fill the username
     useEffect(() => {
-        if (formData.firstName) {
-            setFormData(prevState => ({ ...prevState, username: formData.firstName.toLowerCase() }));
+        if (formData.firstName && !formData.username) {
+            setFormData(prevState => ({ ...prevState, username: prevState.firstName.toLowerCase().trim() }));
         }
     }, [formData.firstName]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setApiError('');
+        if (Object.keys(formErrors).length > 0) {
+            setApiError('Please fix the errors before submitting.');
+            return;
+        }
 
+        setIsSubmitting(true);
         const payload = {
             ...formData,
             hasVehicle: formData.hasVehicle === 'Yes',
+            canProvideShelter: formData.canProvideShelter === 'Yes',
             hasMedicineBox: formData.hasMedicineBox === 'Yes',
+            vehicleType: formData.hasVehicle === 'Yes' ? formData.vehicleType : '',
         };
 
         try {
@@ -66,13 +95,15 @@ const SignUpPage = () => {
             }
         } catch (error) {
             setApiError('Could not connect to the server. Please check your connection and try again.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const closeModal = () => {
         setModalContent({ isOpen: false, message: '', isError: false });
         if (!modalContent.isError) {
-            navigate('/');
+            navigate('/login');
         }
     };
 
@@ -83,13 +114,19 @@ const SignUpPage = () => {
         { value: 'Advanced', label: 'Advanced' },
         { value: 'Expert', label: 'Expert' }
     ];
+    const vehicleTypeOptions = [
+        { value: 'Bike', label: 'Bike' },
+        { value: 'Scooty', label: 'Scooty' },
+        { value: 'Car', label: 'Car' },
+        { value: 'Other', label: 'Other' },
+    ];
 
     return (
         <>
             <div className={styles.formContainer}>
-                <Link to="/" className={styles.backLink}>
+                <Link to="/login" className={styles.backLink}>
                     <FaArrowLeft />
-                    <span>Back to Home</span>
+                    <span>Back to Login</span>
                 </Link>
 
                 <div className={styles.formHeader}>
@@ -109,6 +146,7 @@ const SignUpPage = () => {
                         <div className={styles.formGroup}>
                             <label htmlFor="phoneNumber" className={styles.formLabel}>Phone Number</label>
                             <input type="tel" id="phoneNumber" name="phoneNumber" className={styles.formInput} value={formData.phoneNumber} onChange={handleChange} required />
+                            {formErrors.phoneNumber && <p className={styles.errorText}>{formErrors.phoneNumber}</p>}
                         </div>
                         <div className={styles.formGroup}>
                             <label htmlFor="username" className={styles.formLabel}>Username</label>
@@ -118,6 +156,14 @@ const SignUpPage = () => {
                             <label htmlFor="password" className={styles.formLabel}>Create a Password</label>
                             <input type="password" id="password" name="password" className={styles.formInput} value={formData.password} onChange={handleChange} required />
                         </div>
+                        <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
+                            <label htmlFor="address" className={styles.formLabel}>Address</label>
+                            <input type="text" id="address" name="address" className={styles.formInput} value={formData.address} onChange={handleChange} />
+                        </div>
+                        <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
+                            <label htmlFor="motivation" className={styles.formLabel}>Why do you want to join us?</label>
+                            <textarea id="motivation" name="motivation" className={styles.formTextarea} value={formData.motivation} onChange={handleChange}></textarea>
+                        </div>
                         <div className={styles.formGroup}>
                             <label htmlFor="experienceLevel" className={styles.formLabel}>Experience Level</label>
                             <CustomSelect name="experienceLevel" options={experienceOptions} value={formData.experienceLevel} onChange={handleChange} />
@@ -126,13 +172,25 @@ const SignUpPage = () => {
                             <label htmlFor="hasVehicle" className={styles.formLabel}>Do you have a vehicle?</label>
                             <CustomSelect name="hasVehicle" options={yesNoOptions} value={formData.hasVehicle} onChange={handleChange} />
                         </div>
+                        {formData.hasVehicle === 'Yes' && (
+                            <div className={styles.formGroup}>
+                                <label htmlFor="vehicleType" className={styles.formLabel}>Vehicle Type</label>
+                                <CustomSelect name="vehicleType" options={vehicleTypeOptions} value={formData.vehicleType} onChange={handleChange} />
+                            </div>
+                        )}
+                        <div className={styles.formGroup}>
+                            <label htmlFor="canProvideShelter" className={styles.formLabel}>Can you provide shelter?</label>
+                            <CustomSelect name="canProvideShelter" options={yesNoOptions} value={formData.canProvideShelter} onChange={handleChange} />
+                        </div>
                         <div className={styles.formGroup}>
                             <label htmlFor="hasMedicineBox" className={styles.formLabel}>Do you have a First-Aid Kit?</label>
                             <CustomSelect name="hasMedicineBox" options={yesNoOptions} value={formData.hasMedicineBox} onChange={handleChange} />
                         </div>
                     </div>
                     {apiError && <p className={styles.apiError}>{apiError}</p>}
-                    <button type="submit" className={`${appStyles.btn} ${appStyles.btnPrimary} ${appStyles.btnFullWidth}`}>Sign Up</button>
+                    <button type="submit" className={`${appStyles.btn} ${appStyles.btnPrimary} ${appStyles.btnFullWidth}`} disabled={isSubmitting || Object.keys(formErrors).length > 0}>
+                        {isSubmitting ? <FaSpinner className={appStyles.spinner} /> : 'Sign Up'}
+                    </button>
                 </form>
             </div>
 

@@ -502,17 +502,18 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 )}
 
                 {incident.latitude && incident.longitude && (
-                    <a href={`https://maps.google.com/?q=${incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
+                    <a href={`http://googleusercontent.com/maps/google.com/1{incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
                         <FaMapMarkerAlt />
                         <span>View on Map</span>
                     </a>
                 )}
 
-                {!incident.latitude && !incident.longitude && incident.status !== 'CLOSED' && incident.status !== 'RESOLVED' && (
-                    <button onClick={handleUpdateLocation} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
-                        {isUpdating ? <FaSpinner className={styles.spinner} /> : 'Update Location'}
-                    </button>
-                )}
+                {!incident.latitude && !incident.longitude &&
+                    (incident.status === 'REPORTED' || incident.status === 'ASSIGNED' || incident.status === 'IN_PROGRESS' || incident.status === 'ONGOING') && (
+                        <button onClick={handleUpdateLocation} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
+                            {isUpdating ? <FaSpinner className={styles.spinner} /> : 'Update Location'}
+                        </button>
+                    )}
 
 
                 {updateMessage && <p className={styles.updateMessage}>{updateMessage}</p>}

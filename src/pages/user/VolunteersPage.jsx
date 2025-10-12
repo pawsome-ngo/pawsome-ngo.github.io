@@ -52,7 +52,7 @@ const VolunteersPage = ({ token, currentUser }) => {
                             </div>
                             <div className={styles.userInfo}>
                                 <h3>{user.fullName}</h3>
-                                <p className={styles.positionTag}>{(user.position || 'MEMBER').replace('_', ' ')}</p>
+                                <p className={styles.positionTag}>{(user.position || 'MEMBER').replace(/_/g, ' ')}</p>
                             </div>
                         </div>
                     ))}

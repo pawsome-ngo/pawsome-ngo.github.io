@@ -14,7 +14,11 @@ export default defineConfig({
         name: 'Pawsome NGO Chat',
         short_name: 'Pawsome Chat',
         description: 'Chat application for Pawsome NGO',
-        theme_color: '#fc5c7d', // UPDATED: Consistent vibrant red
+        theme_color: '#fc5c7d',
+
+        // ✨ FIX: Added background_color to match the theme_color
+        background_color: '#fc5c7d',
+
         icons: [
           {
             src: 'pwa-192x192.png',

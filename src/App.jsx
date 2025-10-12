@@ -11,7 +11,7 @@ import ChatWindow from './pages/chat/ChatWindow.jsx';
 import Navbar from './components/layout/Navbar.jsx';
 import LivePage from './pages/incident/LivePage.jsx';
 import ReportIncidentPage from './pages/incident/ReportIncidentPage.jsx';
-import StandingsPage from './pages/user/StandingsPage.jsx';
+import LeaderboardPage from './pages/user/LeaderboardPage.jsx';
 import IncidentDetailPage from './pages/incident/IncidentDetailPage.jsx';
 import IncidentMediaPage from './pages/incident/IncidentMediaPage.jsx';
 import TeamAssignmentPage from './pages/incident/components/TeamAssignmentPage.jsx';
@@ -24,7 +24,6 @@ import VolunteersPage from "./pages/user/VolunteersPage.jsx";
 import VolunteerProfilePage from "./pages/user/VolunteerProfilePage.jsx";
 import InventoryPage from "./pages/inventory/InventoryPage.jsx";
 import FirstAidKitPage from "./pages/inventory/FirstAidKitPage.jsx";
-
 
 // This component acts as a layout for all protected pages
 const ProtectedLayout = ({ user, onLogout }) => {
@@ -96,7 +95,7 @@ const App = () => {
                     <Route path="/incident/:incidentId/media" element={<IncidentMediaPage />} />
                     <Route path="/incident/:incidentId/assign" element={<TeamAssignmentPage token={token} currentUser={user} />} />
                     <Route path="/report" element={<ReportIncidentPage />} />
-                    <Route path="/standings" element={<StandingsPage token={token} />} />
+                    <Route path="/leaderboard" element={<LeaderboardPage token={token} />} />
                     <Route path="/adoptions" element={<AdoptionsPage />} />
                     <Route path="/events" element={<EventsPage />} />
                     <Route path="/volunteers" element={<VolunteersPage token={token} currentUser={user} />} />

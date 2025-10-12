@@ -4,12 +4,19 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
-    /* ✨ IDEA: A fresh, clean background */
-    background-color: #ffffff;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    /* ✨ UPDATED: Solid background by default */
+    background-color: #fc5c7d;
+    color: white;
+    box-shadow: 0 0px 0px rgba(0, 0, 0, 0.0);
     position: sticky;
     top: 0;
     z-index: 1000;
+    transition: background-color 0.4s ease; /* Smooth transition */
+}
+
+/* ✨ NEW: Style for when the header is open on mobile */
+.headerOpen {
+    background: linear-gradient(45deg, #fc5c7d, #e74c3c);
 }
 
 /* --- Logo Styles --- */
@@ -27,17 +34,15 @@
 .logoIcon {
     font-size: 2.2rem;
     margin-right: 0.75rem;
-    background: linear-gradient(45deg, #800000, #c0392b);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: white; /* UPDATED: White icon */
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
 }
 
 .logoText {
     font-size: 1.6rem;
     font-weight: 700;
-    background: linear-gradient(45deg, #800000, #c0392b);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: white; /* UPDATED: White text */
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
 }
 
 
@@ -51,8 +56,7 @@
 .navLink {
     padding: 0.5rem 0;
     text-decoration: none;
-    /* ✨ IDEA: Softer font color */
-    color: #4a5568; /* Slate Gray */
+    color: rgba(255, 255, 255, 0.85); /* UPDATED: Slightly transparent white */
     font-weight: 600;
     position: relative;
     transition: color 0.3s ease;
@@ -65,13 +69,13 @@
     left: 0;
     width: 0;
     height: 3px;
-    background: linear-gradient(90deg, #6a82fb, #fc5c7d);
+    background: white; /* UPDATED: White underline */
     border-radius: 2px;
     transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .navLink:hover {
-    color: #2c3e50;
+    color: white; /* UPDATED: Fully opaque on hover */
 }
 
 .navLink:hover:after,
@@ -80,7 +84,7 @@
 }
 
 .activeLink {
-    color: #6a82fb;
+    color: white; /* UPDATED: Active link is fully white */
 }
 
 /* --- Logout Button --- */
@@ -90,7 +94,7 @@
     gap: 0.5rem;
     background: transparent;
     border: none;
-    color: #4a5568;
+    color: rgba(255, 255, 255, 0.85); /* UPDATED: Slightly transparent white */
     padding: 0.6rem 1.2rem;
     border-radius: 8px;
     font-family: inherit;
@@ -102,8 +106,8 @@
 }
 
 .logoutButton:hover {
-    background-color: #fce8ec;
-    color: #fc5c7d;
+    background-color: rgba(255, 255, 255, 0.15); /* UPDATED: Subtle hover effect */
+    color: white;
 }
 
 /* --- Mobile & Responsive Styles --- */
@@ -112,7 +116,6 @@
         padding: 1rem 1.5rem;
     }
 
-    /* ✨ IDEA: A stunning gradient background for the mobile menu */
     .nav {
         position: fixed;
         top: 0;
@@ -124,11 +127,12 @@
         align-items: stretch; /* Stretch items to fill width */
         padding: 6rem 0; /* Padding top/bottom, zero left/right */
         gap: 0; /* Remove gap to use dividers */
-        background: linear-gradient(180deg, #fdfbfb 0%, #ebedee 100%);
+        /* UPDATED: Mobile menu now has the red gradient too */
+        background: linear-gradient(180deg, #fc5c7d, #e74c3c);
         transform: translateX(100%);
         transition: transform 0.4s cubic-bezier(0.86, 0, 0.07, 1);
         z-index: 1001;
-        overflow-y: auto; /* ✨ IDEA: Allow scrolling for many options */
+        overflow-y: auto;
         box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
     }
 
@@ -159,27 +163,25 @@
         width: 100%;
         font-size: 1.2rem;
         padding: 1.2rem 2.5rem; /* More spacious padding */
-        /* ✨ IDEA: Added a subtle horizontal line between items */
-        border-bottom: 1px solid #dce0e6;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* UPDATED: Divider color */
         opacity: 0;
         transform: translateX(-20px);
         animation: slideIn 0.5s forwards;
-        color: #3f4c6b; /* Darker blue-gray for readability */
+        color: rgba(255, 255, 255, 0.9); /* UPDATED: Mobile link color */
     }
 
     .navLink:first-of-type {
-        border-top: 1px solid #dce0e6;
+        border-top: 1px solid rgba(255, 255, 255, 0.2); /* UPDATED: Divider color */
     }
 
-    /* ✨ IDEA: Clearer active link style for mobile */
     .activeLink {
-        color: #6a82fb;
-        background-color: rgba(106, 130, 251, 0.08);
+        color: white;
+        background-color: rgba(0, 0, 0, 0.15); /* UPDATED: Active link background */
         font-weight: 700;
     }
 
     .navLink:hover {
-        background-color: rgba(106, 130, 251, 0.05);
+        background-color: rgba(0, 0, 0, 0.1); /* UPDATED: Hover background */
     }
 
     .logoutButton {
@@ -187,8 +189,8 @@
         font-size: 1.2rem;
         margin: 2rem auto 0; /* Center the button */
         padding: 0.8rem 2.5rem;
-        background: #fce8ec;
-        color: #fc5c7d;
+        background: rgba(0, 0, 0, 0.2); /* UPDATED: Logout button background */
+        color: white;
         border-radius: 50px;
         opacity: 0;
         transform: translateX(-20px);
@@ -197,9 +199,8 @@
 
     .logoutButton:hover {
         transform: scale(1.05);
-        box-shadow: 0 4px 20px rgba(252, 92, 125, 0.3);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
-
 
     /* Staggered animation for menu items */
     .navOpen .navLink:nth-child(1) { animation-delay: 0.1s; }
@@ -237,7 +238,7 @@
     .hamburgerLine {
         width: 2rem;
         height: 3px;
-        background: #2c3e50; /* Match logo text color */
+        background: white; /* UPDATED: Hamburger color */
         border-radius: 10px;
         transition: all 0.3s linear;
         position: relative;

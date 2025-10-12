@@ -1,21 +1,24 @@
+/* --- Base Container & Utilities --- */
 .container {
     max-width: 700px;
     margin: 0 auto;
-    padding: 2rem 1.5rem 4rem; /* Added more bottom padding */
-    background: linear-gradient(to bottom, #fdfbfb, #ebedee); /* Subtle page background gradient */
-    min-height: 100%;
+    padding: 0; /* Remove padding here, handled by sections */
+    background: #f0f2f5; /* Light background for the main content area */
+    min-height: 100vh; /* Ensure it fills the viewport */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
 .centered {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 4rem;
+    height: 100vh; /* Full viewport height for spinner/error */
+    width: 100%;
 }
 
 .spinner {
-    font-size: 2rem;
-    color: #6a82fb;
+    font-size: 3rem;
+    color: #fc5c7d; /* Theme color */
     animation: spin 1s linear infinite;
 }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -24,62 +27,114 @@
     color: #e74c3c;
     text-align: center;
     padding: 2rem;
-    background: #fff;
-    border-radius: 16px;
+    background-color: #ffebee; /* Light background for error */
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
-.profileHeader {
+/* --- ✨ NEW Header Section (Top Gradient Bar) --- */
+.topHeaderBackground {
+    background: linear-gradient(45deg, #fc5c7d, #fc5c7d); /* Our theme's vibrant gradient */
+    padding-top: 2rem;
+    padding-bottom: 70px; /* Space for the avatar to overlap */
+    position: relative;
     text-align: center;
-    margin-bottom: 2.5rem;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.0);
+}
+
+.motto {
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+    margin-bottom: 2rem;
+    font-weight: 300;
+}
+
+/* --- Avatar & Profile Info --- */
+.avatarContainer {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background-color: white; /* White ring around the avatar */
+    padding: 5px;
+    position: absolute;
+    bottom: -65px; /* Half of height to center it on the boundary */
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    z-index: 10; /* Ensure avatar is above other content */
+}
+
+.avatarContainer:hover {
+    transform: translateX(-50%) scale(1.05);
 }
 
 .avatar {
-    width: 100px;
-    height: 100px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
-    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
-    color: white;
-    font-size: 3rem;
-    font-weight: 600;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0 auto 1rem;
-    box-shadow: 0 10px 20px rgba(106, 130, 251, 0.3);
+    overflow: hidden;
+    /* The Avatar component handles inner styles like font size */
 }
 
-.profileHeader h1 {
+.profileInfo {
+    text-align: center;
+    padding: 6rem 1.5rem 1.5rem; /* Space for avatar below header */
+    background-color: white; /* White background for name/username */
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.profileInfo h1 {
     margin: 0;
-    font-size: 2rem;
-    color: #2c3e50;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #333;
 }
 
-.profileHeader p {
-    margin: 0.25rem 0 0 0;
-    color: #7f8c8d;
-    font-size: 1.1rem;
+.profileInfo p {
+    margin: 0.5rem 0 0;
+    color: #777;
+    font-size: 1rem;
 }
 
+/* --- ✨ NEW Card Styles (White, Raised) --- */
 .card {
     background: white;
-    border-radius: 16px;
+    border-radius: 15px;
     padding: 1.5rem 2rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    margin: 0 1.5rem 1.5rem; /* Horizontal padding from container */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Soft shadow */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .card h2 {
-    margin: 0 0 1.5rem 0;
-    font-size: 1.2rem;
-    color: #34495e;
+    margin: 0 0 1.2rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #555;
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
 }
 
+/* --- Stats Grid --- */
 .statsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 1rem;
     text-align: center;
 }
@@ -87,37 +142,48 @@
 .statItem span {
     font-size: 2rem;
     font-weight: 700;
+    display: block;
+    margin-bottom: 0.25rem;
 }
 
 .gradientText {
-    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
+    background: linear-gradient(45deg, #fc5c7d, #e74c3c); /* Main theme gradient */
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .statItem p {
-    margin: 0.25rem 0 0 0;
-    color: #7f8c8d;
+    margin: 0;
+    color: #888;
     font-size: 0.9rem;
 }
 
+/* --- Setting Sections (Availability, Location, etc.) --- */
 .settingSection {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 0.5rem 0;
 }
+
 .settingSection h2 {
+    border-bottom: none; /* Remove border for these sections */
+    padding-bottom: 0;
     margin: 0;
+    color: #333; /* Darker for main settings */
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: normal;
 }
 
 .toggleButton {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
@@ -125,32 +191,35 @@
     font-size: 2.5rem;
 }
 
-.toggleOn { color: #2ecc71; }
-.toggleOff { color: #bdc3c7; }
+.toggleOn { color: #2ecc71; } /* Green */
+.toggleOff { color: #ccc; } /* Light gray */
 .statusOn { color: #2ecc71; }
-.statusOff { color: #7f8c8d; }
+.statusOff { color: #888; }
 
 .actionButton {
-    padding: 0.6rem 1.2rem;
-    background: #ecf0f1;
-    color: #34495e;
+    padding: 0.8rem 1.5rem;
+    background: linear-gradient(45deg, #fc5c7d, #e74c3c); /* Theme gradient for buttons */
+    color: white;
     border: none;
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    transition: background-color 0.2s;
-    text-decoration: none;
+    transition: opacity 0.2s, transform 0.2s;
+    text-decoration: none; /* For Link component */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 .actionButton:hover {
-    background: #e0e6e8;
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 .actionButton:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 .spinnerIcon {
@@ -166,19 +235,11 @@
     border-radius: 8px;
     font-weight: 500;
     font-size: 0.9rem;
+    color: #333;
 }
-.message.success {
-    background-color: #eafaf1;
-    color: #2ecc71;
-}
-.message.error {
-    background-color: #fbeae5;
-    color: #e74c3c;
-}
-.message.info {
-    background-color: #eaf4ff;
-    color: #3498db;
-}
+.message.success { background-color: #d4edda; border: 1px solid #2ecc71; color: #155724; }
+.message.error { background-color: #f8d7da; border: 1px solid #e74c3c; color: #721c24; }
+.message.info { background-color: #d1ecf1; border: 1px solid #3498db; color: #0c5460; }
 
 .manageKitContainer {
     margin-top: 1.5rem;

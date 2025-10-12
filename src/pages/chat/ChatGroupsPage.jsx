@@ -18,7 +18,7 @@ const ChatGroupsPage = ({ token, onLogout }) => {
     const [chatGroups, setChatGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [username, setUsername] = useState('');
+    const [firstName, setFirstName] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -27,7 +27,7 @@ const ChatGroupsPage = ({ token, onLogout }) => {
 
             try {
                 const decodedToken = jwtDecode(token);
-                setUsername(decodedToken.sub);
+                setFirstName(decodedToken.firstName);
 
                 const response = await fetch(`${API_BASE_URL}/api/chat/groups`, {
                     headers: { 'Authorization': `Bearer ${token}` },
@@ -62,7 +62,7 @@ const ChatGroupsPage = ({ token, onLogout }) => {
     return (
         <div className={styles.container}>
             <header className={styles.pageHeader}>
-                <h1>Hello, {username}!</h1>
+                <h1>Hello, {firstName}!</h1>
                 <p>Your active case conversations are listed below.</p>
             </header>
 

@@ -12,14 +12,17 @@
 
 .spinner {
     font-size: 2.5rem;
-    color: #6a82fb;
+    color: #fc5c7d;
     animation: spin 1s linear infinite;
 }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 .error {
-    color: #e74c3c;
+    color: #ffb8b8;
     text-align: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
 }
 
 .header {
@@ -27,18 +30,18 @@
     margin-bottom: 2.5rem;
 }
 
+/* --- ✨ FIX: Readable and Elegant Header Title --- */
 .header h1 {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
     font-weight: 700;
     margin: 0;
-    background: linear-gradient(45deg, #6a82fb, #fc5c7d);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #ffffff; /* Solid white for maximum readability */
+    text-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
 .header p {
     font-size: 1.1rem;
-    color: #7f8c8d;
+    color: rgba(255, 255, 255, 0.8);
     margin-top: 0.5rem;
 }
 
@@ -48,44 +51,71 @@
     gap: 1.5rem;
 }
 
+/* --- ✨ NEW: Vibrant and Elegant Card Styles --- */
 .userCard {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.07);
+    border-radius: 18px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
-    padding: 1rem 1.5rem;
+    padding: 1.25rem;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
 }
 
 .userCard:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
 .statusIndicator {
-    font-size: 1.5rem;
-    padding-right: 1rem;
-    margin-right: 1rem;
-    border-right: 1px solid #eee;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 1.2rem;
+    z-index: 2;
 }
 
 .statusIndicator.available { color: #2ecc71; }
 .statusIndicator.unavailable { color: #f39c12; }
 
+.cardContent {
+    display: flex;
+    align-items: center;
+    gap: 1rem; /* ✨ This creates the space between the icon and the text */
+}
+
+/* Find and replace this class in VolunteersPage.module.css */
+
+.profilePlaceholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.1);
+    display: flex; /* This remains useful for alignment */
+    justify-content: center;
+    align-items: center;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    flex-shrink: 0;
+    /* Removed font-size and color, as the Avatar component handles its own styling */
+}
 
 .userInfo {
     flex-grow: 1;
 }
+
+/* --- ✨ FIX: Readable Text on Cards --- */
 .userInfo h3 {
     margin: 0 0 0.25rem 0;
-    color: #34495e;
+    color: #34495e; /* Dark, readable color for the name */
+    font-size: 1.2rem;
+    font-weight: 700;
 }
 .userInfo p {
     margin: 0;
     font-size: 0.9rem;
-    color: #7f8c8d;
+    color: #7f8c8d; /* Dark gray for the position */
 }
 
 .positionTag {

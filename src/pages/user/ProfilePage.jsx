@@ -2,14 +2,28 @@ import React, { useState, useEffect } from 'react';
 import styles from './ProfilePage.module.css';
 import { FaUser, FaShieldAlt, FaToggleOn, FaToggleOff, FaSpinner, FaCheckCircle, FaExclamationCircle, FaMapMarkerAlt, FaFirstAid } from 'react-icons/fa';
 import UpdatePasswordModal from '../../components/common/UpdatePasswordModal.jsx';
+import Lightbox from '../../components/common/Lightbox.jsx';
+import Avatar from '../../components/common/Avatar.jsx';
 import { Link } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const avatarModules = import.meta.glob('/src/assets/avatars/*');
+
+const getAvatarSrc = async (userId) => {
+    for (const path in avatarModules) {
+        if (path.includes(`/avatars/${userId}.`)) {
+            const mod = await avatarModules[path]();
+            return mod.default;
+        }
+    }
+    return null;
+};
 
 const ProfilePage = ({ token }) => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [lightboxSrc, setLightboxSrc] = useState(null);
 
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
@@ -36,20 +50,25 @@ const ProfilePage = ({ token }) => {
         }
     }, [token]);
 
+    const handleAvatarClick = async () => {
+        if (profile) {
+            const src = await getAvatarSrc(profile.id);
+            if (src) {
+                setLightboxSrc(src);
+            }
+        }
+    };
+
     const handleAvailabilityToggle = async () => {
         const newStatus = profile.availabilityStatus === 'Available' ? 'Unavailable' : 'Available';
         try {
-            setProfile({ ...profile, availabilityStatus: newStatus }); // Optimistic UI update
+            setProfile({ ...profile, availabilityStatus: newStatus });
             await fetch(`${API_BASE_URL}/api/profile/availability`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ availabilityStatus: newStatus }),
             });
         } catch (err) {
-            // Revert on error
             setProfile({ ...profile, availabilityStatus: profile.availabilityStatus });
             alert('Failed to update availability. Please try again.');
         }
@@ -58,17 +77,13 @@ const ProfilePage = ({ token }) => {
     const handleMedicineBoxToggle = async () => {
         const newStatus = !profile.hasMedicineBox;
         try {
-            setProfile({ ...profile, hasMedicineBox: newStatus }); // Optimistic UI update
+            setProfile({ ...profile, hasMedicineBox: newStatus });
             await fetch(`${API_BASE_URL}/api/profile/medicine-box`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ hasMedicineBox: newStatus }),
             });
         } catch (err) {
-            // Revert on error
             setProfile({ ...profile, hasMedicineBox: profile.hasMedicineBox });
             alert('Failed to update first-aid kit status. Please try again.');
         }
@@ -90,10 +105,7 @@ const ProfilePage = ({ token }) => {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/profile/location`, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ latitude, longitude }),
                 });
 
@@ -111,16 +123,24 @@ const ProfilePage = ({ token }) => {
         });
     };
 
-    if (loading) return <div className={styles.container}><div className={styles.centered}><FaSpinner className={styles.spinner} /></div></div>;
-    if (error) return <div className={styles.container}><p className={styles.error}>{error}</p></div>;
+    if (loading) return <div className={styles.centered}><FaSpinner className={styles.spinner} /></div>;
+    if (error) return <div className={styles.centered}><p className={styles.error}>{error}</p></div>;
+    if (!profile) return null;
 
     return (
         <>
             <div className={styles.container}>
-                <div className={styles.profileHeader}>
-                    <div className={styles.avatar}>
-                        {profile.firstName.charAt(0)}
+                <div className={styles.topHeaderBackground}>
+                    <div className={styles.avatarContainer} onClick={handleAvatarClick}>
+                        <Avatar
+                            userId={profile.id}
+                            name={profile.firstName}
+                            className={styles.avatar}
+                        />
                     </div>
+                </div>
+
+                <div className={styles.profileInfo}>
                     <h1>{profile.firstName} {profile.lastName}</h1>
                     <p>@{profile.username}</p>
                 </div>
@@ -202,6 +222,7 @@ const ProfilePage = ({ token }) => {
                     onClose={() => setIsPasswordModalOpen(false)}
                 />
             )}
+            <Lightbox src={lightboxSrc} alt="Profile Picture" onClose={() => setLightboxSrc(null)} />
         </>
     );
 };

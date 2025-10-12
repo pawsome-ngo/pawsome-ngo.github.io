@@ -31,7 +31,7 @@ const Navbar = ({ user, onLogout }) => {
     };
 
     return (
-        <header className={styles.header}>
+        <header className={`${styles.header} ${isMenuOpen ? styles.headerOpen : ''}`}>
             <div className={styles.logoContainer}>
                 <NavLink to="/chat" className={styles.logoLink} onClick={closeMenu}>
                     <FaPaw className={styles.logoIcon} />
@@ -49,7 +49,7 @@ const Navbar = ({ user, onLogout }) => {
                 <NavLink to="/live" className={getNavLinkClass} onClick={closeMenu}>Live</NavLink>
                 <NavLink to="/my-cases" className={getNavLinkClass} onClick={closeMenu}>My Cases</NavLink>
                 <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>Report</NavLink>
-                <NavLink to="/standings" className={getNavLinkClass} onClick={closeMenu}>Standings</NavLink>
+                <NavLink to="/leaderboard" className={getNavLinkClass} onClick={closeMenu}>Leaderboard</NavLink>
                 <NavLink to="/volunteers" className={getNavLinkClass} onClick={closeMenu}>Volunteers</NavLink>
                 <NavLink to="/adoptions" className={getNavLinkClass} onClick={closeMenu}>Adoptions</NavLink>
                 <NavLink to="/events" className={getNavLinkClass} onClick={closeMenu}>Events</NavLink>

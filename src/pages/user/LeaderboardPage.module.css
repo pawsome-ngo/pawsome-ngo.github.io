@@ -1,0 +1,214 @@
+.container {
+    background-color: #f7f8fc;
+    min-height: 100vh;
+}
+
+.centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 5px solid rgba(0, 0, 0, 0.1);
+    border-top-color: #fe5196;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error {
+    color: #d32f2f;
+    font-size: 1.1rem;
+    padding: 1rem;
+}
+
+.topSection {
+    position: relative;
+    padding-bottom: 50px;
+    background: linear-gradient(135deg, #f77062 0%, #fe5196 100%);
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
+}
+
+.header {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.header h1 {
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.podium {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 0.5rem;
+    padding: 0 1rem;
+}
+
+.podiumUser {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 110px;
+    cursor: pointer;
+}
+
+.podiumAvatarWrapper {
+    position: relative;
+    border-radius: 50%;
+    padding: 4px;
+    background-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.2s ease-out;
+}
+
+.podiumAvatarWrapper:hover {
+    transform: scale(1.05);
+}
+
+.podiumAvatar {
+    border: 3px solid #fff;
+}
+
+.podiumRank {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(2px);
+    background: white;
+    color: #333;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    z-index: 5;
+}
+
+.podiumName {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0.25rem 0;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* --- ✨ Podium Points Bubble Style ✨ --- */
+.podiumPoints {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem; /* Added space for the bubble */
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.25); /* Made it slightly more opaque */
+    padding: 0.3rem 0.8rem; /* Added padding */
+    border-radius: 12px; /* Rounded corners */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle border to make it stand out */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.firstPlace {
+    order: 2;
+    transform: translateY(-20px);
+}
+.secondPlace { order: 1; }
+.thirdPlace { order: 3; }
+
+.firstPlace .podiumAvatarWrapper {
+    width: 90px;
+    height: 90px;
+}
+
+.secondPlace .podiumAvatarWrapper,
+.thirdPlace .podiumAvatarWrapper {
+    width: 75px;
+    height: 75px;
+    margin-bottom: 1rem;
+}
+
+.crownIcon {
+    color: #FFD700;
+    font-size: 1.8rem;
+    margin-bottom: 0.25rem;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+}
+
+.leaderboardList {
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.userRow {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.userRow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.rank {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #8a94a6;
+    width: 30px;
+    text-align: left;
+}
+
+.listAvatarWrapper {
+    width: 45px;
+    height: 45px;
+    margin: 0 1rem;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: transform 0.2s ease-out;
+}
+
+.listAvatarWrapper:hover {
+    transform: scale(1.1);
+}
+
+.userName {
+    font-weight: 600;
+    color: #333d4f;
+    flex-grow: 1;
+}
+
+.points {
+    font-weight: 700;
+    color: #fff;
+    background-color: #fe5196;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 16px;
+    min-width: 80px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(254, 81, 150, 0.2);
+}

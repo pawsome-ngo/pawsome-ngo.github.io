@@ -502,7 +502,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 )}
 
                 {incident.latitude && incident.longitude && (
-                    <a href={`http://googleusercontent.com/maps/google.com/1{incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
                         <FaMapMarkerAlt />
                         <span>View on Map</span>
                     </a>

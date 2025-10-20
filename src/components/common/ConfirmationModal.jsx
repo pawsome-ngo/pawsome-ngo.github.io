@@ -1,14 +1,19 @@
 import React from 'react';
 import styles from './ConfirmationModal.module.css';
 
-const ConfirmationModal = ({ message, onConfirm, onCancel, confirmText = "Confirm", confirmClass = '' }) => {
+const ConfirmationModal = ({ message, onConfirm, onCancel, confirmText = "Confirm", confirmClass = '', confirmDisabled = false, cancelDisabled = false }) => {
     return (
         <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
-                <p>{message}</p>
+                {/* Render message - could be string or JSX */}
+                {typeof message === 'string' ? <p>{message}</p> : message}
                 <div className={styles.modalActions}>
-                    <button onClick={onCancel} className={styles.cancelButton}>Cancel</button>
-                    <button onClick={onConfirm} className={`${styles.confirmButton} ${styles[confirmClass]}`}>
+                    <button onClick={onCancel} className={styles.cancelButton} disabled={cancelDisabled}>Cancel</button>
+                    <button
+                        onClick={onConfirm}
+                        className={`${styles.confirmButton} ${styles[confirmClass]}`}
+                        disabled={confirmDisabled} // Use the prop here
+                    >
                         {confirmText}
                     </button>
                 </div>
@@ -16,5 +21,4 @@ const ConfirmationModal = ({ message, onConfirm, onCancel, confirmText = "Confir
         </div>
     );
 };
-
 export default ConfirmationModal;

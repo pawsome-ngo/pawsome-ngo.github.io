@@ -91,6 +91,56 @@ const InventoryPage = ({ token }) => {
         }
     };
 
+    // --- ✨ Function to handle SAVING a category ---
+    const handleSaveCategory = async (categoryData, isEditing) => {
+        const url = isEditing
+            ? `${API_BASE_URL}/api/inventory/categories/${categoryData.id}`
+            : `${API_BASE_URL}/api/inventory/categories`;
+        const method = isEditing ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method,
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: categoryData.name }), // Send only the fields the DTO expects
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.message || 'Failed to save category.');
+            }
+            await fetchData(); // Refetch all data
+            return true; // Signal success to CategoryManager
+        } catch (err) {
+            setError(err.message); // Set error for the page
+            return false; // Signal failure to CategoryManager
+        }
+    };
+
+    // --- ✨ Function to handle DELETING a category ---
+    const handleDeleteCategory = async (categoryId) => {
+        setError(null);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/inventory/categories/${categoryId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                // Check for a specific constraint violation message
+                if (errData.message && errData.message.includes('constraint')) {
+                    throw new Error('Cannot delete category. It is currently in use by inventory items.');
+                }
+                throw new Error(errData.message || 'Failed to delete category.');
+            }
+            await fetchData(); // Refetch all data
+            return true; // Signal success
+        } catch (err) {
+            setError(err.message); // Set error for the page
+            return false; // Signal failure
+        }
+    };
+    // --- End Fix ---
+
     const handleAttemptDelete = async (item) => {
         try {
             const response = await fetch(`${API_BASE_URL}/api/inventory/items/${item.id}/usage`, {
@@ -234,7 +284,9 @@ const InventoryPage = ({ token }) => {
                 <CategoryManager
                     categories={categories}
                     onClose={() => setIsCategoryModalOpen(false)}
-                    // onSave and onDelete need to be wired up if not already
+                    // --- ✨ FIX: Pass both onSave and onDelete props ---
+                    onSave={handleSaveCategory}
+                    onDelete={handleDeleteCategory}
                 />
             )}
 

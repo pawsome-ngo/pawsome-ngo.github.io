@@ -24,6 +24,8 @@ import VolunteersPage from "./pages/user/VolunteersPage.jsx";
 import VolunteerProfilePage from "./pages/user/VolunteerProfilePage.jsx";
 import InventoryPage from "./pages/inventory/InventoryPage.jsx";
 import FirstAidKitPage from "./pages/inventory/FirstAidKitPage.jsx";
+import NotificationsPage from './pages/notification/NotificationsPage.jsx';
+import SuperAdminPage from './pages/admin/SuperAdminPage.jsx'; // <-- Import SuperAdminPage
 
 // This component acts as a layout for all protected pages
 const ProtectedLayout = ({ user, onLogout }) => {
@@ -51,65 +53,97 @@ const App = () => {
         if (token) {
             try {
                 const decodedUser = jwtDecode(token);
+                // Check if token is expired (optional but good practice)
+                if (decodedUser.exp * 1000 < Date.now()) {
+                    throw new Error("Token expired");
+                }
                 setUser(decodedUser);
                 setToken(token);
             } catch (e) {
-                // Handle invalid token
+                console.error("Token validation failed:", e.message);
+                // Handle invalid/expired token
                 setUser(null);
                 setToken(null);
                 localStorage.removeItem('jwtToken');
             }
         }
-    }, []);
+    }, []); // Run only once on initial load
 
     const handleLoginSuccess = (newToken) => {
         localStorage.setItem('jwtToken', newToken);
         setToken(newToken);
-        const decodedUser = jwtDecode(newToken);
-        setUser(decodedUser);
-        navigate('/chat');
+        try {
+            const decodedUser = jwtDecode(newToken);
+            setUser(decodedUser);
+            navigate('/chat'); // Navigate after state update
+        } catch (e) {
+            console.error("Failed to decode token on login:", e);
+            handleLogout(); // Log out if token is invalid
+        }
     };
 
     const handleLogout = () => {
         localStorage.removeItem('jwtToken');
         setToken(null);
         setUser(null);
-        navigate('/login');
+        navigate('/login'); // Navigate after state update
     };
 
     return (
         <div className={styles.app}>
             <Routes>
                 {/* Public Routes */}
-                <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
-                <Route path="/signup" element={<SignUpPage />} />
+                <Route path="/login" element={token ? <Navigate to="/chat" /> : <LoginPage onLoginSuccess={handleLoginSuccess} />} />
+                <Route path="/signup" element={token ? <Navigate to="/chat" /> : <SignUpPage />} />
 
                 {/* Protected Routes nested inside the layout */}
                 <Route element={<ProtectedLayout user={user} onLogout={handleLogout} />}>
-                    <Route path="/" element={<Navigate to="/chat" />} />
+                    {/* Redirect base path */}
+                    <Route path="/" element={<Navigate to="/chat" replace />} />
+
+                    {/* Core Features */}
                     <Route path="/chat" element={<ChatGroupsPage token={token} onLogout={handleLogout} />} />
                     <Route path="/chat/:chatId" element={<ChatWindow token={token} onLogout={handleLogout} />} />
-                    <Route path="/my-cases" element={<MyCasesPage token={token} />} />
                     <Route path="/live" element={<LivePage token={token} />} />
                     <Route path="/incident/:incidentId" element={<IncidentDetailPage token={token} />} />
                     <Route path="/incident/:incidentId/media" element={<IncidentMediaPage />} />
                     <Route path="/incident/:incidentId/assign" element={<TeamAssignmentPage token={token} currentUser={user} />} />
                     <Route path="/report" element={<ReportIncidentPage />} />
+
+                    {/* User Specific */}
+                    <Route path="/my-cases" element={<MyCasesPage token={token} />} />
                     <Route path="/leaderboard" element={<LeaderboardPage token={token} />} />
-                    <Route path="/adoptions" element={<AdoptionsPage />} />
-                    <Route path="/events" element={<EventsPage />} />
                     <Route path="/volunteers" element={<VolunteersPage token={token} currentUser={user} />} />
                     <Route path="/volunteer/:volunteerId" element={<VolunteerProfilePage token={token} currentUser={user} />} />
-                    <Route path="/approvals" element={<ApprovalsPage token={token} />} />
                     <Route path="/profile" element={<ProfilePage token={token} />} />
-                    <Route path="/inventory" element={<InventoryPage token={token} />} />
                     <Route path="/profile/first-aid-kit/:userId" element={<FirstAidKitPage token={token} />} />
+
+                    {/* Notifications */}
+                    <Route path="/notifications" element={<NotificationsPage token={token} />} />
+
+                    {/* Static/Info */}
+                    <Route path="/adoptions" element={<AdoptionsPage />} />
+                    <Route path="/events" element={<EventsPage />} />
+
+                    {/* Admin/Manager Specific */}
+                    {/* Consider adding role checks here if needed, although backend handles authorization */}
+                    <Route path="/approvals" element={<ApprovalsPage token={token} />} />
+                    <Route path="/inventory" element={<InventoryPage token={token} />} />
+                    {/* --- ✨ Add Super Admin Route --- */}
+                    <Route path="/superadmin" element={<SuperAdminPage token={token} currentUser={user} />} />
+                    {/* --- End Route --- */}
+
+                    {/* Fallback for unknown protected routes */}
+                    <Route path="*" element={<Navigate to="/chat" replace />} />
                 </Route>
+                {/* Fallback for unknown public routes */}
+                <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
         </div>
     );
 };
 
+// Wrap App with Router if Router is not already wrapping it higher up
 const AppWithRouter = () => (
     <Router>
         <App />

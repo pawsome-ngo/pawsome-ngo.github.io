@@ -1,0 +1,127 @@
+/* File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/notification/NotificationItem.module.css */
+
+.notificationItem {
+    display: flex;
+    align-items: flex-start; /* Align icon to the top of the text */
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+    color: white; /* Default text color for gradients */
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease; /* Added opacity transition */
+    position: relative; /* For the unread dot */
+}
+
+.notificationItem:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 20px rgba(0, 0, 0, 0.1);
+}
+
+.iconWrapper {
+    flex-shrink: 0;
+    margin-top: 2px; /* Slight alignment adjustment */
+    font-size: 1.2rem;
+    opacity: 0.8;
+}
+
+.contentWrapper {
+    flex-grow: 1;
+}
+
+.message {
+    margin: 0 0 0.5rem 0;
+    font-weight: 500;
+    line-height: 1.4;
+    font-size: 0.95rem;
+}
+
+.triggerUser {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    margin: 0.25rem 0 0.5rem 0;
+    opacity: 0.8;
+}
+
+.triggerUser svg {
+    font-size: 0.9em;
+}
+
+
+.time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin: 0;
+    text-align: right;
+}
+
+.unreadDot {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    background-color: #FFD700; /* Gold dot for unread */
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+
+/* Unread/Read Styles */
+.unread {
+    /* Default state */
+}
+
+.read {
+    opacity: 0.75; /* Fade out read notification */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.read:hover {
+    opacity: 1; /* Bring back full opacity on hover */
+    transform: none; /* Optional: remove hover transform for read items */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+}
+
+
+/* --- ✨ Status-based Gradients (Using camelCase) --- */
+.reported { background: linear-gradient(45deg, #e74c3c, #c0392b); }
+.assigned { background: linear-gradient(45deg, #3498db, #2980b9); }
+.inProgress { background: linear-gradient(45deg, #f39c12, #e67e22); } /* Renamed */
+.ongoing { background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+.resolved { background: linear-gradient(45deg, #2ecc71, #27ae60); }
+.closed { background: linear-gradient(45deg, #95a5a6, #7f8c8d); }
+/* --- End Status Gradients --- */
+
+
+/* --- General Type-based Gradients (Fallback - No changes needed here) --- */
+.type_incident {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+}
+.type_inventory {
+    background: linear-gradient(45deg, #f39c12, #e67e22);
+}
+.type_approval {
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+}
+.type_rewards {
+    background: linear-gradient(45deg, #3498db, #2980b9);
+}
+.type_general {
+    background: linear-gradient(45deg, #9b59b6, #8e44ad);
+}
+/* --- End Type Gradients --- */
+
+/* ... (Keep adjustments for unreadDot colors etc.) ... */
+.type_inventory .unreadDot,
+.type_rewards .unreadDot,
+.assigned .unreadDot, /* For blue background */
+.resolved .unreadDot, /* For green background */
+.type_approval .unreadDot, /* Also green background */
+.inProgress .unreadDot, /* For orange background */
+.ongoing .unreadDot, /* For purple background */
+.type_general .unreadDot
+{
+    background-color: white; /* White dot looks better on these */
+    border-color: rgba(0,0,0,0.4);
+}

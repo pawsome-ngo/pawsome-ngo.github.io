@@ -1,0 +1,76 @@
+.modalOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 6000; padding: 1rem; /* Higher z-index than other modals */
+}
+
+.modalContent {
+    background: white; padding: 2rem; border-radius: 12px;
+    max-width: 450px; width: 100%; text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+    max-height: 90vh; /* Allow scrolling if many members */
+    display: flex;
+    flex-direction: column;
+}
+
+.modalContent h2 {
+    margin-top: 0; margin-bottom: 0.5rem; color: #2c3e50;
+}
+.modalContent p {
+    margin-bottom: 1.5rem; color: #555;
+}
+
+.memberList {
+    text-align: left;
+    margin-bottom: 1.5rem;
+    max-height: 40vh; /* Limit height and allow scroll */
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 0.5rem;
+}
+
+.memberItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    user-select: none; /* Prevent text selection on click */
+}
+
+.memberItem:hover {
+    background-color: #f8f9fa;
+}
+
+.memberItem input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #3498db;
+}
+
+.centered {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 2rem; color: #7f8c8d;
+}
+.spinner { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.message {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin: 1rem 0; padding: 0.75rem; border-radius: 8px; font-weight: 500; font-size: 0.9rem;
+}
+.message.error { background-color: #f8d7da; border: 1px solid #e74c3c; color: #721c24; }
+
+.actions { display: flex; gap: 1rem; margin-top: auto; /* Push actions to bottom */ }
+.actions button {
+    flex: 1; padding: 0.8rem; border-radius: 8px; font-weight: 600;
+    cursor: pointer; border: none; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+}
+.cancelButton { background-color: #ecf0f1; color: #555; }
+.confirmButton { background-color: #2ecc71; color: white; }
+.confirmButton:disabled { background-color: #bdc3c7; cursor: not-allowed; }

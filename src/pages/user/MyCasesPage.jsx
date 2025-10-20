@@ -1,8 +1,13 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/user/MyCasesPage.jsx
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './MyCasesPage.module.css';
-import { FaSpinner, FaPaw, FaUser, FaInfoCircle, FaDog, FaCat, FaDove, FaAngleRight, FaInbox, FaUsers } from 'react-icons/fa';
+// Import FaPaw for the loading spinner
+import { FaPaw, FaUser, FaInfoCircle, FaDog, FaCat, FaDove, FaAngleRight, FaInbox, FaUsers } from 'react-icons/fa'; // FaSpinner is only needed inside the modal now
 import MarkAsDoneModal from './components/MarkAsDoneModal.jsx';
+// --- ✨ Import the new modal ---
+import ConfirmInitiationModal from './components/ConfirmInitiationModal.jsx';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -20,9 +25,11 @@ const MyCasesPage = ({ token }) => {
     const [cases, setCases] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedIncident, setSelectedIncident] = useState(null);
-    const [initiatingCaseId, setInitiatingCaseId] = useState(null);
+    const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false); // Renamed state
+    const [selectedIncidentForCompletion, setSelectedIncidentForCompletion] = useState(null); // Renamed state
+    // --- ✨ State for the new confirmation modal ---
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [incidentToConfirm, setIncidentToConfirm] = useState(null);
 
     useEffect(() => {
         const fetchMyCases = async () => {
@@ -31,6 +38,10 @@ const MyCasesPage = ({ token }) => {
                 setLoading(false);
                 return;
             }
+            // Start loading state
+            setLoading(true);
+            setError(null); // Clear previous errors
+
             try {
                 const response = await fetch(`${API_BASE_URL}/api/cases/my-cases`, {
                     headers: { 'Authorization': `Bearer ${token}` },
@@ -41,53 +52,57 @@ const MyCasesPage = ({ token }) => {
             } catch (err) {
                 setError(err.message || 'Could not connect to the server.');
             } finally {
-                setLoading(false);
+                setLoading(false); // End loading state
             }
         };
         fetchMyCases();
     }, [token]);
 
-    const handleInitiateCase = async (incidentId, e) => {
+    // --- ✨ Modified function to OPEN the confirmation modal ---
+    const handleOpenInitiateModal = (incidentId, e) => {
         e.preventDefault();
         e.stopPropagation();
-        setInitiatingCaseId(incidentId);
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}/initiate`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-
-            if (response.ok) {
-                setCases(prevCases => prevCases.map(c =>
-                    c.id === incidentId ? { ...c, status: 'IN_PROGRESS' } : c
-                ));
-            } else {
-                const errorData = await response.text();
-                alert(`Failed to initiate case: ${errorData}`);
-            }
-        } catch (err) {
-            console.error("Failed to initiate case:", err);
-            alert('An error occurred. Please try again.');
-        } finally {
-            setInitiatingCaseId(null);
-        }
+        setIncidentToConfirm(incidentId); // Store the ID of the incident to confirm
+        setIsConfirmModalOpen(true);     // Open the modal
     };
+    // --- End modification ---
 
     const openCompletionModal = (incident, e) => {
         e.preventDefault();
         e.stopPropagation();
-        setSelectedIncident(incident);
-        setIsModalOpen(true);
+        setSelectedIncidentForCompletion(incident);
+        setIsCompletionModalOpen(true);
     };
 
     const handleCaseCompleted = (completedIncidentId) => {
-        // --- THIS IS THE FIX ---
-        // Instead of updating the item's status, we filter it out of the list.
         setCases(prevCases => prevCases.filter(c => c.id !== completedIncidentId));
+        // No need to update status locally here as the item is removed
     };
 
-    if (loading) return <div className={styles.container}><div className={styles.centered}><FaSpinner className={styles.spinner} /></div></div>;
+    // --- ✨ NEW Handler for successful confirmation ---
+    const handleConfirmSuccess = (initiatedIncidentId) => {
+        // Update the status of the specific incident in the local state
+        setCases(prevCases => prevCases.map(c =>
+            c.id === initiatedIncidentId ? { ...c, status: 'IN_PROGRESS' } : c
+        ));
+        // Optionally refetch if needed, but local update is often faster UX
+        // fetchMyCases();
+    };
+    // --- End New Handler ---
+
+    // --- ✨ UPDATED Loading State Return ---
+    if (loading) {
+        return (
+            <div className={styles.loadingContainer}>
+                <div className={styles.pawSpinner}>
+                    <FaPaw className={styles.pawIcon} />
+                </div>
+                <p>Loading Your Cases...</p> {/* Changed text slightly */}
+            </div>
+        );
+    }
+    // --- End Updated Loading State ---
+
     if (error) return <div className={styles.container}><p className={styles.error}>{error}</p></div>;
 
     return (
@@ -129,15 +144,17 @@ const MyCasesPage = ({ token }) => {
                                 </div>
                             </Link>
                             <div className={styles.cardActions}>
+                                {/* --- ✨ Updated onClick handler --- */}
                                 {incident.status === 'ASSIGNED' && (
                                     <button
-                                        onClick={(e) => handleInitiateCase(incident.id, e)}
-                                        disabled={initiatingCaseId === incident.id}
+                                        onClick={(e) => handleOpenInitiateModal(incident.id, e)} // Use new handler
                                         className={styles.actionButton}
+                                        // Removed disabled state related to initiatingCaseId
                                     >
-                                        {initiatingCaseId === incident.id ? <FaSpinner className={styles.spinner} /> : 'Initiate Case'}
+                                        Initiate Case
                                     </button>
                                 )}
+                                {/* --- End update --- */}
 
                                 {incident.status === 'IN_PROGRESS' && (
                                     <button
@@ -162,14 +179,25 @@ const MyCasesPage = ({ token }) => {
                 </div>
             )}
 
-            {isModalOpen && (
+            {isCompletionModalOpen && (
                 <MarkAsDoneModal
-                    incident={selectedIncident}
+                    incident={selectedIncidentForCompletion}
                     token={token}
-                    onClose={() => setIsModalOpen(false)}
+                    onClose={() => setIsCompletionModalOpen(false)}
                     onCaseCompleted={handleCaseCompleted}
                 />
             )}
+
+            {/* --- ✨ Render the new confirmation modal --- */}
+            {isConfirmModalOpen && incidentToConfirm && (
+                <ConfirmInitiationModal
+                    incidentId={incidentToConfirm}
+                    token={token}
+                    onClose={() => setIsConfirmModalOpen(false)}
+                    onConfirmSuccess={handleConfirmSuccess}
+                />
+            )}
+            {/* --- End rendering --- */}
         </div>
     );
 };

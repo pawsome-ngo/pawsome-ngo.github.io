@@ -1,0 +1,139 @@
+/* File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/notification/NotificationsPage.module.css */
+
+.container {
+    padding: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.header h1 {
+    margin: 0 0 0.5rem 0; /* Add bottom margin for wrap */
+    flex-basis: 100%; /* Take full width initially */
+    text-align: center; /* Center title */
+    color: #2c3e50;
+    font-size: 1.8rem;
+}
+
+.controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-basis: 100%; /* Take full width */
+    justify-content: center; /* Center controls */
+    margin-top: 0.5rem;
+}
+
+.controls button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #bdc3c7;
+    background-color: #fff;
+    color: #555;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.controls button:hover:not(:disabled) {
+    background-color: #f8f9fa;
+    border-color: #7f8c8d;
+    color: #333;
+}
+
+.controls button.activeFilter {
+    background-color: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.markAllButton svg {
+    font-size: 0.9em; /* Slightly smaller icon */
+}
+
+/* Responsive adjustments for header/controls */
+@media (min-width: 600px) {
+    .header h1 {
+        flex-basis: auto; /* Allow title and controls on same line */
+        text-align: left;
+        margin-bottom: 0;
+    }
+    .controls {
+        flex-basis: auto;
+        justify-content: flex-end; /* Align controls to right */
+        margin-top: 0;
+    }
+}
+
+
+.notificationList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.error {
+    color: #e74c3c;
+    text-align: center;
+    padding: 1rem;
+    background-color: #fbeae5;
+    border-radius: 8px;
+}
+
+.emptyState {
+    text-align: center;
+    margin-top: 4rem;
+    color: #7f8c8d;
+}
+.emptyState svg {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    color: #bdc3c7;
+}
+.emptyState h2 {
+    color: #34495e;
+}
+
+/* Loading Styles (Copied from LivePage.module.css) */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 200px); /* Adjust height */
+    padding: 2rem;
+    color: #7f8c8d;
+}
+
+.pawSpinner {
+    margin-bottom: 1.5rem;
+}
+
+.pawIcon {
+    font-size: 4rem;
+    color: #fc5c7d; /* Theme color */
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}

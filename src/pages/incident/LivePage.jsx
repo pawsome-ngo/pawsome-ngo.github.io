@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react';
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/LivePage.jsx
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './LivePage.module.css';
 import CustomSelect from '../../components/common/CustomSelect.jsx';
-import { FaDog, FaCat, FaPaw, FaDove } from 'react-icons/fa';
+// FaExclamationTriangle removed if not used elsewhere
+import { FaDog, FaCat, FaPaw, FaDove, FaClock } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
+// --- Helper functions (truncateLocation, AnimalIcon, needsAttention, formatTimeAgo) ---
 const truncateLocation = (location) => {
     if (!location) return 'Location not available';
     const words = location.split(' ');
-    if (words.length > 4) {
-        return words.slice(0, 4).join(' ') + '...';
+    if (words.length > 6) {
+        return words.slice(0, 6).join(' ') + '...';
     }
     return location;
 };
@@ -24,11 +28,71 @@ const AnimalIcon = ({ type }) => {
     }
 };
 
+const needsAttention = (status, lastUpdatedString) => {
+    if (!lastUpdatedString) return false;
+    const lastUpdatedDate = new Date(lastUpdatedString);
+    const now = new Date();
+
+    if (status === 'REPORTED') {
+        const threeDaysAgo = new Date(now);
+        threeDaysAgo.setDate(now.getDate() - 3);
+        return lastUpdatedDate < threeDaysAgo;
+    } else if (status === 'ONGOING') {
+        const sevenDaysAgo = new Date(now);
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        return lastUpdatedDate < sevenDaysAgo;
+    }
+    return false;
+};
+
+const formatTimeAgo = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    let interval = Math.floor(seconds / 31536000);
+    if (interval >= 1) return interval + (interval === 1 ? " year" : " yrs") + " ago";
+
+    interval = Math.floor(seconds / 2592000);
+    if (interval >= 1) return interval + (interval === 1 ? " month" : " mths") + " ago";
+
+    interval = Math.floor(seconds / 86400); // days
+    const hours = Math.floor((seconds % 86400) / 3600);
+    if (interval >= 1) {
+        let str = interval + (interval === 1 ? " day" : " days");
+        if (hours > 0 && interval < 3) {
+            str += `, ${hours}${hours === 1 ? ' hr' : ' hrs'}`;
+        }
+        return str + " ago";
+    }
+
+    interval = Math.floor(seconds / 3600); // hours
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (interval >= 1) {
+        let str = interval + (interval === 1 ? " hour" : " hours");
+        if (minutes > 0) {
+            str += `, ${minutes}${minutes === 1 ? ' min' : ' mins'}`;
+        }
+        return str + " ago";
+    }
+
+    interval = Math.floor(seconds / 60); // minutes
+    if (interval >= 1) return interval + (interval === 1 ? " minute" : " mins") + " ago";
+
+    if (seconds < 10) return "Just now";
+    return Math.floor(seconds) + " secs ago";
+};
+// --- End Helper Functions ---
+
+
 const LivePage = ({ token }) => {
     const [incidents, setIncidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [statusFilter, setStatusFilter] = useState('LIVE');
+    const intervalRef = useRef(null);
+    const [, setTimeNow] = useState(Date.now());
 
     useEffect(() => {
         const fetchIncidents = async () => {
@@ -47,8 +111,11 @@ const LivePage = ({ token }) => {
                     let data = await response.json();
 
                     if (statusFilter === 'LIVE') {
-                        // Sort to show 'REPORTED' incidents first
                         data.sort((a, b) => {
+                            const aNeedsAttention = needsAttention(a.status, a.lastUpdated);
+                            const bNeedsAttention = needsAttention(b.status, b.lastUpdated);
+                            if (aNeedsAttention && !bNeedsAttention) return -1;
+                            if (!aNeedsAttention && bNeedsAttention) return 1;
                             if (a.status === 'REPORTED' && b.status !== 'REPORTED') return -1;
                             if (a.status !== 'REPORTED' && b.status === 'REPORTED') return 1;
                             return 0;
@@ -59,6 +126,7 @@ const LivePage = ({ token }) => {
                     } else {
                         setIncidents(data);
                     }
+                    setError(null);
                 } else {
                     setError('Failed to fetch incidents.');
                 }
@@ -68,7 +136,21 @@ const LivePage = ({ token }) => {
                 setLoading(false);
             }
         };
+
         fetchIncidents();
+
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
+        intervalRef.current = setInterval(() => {
+            setTimeNow(Date.now());
+        }, 60000);
+
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
     }, [token, statusFilter]);
 
     const statusOptions = [
@@ -82,7 +164,17 @@ const LivePage = ({ token }) => {
         { value: 'CLOSED', label: 'Closed' }
     ];
 
-    if (loading) return <div className={styles.container}>Loading incidents...</div>;
+    if (loading) {
+        return (
+            <div className={styles.loadingContainer}>
+                <div className={styles.pawSpinner}>
+                    <FaPaw className={styles.pawIcon} />
+                </div>
+                <p>Loading Incidents...</p>
+            </div>
+        );
+    }
+
     if (error) return <div className={styles.container} style={{ color: 'red' }}>{error}</div>;
 
     return (
@@ -103,34 +195,54 @@ const LivePage = ({ token }) => {
             </div>
 
             <div className={styles.cardGrid}>
-                {incidents.map(incident => (
-                    <Link
-                        to={`/incident/${incident.id}`}
-                        key={incident.id}
-                        className={`${styles.card} ${styles[incident.status.toLowerCase()]}`}
-                    >
-                        {incident.caseCount > 0 && (
-                            <div className={styles.caseCount}>
-                                {incident.caseCount}
+                {incidents.map(incident => {
+                    const attentionNeeded = needsAttention(incident.status, incident.lastUpdated);
+                    const timeAgo = formatTimeAgo(incident.lastUpdated || incident.reportedAt);
+
+                    return (
+                        <Link
+                            to={`/incident/${incident.id}`}
+                            key={incident.id}
+                            className={`${styles.card} ${styles[incident.status.toLowerCase()]} ${attentionNeeded ? styles.overdue : ''}`}
+                        >
+                            <div className={styles.cardIcon}>
+                                <AnimalIcon type={incident.animalType} />
                             </div>
-                        )}
-                        <div className={styles.cardIcon}>
-                            <AnimalIcon type={incident.animalType} />
-                        </div>
-                        <div className={styles.cardContent}>
-                            <div className={styles.cardHeader}>
-                                <h2>Incident #{incident.id}</h2>
-                                <span className={styles.statusTag}>
-                                    {incident.status.replace('_', ' ')}
-                                </span>
+
+                            {/* Conditionally render ATTENTION text - centered */}
+                            {attentionNeeded && (
+                                <div className={styles.attentionIndicator} title="Needs attention!">
+                                    ATTENTION!
+                                </div>
+                            )}
+
+                            {incident.caseCount > 0 && (
+                                <div className={styles.caseCount}>
+                                    {incident.caseCount}
+                                </div>
+                            )}
+
+                            <div className={styles.cardContent}>
+                                <div className={styles.cardHeader}>
+                                    <h2>Incident #{incident.id}</h2>
+                                    <span className={styles.statusTag}>
+                                        {incident.status.replace('_', ' ')}
+                                    </span>
+                                </div>
+                                <p><strong>Informer:</strong> {incident.informerName}</p>
+                                <p className={styles.locationText}>
+                                    {truncateLocation(incident.location)}
+                                </p>
                             </div>
-                            <p><strong>Informer:</strong> {incident.informerName}</p>
-                            <p className={styles.locationText}>
-                                {truncateLocation(incident.location)}
-                            </p>
-                        </div>
-                    </Link>
-                ))}
+                            <div className={styles.cardFooter}>
+                                <div className={styles.timeAgoIndicator}>
+                                    <FaClock />
+                                    <span>{timeAgo}</span>
+                                </div>
+                            </div>
+                        </Link>
+                    );
+                })}
             </div>
             {incidents.length === 0 && !loading && (
                 <div className={styles.noIncidents}>

@@ -1,3 +1,5 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/components/layout/Navbar.jsx
+
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import styles from './Navbar.module.css';
@@ -22,8 +24,10 @@ const Navbar = ({ user, onLogout }) => {
 
     const closeMenu = () => setIsMenuOpen(false);
 
-    const isAdmin = user && user.roles.includes('ROLE_ADMIN');
-    const isInventoryManager = user && (user.roles.includes('ROLE_INVENTORY_MANAGER') || user.roles.includes('ROLE_SUPER_ADMIN'));
+    // Role checks (assuming roles are available in the user object from JWT)
+    const isAdmin = user && user.roles && user.roles.includes('ROLE_ADMIN');
+    const isSuperAdmin = user && user.roles && user.roles.includes('ROLE_SUPER_ADMIN');
+    const isInventoryManager = user && user.roles && (user.roles.includes('ROLE_INVENTORY_MANAGER') || user.roles.includes('ROLE_SUPER_ADMIN'));
 
     // Function to apply active styles to NavLink
     const getNavLinkClass = ({ isActive }) => {
@@ -46,21 +50,35 @@ const Navbar = ({ user, onLogout }) => {
             ></div>
 
             <nav className={`${styles.nav} ${isMenuOpen ? styles.navOpen : ''}`}>
+                {/* Core User Links */}
                 <NavLink to="/live" className={getNavLinkClass} onClick={closeMenu}>Live</NavLink>
                 <NavLink to="/my-cases" className={getNavLinkClass} onClick={closeMenu}>My Cases</NavLink>
-                <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>Report</NavLink>
+                <NavLink to="/notifications" className={getNavLinkClass} onClick={closeMenu}>Notifications</NavLink>
+                <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>Report Incident</NavLink>
                 <NavLink to="/leaderboard" className={getNavLinkClass} onClick={closeMenu}>Leaderboard</NavLink>
                 <NavLink to="/volunteers" className={getNavLinkClass} onClick={closeMenu}>Volunteers</NavLink>
+
+                {/* Static/Info Links */}
                 <NavLink to="/adoptions" className={getNavLinkClass} onClick={closeMenu}>Adoptions</NavLink>
                 <NavLink to="/events" className={getNavLinkClass} onClick={closeMenu}>Events</NavLink>
-                {isAdmin && (
+
+                {/* Role-Specific Links */}
+                {(isAdmin || isSuperAdmin) && (
                     <NavLink to="/approvals" className={getNavLinkClass} onClick={closeMenu}>Approvals</NavLink>
                 )}
                 {isInventoryManager && (
                     <NavLink to="/inventory" className={getNavLinkClass} onClick={closeMenu}>Inventory</NavLink>
                 )}
+                {/* --- ✨ Add Super Admin Link --- */}
+                {isSuperAdmin && (
+                    <NavLink to="/superadmin" className={getNavLinkClass} onClick={closeMenu}>Super Admin</NavLink>
+                )}
+                {/* --- End Link --- */}
+
+                {/* Profile Link */}
                 <NavLink to="/profile" className={getNavLinkClass} onClick={closeMenu}>Profile</NavLink>
 
+                {/* Logout Button */}
                 <button
                     onClick={() => {
                         closeMenu();

@@ -1,7 +1,11 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/IncidentMediaPage.jsx
 import React, { useMemo } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import styles from './IncidentMediaPage.module.css';
 import { FaArrowLeft, FaPhotoVideo, FaImage, FaVideo, FaVolumeUp, FaFileAlt, FaFolder, FaFolderOpen } from 'react-icons/fa';
+
+// --- ✨ 1. Import the API_BASE_URL ---
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 // A helper component to show the correct icon based on media type
 const MediaIcon = ({ type }) => {
@@ -70,18 +74,25 @@ const IncidentMediaPage = () => {
                                 <span>{category}</span>
                             </summary>
                             <div className={styles.linkList}>
-                                {mediaItems.map(mediaItem => (
-                                    <a
-                                        key={mediaItem.id}
-                                        href={mediaItem.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className={styles.linkItem}
-                                    >
-                                        <MediaIcon type={mediaItem.mediaType} />
-                                        <span>Download Media File ({mediaItem.mediaType.toLowerCase()})</span>
-                                    </a>
-                                ))}
+                                {mediaItems.map(mediaItem => {
+                                    // --- ✨ 2. Create the absolute URL ---
+                                    // mediaItem.url is "/api/uploads/...", API_BASE_URL is "https://api.pawsome.buzz"
+                                    const absoluteUrl = `${API_BASE_URL}${mediaItem.url}`;
+                                    // --- End Fix ---
+
+                                    return (
+                                        <a
+                                            key={mediaItem.id}
+                                            href={absoluteUrl} // <-- 3. Use the absolute URL here
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={styles.linkItem}
+                                        >
+                                            <MediaIcon type={mediaItem.mediaType} />
+                                            <span>Download Media File ({mediaItem.mediaType.toLowerCase()})</span>
+                                        </a>
+                                    );
+                                })}
                             </div>
                         </details>
                     ))}

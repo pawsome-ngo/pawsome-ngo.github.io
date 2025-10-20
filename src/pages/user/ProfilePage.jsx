@@ -2,19 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from './ProfilePage.module.css';
-// --- ✨ Import FaBell and the new subscription function ---
-import { FaUser, FaShieldAlt, FaToggleOn, FaToggleOff, FaSpinner, FaCheckCircle, FaExclamationCircle, FaMapMarkerAlt, FaFirstAid, FaBell } from 'react-icons/fa';
-import { subscribeToPushNotifications } from '../../pushSubscription.js'; // Import the function
+// --- ✨ Import all icons ---
+import { FaUser, FaShieldAlt, FaToggleOn, FaToggleOff, FaSpinner, FaCheckCircle, FaExclamationCircle, FaMapMarkerAlt, FaFirstAid, FaBell, FaCar, FaHome } from 'react-icons/fa';
+import { subscribeToPushNotifications } from '../../pushSubscription.js'; // Import the push function
 // --- End Imports ---
 import UpdatePasswordModal from '../../components/common/UpdatePasswordModal.jsx';
 import Lightbox from '../../components/common/Lightbox.jsx';
 import Avatar from '../../components/common/Avatar.jsx';
 import { Link } from 'react-router-dom';
+import CustomSelect from '../../components/common/CustomSelect.jsx'; // Import CustomSelect
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const avatarModules = import.meta.glob('/src/assets/avatars/*');
 
 const getAvatarSrc = async (userId) => {
+    // ... (function remains the same)
     for (const path in avatarModules) {
         if (path.includes(`/avatars/${userId}.`)) {
             const mod = await avatarModules[path]();
@@ -33,8 +35,10 @@ const ProfilePage = ({ token }) => {
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
     const [locationMessage, setLocationMessage] = useState({ type: '', text: '' });
-    // --- ✨ Add state for notification button ---
+
+    // --- ✨ State for new/complex fields ---
     const [isSubscribing, setIsSubscribing] = useState(false);
+    const [vehicleType, setVehicleType] = useState('Bike'); // State for vehicle type dropdown
     // --- End State ---
 
     useEffect(() => {
@@ -46,6 +50,8 @@ const ProfilePage = ({ token }) => {
                 if (!response.ok) throw new Error('Failed to fetch profile.');
                 const data = await response.json();
                 setProfile(data);
+                // --- ✨ Set vehicleType state from fetched data ---
+                setVehicleType(data.vehicleType || 'Bike');
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -59,6 +65,7 @@ const ProfilePage = ({ token }) => {
     }, [token]);
 
     const handleAvatarClick = async () => {
+        // ... (function remains the same)
         if (profile) {
             const src = await getAvatarSrc(profile.id);
             if (src) {
@@ -67,37 +74,66 @@ const ProfilePage = ({ token }) => {
         }
     };
 
-    const handleAvailabilityToggle = async () => {
-        const newStatus = profile.availabilityStatus === 'Available' ? 'Unavailable' : 'Available';
+    // --- ✨ Generic Toggle Handler ---
+    // Handles simple boolean toggles by sending to a specific endpoint
+    const handleToggle = async (field, endpoint, newValue) => {
+        // Optimistic UI update
+        setProfile(prev => ({ ...prev, [field]: newValue }));
+
         try {
-            setProfile({ ...profile, availabilityStatus: newStatus });
-            await fetch(`${API_BASE_URL}/api/profile/availability`, {
+            await fetch(`${API_BASE_URL}/api/profile/${endpoint}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ availabilityStatus: newStatus }),
+                body: JSON.stringify({ [field]: newValue }), // e.g., { "availabilityStatus": "Available" }
             });
         } catch (err) {
-            setProfile({ ...profile, availabilityStatus: profile.availabilityStatus });
-            alert('Failed to update availability. Please try again.');
+            // Revert on error
+            setProfile(prev => ({ ...prev, [field]: !newValue }));
+            alert(`Failed to update ${field}. Please try again.`);
         }
     };
 
-    const handleMedicineBoxToggle = async () => {
-        const newStatus = !profile.hasMedicineBox;
+    // --- ✨ Vehicle Toggle Handler (Slightly complex) ---
+    const handleVehicleToggle = async () => {
+        const newStatus = !profile.hasVehicle;
+        // Optimistic UI update
+        setProfile(prev => ({ ...prev, hasVehicle: newStatus }));
+
         try {
-            setProfile({ ...profile, hasMedicineBox: newStatus });
-            await fetch(`${API_BASE_URL}/api/profile/medicine-box`, {
+            await fetch(`${API_BASE_URL}/api/profile/vehicle`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ hasMedicineBox: newStatus }),
+                body: JSON.stringify({ hasVehicle: newStatus, vehicleType: newStatus ? vehicleType : null }),
             });
         } catch (err) {
-            setProfile({ ...profile, hasMedicineBox: profile.hasMedicineBox });
-            alert('Failed to update first-aid kit status. Please try again.');
+            setProfile(prev => ({ ...prev, hasVehicle: !newStatus }));
+            alert('Failed to update vehicle status. Please try again.');
+        }
+    };
+
+    // --- ✨ Vehicle Type Change Handler (Calls same endpoint) ---
+    const handleVehicleTypeChange = async (e) => {
+        const newType = e.target.value;
+        setVehicleType(newType); // Update local state for dropdown
+
+        // Send update to backend immediately
+        try {
+            await fetch(`${API_BASE_URL}/api/profile/vehicle`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hasVehicle: profile.hasVehicle, vehicleType: newType }),
+            });
+            // Update profile object as well
+            setProfile(prev => ({ ...prev, vehicleType: newType }));
+        } catch (err) {
+            alert('Failed to update vehicle type. Please try again.');
+            // Revert local state (optional)
+            setVehicleType(profile.vehicleType || 'Bike');
         }
     };
 
     const handleUpdateLocation = () => {
+        // ... (function remains the same)
         if (!navigator.geolocation) {
             setLocationMessage({ type: 'error', text: 'Geolocation is not supported by your browser.' });
             return;
@@ -131,8 +167,8 @@ const ProfilePage = ({ token }) => {
         });
     };
 
-    // --- ✨ Add handler for the notification button ---
     const handleSubscribeClick = async () => {
+        // ... (function remains the same)
         setIsSubscribing(true);
         setLocationMessage({ type: '', text: '' }); // Clear other messages
 
@@ -147,11 +183,17 @@ const ProfilePage = ({ token }) => {
         setIsSubscribing(false);
         setTimeout(() => setLocationMessage({ type: '', text: '' }), 3000); // Clear message after 3s
     };
-    // --- End Handler ---
 
     if (loading) return <div className={styles.centered}><FaSpinner className={styles.spinner} /></div>;
     if (error) return <div className={styles.centered}><p className={styles.error}>{error}</p></div>;
     if (!profile) return null;
+
+    const vehicleTypeOptions = [
+        { value: 'Bike', label: 'Bike' },
+        { value: 'Scooty', label: 'Scooty' },
+        { value: 'Car', label: 'Car' },
+        { value: 'Other', label: 'Other' },
+    ];
 
     return (
         <>
@@ -174,6 +216,7 @@ const ProfilePage = ({ token }) => {
                 <div className={styles.card}>
                     <h2>My Stats</h2>
                     <div className={styles.statsGrid}>
+                        {/* ... (stats items remain the same) ... */}
                         <div className={styles.statItem}>
                             <span className={styles.gradientText}>{profile.casesCompleted}</span>
                             <p>Cases Completed</p>
@@ -189,19 +232,76 @@ const ProfilePage = ({ token }) => {
                     </div>
                 </div>
 
+                {/* --- ✨ Redesigned Settings Section --- */}
+
                 <div className={styles.card}>
+                    <h2>My Settings</h2>
+                    {/* Availability */}
                     <div className={styles.settingSection}>
                         <h2>Availability</h2>
-                        <button onClick={handleAvailabilityToggle} className={styles.toggleButton}>
+                        <button
+                            onClick={() => handleToggle('availabilityStatus', 'availability', profile.availabilityStatus === 'Available' ? 'Unavailable' : 'Available')}
+                            className={styles.toggleSwitch}
+                        >
                             {profile.availabilityStatus === 'Available' ? <FaToggleOn className={styles.toggleOn} /> : <FaToggleOff className={styles.toggleOff} />}
-                            <span className={profile.availabilityStatus === 'Available' ? styles.statusOn : styles.statusOff}>
-                                {profile.availabilityStatus}
-                            </span>
+                        </button>
+                    </div>
+
+                    {/* First-Aid Kit */}
+                    <div className={styles.settingSection}>
+                        <h2><FaFirstAid /> I have a First-Aid Kit</h2>
+                        <button
+                            onClick={() => handleToggle('hasMedicineBox', 'medicine-box', !profile.hasMedicineBox)}
+                            className={styles.toggleSwitch}
+                        >
+                            {profile.hasMedicineBox ? <FaToggleOn className={styles.toggleOn} /> : <FaToggleOff className={styles.toggleOff} />}
+                        </button>
+                    </div>
+                    {profile.hasMedicineBox && (
+                        <div className={styles.manageKitContainer}>
+                            <Link to={`/profile/first-aid-kit/${profile.id}`} className={styles.actionButton}>
+                                Manage Kit
+                            </Link>
+                        </div>
+                    )}
+
+                    {/* Vehicle */}
+                    <div className={styles.settingSection}>
+                        <h2><FaCar /> I have a vehicle</h2>
+                        <button
+                            onClick={handleVehicleToggle}
+                            className={styles.toggleSwitch}
+                        >
+                            {profile.hasVehicle ? <FaToggleOn className={styles.toggleOn} /> : <FaToggleOff className={styles.toggleOff} />}
+                        </button>
+                    </div>
+                    {profile.hasVehicle && (
+                        <div className={styles.vehicleTypeSelector}>
+                            <label>Vehicle Type</label>
+                            <CustomSelect
+                                name="vehicleType"
+                                options={vehicleTypeOptions}
+                                value={vehicleType}
+                                onChange={handleVehicleTypeChange}
+                            />
+                        </div>
+                    )}
+
+                    {/* Shelter */}
+                    <div className={styles.settingSection}>
+                        <h2><FaHome /> I can provide shelter</h2>
+                        <button
+                            onClick={() => handleToggle('canProvideShelter', 'shelter', !profile.canProvideShelter)}
+                            className={styles.toggleSwitch}
+                        >
+                            {profile.canProvideShelter ? <FaToggleOn className={styles.toggleOn} /> : <FaToggleOff className={styles.toggleOff} />}
                         </button>
                     </div>
                 </div>
 
                 <div className={styles.card}>
+                    <h2>Actions</h2>
+                    {/* Location */}
                     <div className={styles.settingSection}>
                         <h2><FaMapMarkerAlt /> My Location</h2>
                         <button onClick={handleUpdateLocation} className={styles.actionButton} disabled={isUpdatingLocation}>
@@ -214,26 +314,8 @@ const ProfilePage = ({ token }) => {
                             {locationMessage.text}
                         </div>
                     )}
-                </div>
 
-                <div className={styles.card}>
-                    <div className={styles.settingSection}>
-                        <h2><FaFirstAid /> I have a First-Aid Kit</h2>
-                        <button onClick={handleMedicineBoxToggle} className={styles.toggleButton}>
-                            {profile.hasMedicineBox ? <FaToggleOn className={styles.toggleOn} /> : <FaToggleOff className={styles.toggleOff} />}
-                        </button>
-                    </div>
-                    {profile.hasMedicineBox && (
-                        <div className={styles.manageKitContainer}>
-                            <Link to={`/profile/first-aid-kit/${profile.id}`} className={styles.actionButton}>
-                                Manage Kit
-                            </Link>
-                        </div>
-                    )}
-                </div>
-
-                {/* --- ✨ Add Notification Subscription Card --- */}
-                <div className={styles.card}>
+                    {/* Notifications */}
                     <div className={styles.settingSection}>
                         <h2><FaBell /> Notifications</h2>
                         <button
@@ -244,10 +326,8 @@ const ProfilePage = ({ token }) => {
                             {isSubscribing ? <FaSpinner className={styles.spinnerIcon} /> : 'Enable Notifications'}
                         </button>
                     </div>
-                </div>
-                {/* --- End Card --- */}
 
-                <div className={styles.card}>
+                    {/* Security */}
                     <div className={styles.settingSection}>
                         <h2><FaShieldAlt /> Account Security</h2>
                         <button onClick={() => setIsPasswordModalOpen(true)} className={styles.actionButton}>
@@ -255,6 +335,8 @@ const ProfilePage = ({ token }) => {
                         </button>
                     </div>
                 </div>
+
+                {/* --- End Redesigned Section --- */}
             </div>
 
             {isPasswordModalOpen && (

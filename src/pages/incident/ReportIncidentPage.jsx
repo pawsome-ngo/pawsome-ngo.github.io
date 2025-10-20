@@ -1,6 +1,11 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/ReportIncidentPage.jsx
+
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaMicrophone, FaStop, FaTrash, FaFileAlt, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
+// --- ✨ 1. Import the compression library ---
+import imageCompression from 'browser-image-compression';
+// --- End Import ---
 import CustomSelect from '../../components/common/CustomSelect.jsx';
 import SignUpModal from '../../components/common/SignUpModal.jsx';
 import styles from './ReportIncidentPage.module.css';
@@ -53,9 +58,48 @@ const ReportIncidentPage = () => {
         }
     };
 
-    const handleFileChange = (e) => {
-        setMediaFiles(prevFiles => [...prevFiles, ...Array.from(e.target.files)]);
+    // --- ✨ 2. Modified handleFileChange to compress images ---
+    const handleFileChange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        setLocationStatus(`Compressing ${files.length} file(s)...`); // Give user feedback
+
+        const compressionOptions = {
+            maxSizeMB: 1.5,         // Max file size: 1.5MB
+            maxWidthOrHeight: 1920, // Max dimensions: 1920px
+            useWebWorker: true,     // Use web worker for performance
+            fileType: 'image/jpeg', // Force JPEG for better compression
+        };
+
+        const processedFiles = [];
+        for (const file of files) {
+            // Only compress image files
+            if (file.type.startsWith('image/')) {
+                try {
+                    const compressedFile = await imageCompression(file, compressionOptions);
+                    // Create a new File object with a .jpg extension
+                    const newFileName = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg';
+                    const newFile = new File([compressedFile], newFileName, {
+                        type: 'image/jpeg',
+                        lastModified: file.lastModified,
+                    });
+                    processedFiles.push(newFile);
+                } catch (error) {
+                    console.error("Image compression failed, adding original file:", error);
+                    processedFiles.push(file); // Add original if compression fails
+                }
+            } else {
+                // Add non-image files (videos, audio) directly
+                processedFiles.push(file);
+            }
+        }
+
+        setMediaFiles(prevFiles => [...prevFiles, ...processedFiles]);
+        setLocationStatus(`Added ${processedFiles.length} file(s).`);
+        setTimeout(() => setLocationStatus(''), 3000);
     };
+    // --- End Modification ---
 
     const handleGetLocation = () => {
         setLocationStatus('Fetching location...');

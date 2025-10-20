@@ -1,9 +1,7 @@
-// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/ReportIncidentPage.jsx
-
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaMicrophone, FaStop, FaTrash, FaFileAlt, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
-// --- ✨ 1. Import the compression library ---
+// --- 1. Import the compression library ---
 import imageCompression from 'browser-image-compression';
 // --- End Import ---
 import CustomSelect from '../../components/common/CustomSelect.jsx';
@@ -58,27 +56,31 @@ const ReportIncidentPage = () => {
         }
     };
 
-    // --- ✨ 2. Modified handleFileChange to compress images ---
+    // --- ✨ 2. Modify handleFileChange for MORE compression ---
     const handleFileChange = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        setLocationStatus(`Compressing ${files.length} file(s)...`); // Give user feedback
+        setLocationStatus(`Compressing 1 of ${files.length} file(s)...`);
 
         const compressionOptions = {
-            maxSizeMB: 1.5,         // Max file size: 1.5MB
-            maxWidthOrHeight: 1920, // Max dimensions: 1920px
-            useWebWorker: true,     // Use web worker for performance
-            fileType: 'image/jpeg', // Force JPEG for better compression
+            maxSizeMB: 0.8,         // 800KB (More aggressive than 1.5MB)
+            maxWidthOrHeight: 1280, // 1280px (More aggressive than 1920px)
+            useWebWorker: true,
+            fileType: 'image/jpeg',
+            quality: 0.7,           // Explicitly set JPEG quality to 70%
         };
 
         const processedFiles = [];
+        let count = 0;
         for (const file of files) {
+            count++;
+            setLocationStatus(`Compressing ${count} of ${files.length} file(s)...`);
+
             // Only compress image files
             if (file.type.startsWith('image/')) {
                 try {
                     const compressedFile = await imageCompression(file, compressionOptions);
-                    // Create a new File object with a .jpg extension
                     const newFileName = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg';
                     const newFile = new File([compressedFile], newFileName, {
                         type: 'image/jpeg',

@@ -1,3 +1,5 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/App.jsx
+
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useNavigate, Outlet, Navigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -25,7 +27,7 @@ import VolunteerProfilePage from "./pages/user/VolunteerProfilePage.jsx";
 import InventoryPage from "./pages/inventory/InventoryPage.jsx";
 import FirstAidKitPage from "./pages/inventory/FirstAidKitPage.jsx";
 import NotificationsPage from './pages/notification/NotificationsPage.jsx';
-import SuperAdminPage from './pages/admin/SuperAdminPage.jsx'; // <-- Import SuperAdminPage
+import SuperAdminPage from './pages/admin/SuperAdminPage.jsx';
 
 // This component acts as a layout for all protected pages
 const ProtectedLayout = ({ user, onLogout }) => {
@@ -53,15 +55,16 @@ const App = () => {
         if (token) {
             try {
                 const decodedUser = jwtDecode(token);
-                // Check if token is expired (optional but good practice)
                 if (decodedUser.exp * 1000 < Date.now()) {
                     throw new Error("Token expired");
                 }
                 setUser(decodedUser);
                 setToken(token);
+
+                // --- ✨ Removed subscribeToPushNotifications(token) call ---
+
             } catch (e) {
                 console.error("Token validation failed:", e.message);
-                // Handle invalid/expired token
                 setUser(null);
                 setToken(null);
                 localStorage.removeItem('jwtToken');
@@ -75,18 +78,24 @@ const App = () => {
         try {
             const decodedUser = jwtDecode(newToken);
             setUser(decodedUser);
-            navigate('/chat'); // Navigate after state update
+            navigate('/chat');
+
+            // --- ✨ Removed subscribeToPushNotifications(newToken) call ---
+
         } catch (e) {
             console.error("Failed to decode token on login:", e);
-            handleLogout(); // Log out if token is invalid
+            handleLogout();
         }
     };
 
     const handleLogout = () => {
+        // Here you might also want to unsubscribe the user,
+        // but it's complex as you need the endpoint.
+        // The backend will handle failed pushes.
         localStorage.removeItem('jwtToken');
         setToken(null);
         setUser(null);
-        navigate('/login'); // Navigate after state update
+        navigate('/login');
     };
 
     return (
@@ -121,17 +130,10 @@ const App = () => {
                     {/* Notifications */}
                     <Route path="/notifications" element={<NotificationsPage token={token} />} />
 
-                    {/* Static/Info */}
-                    <Route path="/adoptions" element={<AdoptionsPage />} />
-                    <Route path="/events" element={<EventsPage />} />
-
                     {/* Admin/Manager Specific */}
-                    {/* Consider adding role checks here if needed, although backend handles authorization */}
                     <Route path="/approvals" element={<ApprovalsPage token={token} />} />
                     <Route path="/inventory" element={<InventoryPage token={token} />} />
-                    {/* --- ✨ Add Super Admin Route --- */}
                     <Route path="/superadmin" element={<SuperAdminPage token={token} currentUser={user} />} />
-                    {/* --- End Route --- */}
 
                     {/* Fallback for unknown protected routes */}
                     <Route path="*" element={<Navigate to="/chat" replace />} />

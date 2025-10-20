@@ -1,6 +1,11 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/user/ProfilePage.jsx
+
 import React, { useState, useEffect } from 'react';
 import styles from './ProfilePage.module.css';
-import { FaUser, FaShieldAlt, FaToggleOn, FaToggleOff, FaSpinner, FaCheckCircle, FaExclamationCircle, FaMapMarkerAlt, FaFirstAid } from 'react-icons/fa';
+// --- ✨ Import FaBell and the new subscription function ---
+import { FaUser, FaShieldAlt, FaToggleOn, FaToggleOff, FaSpinner, FaCheckCircle, FaExclamationCircle, FaMapMarkerAlt, FaFirstAid, FaBell } from 'react-icons/fa';
+import { subscribeToPushNotifications } from '../../pushSubscription.js'; // Import the function
+// --- End Imports ---
 import UpdatePasswordModal from '../../components/common/UpdatePasswordModal.jsx';
 import Lightbox from '../../components/common/Lightbox.jsx';
 import Avatar from '../../components/common/Avatar.jsx';
@@ -28,6 +33,9 @@ const ProfilePage = ({ token }) => {
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
     const [locationMessage, setLocationMessage] = useState({ type: '', text: '' });
+    // --- ✨ Add state for notification button ---
+    const [isSubscribing, setIsSubscribing] = useState(false);
+    // --- End State ---
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -123,6 +131,24 @@ const ProfilePage = ({ token }) => {
         });
     };
 
+    // --- ✨ Add handler for the notification button ---
+    const handleSubscribeClick = async () => {
+        setIsSubscribing(true);
+        setLocationMessage({ type: '', text: '' }); // Clear other messages
+
+        const success = await subscribeToPushNotifications(token);
+
+        if (success) {
+            setLocationMessage({ type: 'success', text: 'Notifications enabled!' });
+        } else {
+            // alert() is already handled in the function, just clear loading
+        }
+
+        setIsSubscribing(false);
+        setTimeout(() => setLocationMessage({ type: '', text: '' }), 3000); // Clear message after 3s
+    };
+    // --- End Handler ---
+
     if (loading) return <div className={styles.centered}><FaSpinner className={styles.spinner} /></div>;
     if (error) return <div className={styles.centered}><p className={styles.error}>{error}</p></div>;
     if (!profile) return null;
@@ -205,6 +231,21 @@ const ProfilePage = ({ token }) => {
                         </div>
                     )}
                 </div>
+
+                {/* --- ✨ Add Notification Subscription Card --- */}
+                <div className={styles.card}>
+                    <div className={styles.settingSection}>
+                        <h2><FaBell /> Notifications</h2>
+                        <button
+                            onClick={handleSubscribeClick}
+                            className={styles.actionButton}
+                            disabled={isSubscribing}
+                        >
+                            {isSubscribing ? <FaSpinner className={styles.spinnerIcon} /> : 'Enable Notifications'}
+                        </button>
+                    </div>
+                </div>
+                {/* --- End Card --- */}
 
                 <div className={styles.card}>
                     <div className={styles.settingSection}>

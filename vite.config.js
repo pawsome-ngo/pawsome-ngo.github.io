@@ -9,24 +9,31 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       manifest: {
         name: 'Pawsome NGO Chat',
         short_name: 'Pawsome Chat',
         description: 'Chat application for Pawsome NGO',
         theme_color: '#fc5c7d',
-
-        // ✨ FIX: Added background_color to match the theme_color
         background_color: '#fc5c7d',
+
+        // --- ✨ ADD THESE TWO LINES ---
+        start_url: '/',
+        display: 'standalone',
+        // --- End of Add ---
 
         icons: [
           {
-            src: 'pwa-192x192.png',
+            // --- ✨ FIX: Correct file path ---
+            src: 'pawsome_app_icon.png', // Was 'pwa-192x192.png'
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            // --- ✨ FIX: Correct file path ---
+            src: 'android-chrome-512x512.png', // Was 'pwa-512x512.png'
             sizes: '512x512',
             type: 'image/png'
           }

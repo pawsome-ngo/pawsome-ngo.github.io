@@ -1,13 +1,14 @@
 // File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/IncidentMediaPage.jsx
+
 import React, { useMemo } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import styles from './IncidentMediaPage.module.css';
 import { FaArrowLeft, FaPhotoVideo, FaImage, FaVideo, FaVolumeUp, FaFileAlt, FaFolder, FaFolderOpen } from 'react-icons/fa';
 
-// --- ✨ 1. Import the API_BASE_URL ---
+// Import the API_BASE_URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// A helper component to show the correct icon based on media type
+// A helper component to show the correct icon based on media type (used as a fallback)
 const MediaIcon = ({ type }) => {
     switch(type) {
         case 'IMAGE': return <FaImage />;
@@ -53,6 +54,57 @@ const IncidentMediaPage = () => {
         );
     }
 
+    // Helper to render the correct media element
+    const renderMediaElement = (mediaItem) => {
+        // Construct the full, absolute URL for the file
+        const absoluteUrl = `${API_BASE_URL}${mediaItem.url}`;
+
+        switch(mediaItem.mediaType) {
+            case 'IMAGE':
+                return (
+                    <a href={absoluteUrl} target="_blank" rel="noopener noreferrer" className={styles.mediaItem}>
+                        <img
+                            src={absoluteUrl}
+                            alt={`Incident media ${mediaItem.id}`}
+                            loading="lazy"
+                            className={styles.mediaImage}
+                        />
+                    </a>
+                );
+            case 'VIDEO':
+                return (
+                    <div className={styles.mediaItem}>
+                        <video controls className={styles.mediaVideo}>
+                            <source src={absoluteUrl} type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                );
+            case 'AUDIO':
+                return (
+                    <div className={styles.mediaItem}>
+                        <audio controls className={styles.mediaAudio}>
+                            <source src={absoluteUrl} type="audio/wav" />
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                );
+            default:
+                // Fallback for unknown types (same as old link)
+                return (
+                    <a
+                        href={absoluteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`${styles.mediaItem} ${styles.linkItem}`} // Use mediaItem for grid, linkItem for link style
+                    >
+                        <MediaIcon type={mediaItem.mediaType} />
+                        <span>Download File ({mediaItem.mediaType ? mediaItem.mediaType.toLowerCase() : 'unknown'})</span>
+                    </a>
+                );
+        }
+    };
+
     return (
         <div className={styles.container}>
             <Link to={`/incident/${incidentId}`} className={styles.backLink}>
@@ -71,29 +123,17 @@ const IncidentMediaPage = () => {
                             <summary className={styles.categoryHeader}>
                                 <FaFolderOpen className={styles.folderIconOpen} />
                                 <FaFolder className={styles.folderIconClosed} />
-                                <span>{category}</span>
+                                <span>{category} ({mediaItems.length})</span>
                             </summary>
-                            <div className={styles.linkList}>
-                                {mediaItems.map(mediaItem => {
-                                    // --- ✨ 2. Create the absolute URL ---
-                                    // mediaItem.url is "/api/uploads/...", API_BASE_URL is "https://api.pawsome.buzz"
-                                    const absoluteUrl = `${API_BASE_URL}${mediaItem.url}`;
-                                    // --- End Fix ---
-
-                                    return (
-                                        <a
-                                            key={mediaItem.id}
-                                            href={absoluteUrl} // <-- 3. Use the absolute URL here
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className={styles.linkItem}
-                                        >
-                                            <MediaIcon type={mediaItem.mediaType} />
-                                            <span>Download Media File ({mediaItem.mediaType.toLowerCase()})</span>
-                                        </a>
-                                    );
-                                })}
+                            {/* --- ✨ UPDATED: Using mediaGrid instead of linkList --- */}
+                            <div className={styles.mediaGrid}>
+                                {mediaItems.map(mediaItem => (
+                                    <React.Fragment key={mediaItem.id}>
+                                        {renderMediaElement(mediaItem)}
+                                    </React.Fragment>
+                                ))}
                             </div>
+                            {/* --- End Update --- */}
                         </details>
                     ))}
                 </div>

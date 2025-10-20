@@ -1,3 +1,5 @@
+/* File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/IncidentMediaPage.module.css */
+
 .container {
     padding: 1.5rem;
     max-width: 800px;
@@ -30,7 +32,7 @@
     -webkit-text-fill-color: transparent;
 }
 
-/* --- NEW CATEGORY STYLES --- */
+/* --- Category Styles --- */
 .categoryList {
     display: flex;
     flex-direction: column;
@@ -41,6 +43,8 @@
     border: 1px solid #e0e0e0;
     border-radius: 12px;
     overflow: hidden;
+    background: #fff; /* Give the section a white background */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
 .categoryHeader {
@@ -70,39 +74,64 @@
 .categorySection:not([open]) .folderIconOpen { display: none; }
 
 
-/* --- Link List Styles --- */
-.linkList {
-    display: flex;
-    flex-direction: column;
+/* --- ✨ NEW Media Grid Styles --- */
+.mediaGrid {
+    display: grid;
+    /* Responsive grid: 2 columns on small, 3 on medium, 4 on large */
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 1rem;
     padding: 1.5rem;
 }
 
+.mediaItem {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    background: #f0f0f0; /* Background color for loading */
+    display: block; /* For <a> tags */
+    text-decoration: none; /* For <a> tags */
+}
+
+.mediaImage, .mediaVideo, .mediaAudio {
+    width: 100%;
+    display: block;
+}
+
+.mediaImage {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+}
+.mediaItem:hover .mediaImage {
+    transform: scale(1.05);
+}
+
+.mediaVideo, .mediaAudio {
+    aspect-ratio: 16 / 9; /* Give videos/audio players a standard shape */
+}
+
+/* Fallback for link items (non-media) */
 .linkItem {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
-    text-decoration: none;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
     color: #34495e;
     font-weight: 600;
-    font-size: 1.1rem;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.2s;
+    font-size: 0.9rem;
+    text-align: center;
+    transition: background-color 0.2s ease;
 }
-
 .linkItem:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    background-color: #f1f3f5;
+}
+.linkItem svg {
+    font-size: 2rem;
     color: #6a82fb;
 }
 
-.linkItem svg {
-    font-size: 1.5rem;
-    color: #6a82fb;
-}
 
 /* --- Empty State (unchanged) --- */
 .emptyState {

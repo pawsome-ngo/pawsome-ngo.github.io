@@ -142,33 +142,48 @@
 .dangerButton {
     background: linear-gradient(45deg, #e74c3c, #c0392b);
 }
-/* Ensure danger icon color is correct */
-.dangerZone .fa-bell-slash {
+/* Ensure Danger Icon Colors are Correct */
+.dangerZone .fa-bell-slash,
+.dangerZone .fa-redo { /* Use FaRedo for reset */
     color: #e74c3c;
 }
 
-
-/* --- Styles Copied/Reused for ManageUsersModal --- */
-
-/* Loading Styles */
-.loadingContainer { /* Center content */
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    min-height: calc(100vh - 200px); padding: 2rem; color: #7f8c8d;
+/* --- Styles for Purge Input on Card --- */
+.purgeInputGroupCard {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center items */
+    gap: 0.75rem;
+    margin-bottom: 1rem; /* Space before the button */
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    width: 90%; /* Don't take full width */
+    margin-left: auto;
+    margin-right: auto;
 }
-.pawSpinner { margin-bottom: 1.5rem; }
-.pawIcon { font-size: 4rem; color: #fc5c7d; animation: pulse 1.5s infinite ease-in-out; }
-@keyframes pulse { /* Pulse animation */
-    0% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.15); opacity: 1; }
-    100% { transform: scale(1); opacity: 0.8; }
+.purgeInputGroupCard label {
+    font-weight: 600;
+    color: #34495e;
+    font-size: 0.9rem;
 }
-
-.error { /* General page error */
-    color: #e74c3c; text-align: center; padding: 1rem; background-color: #fbeae5;
-    border-radius: 8px; margin-top: 2rem; border: 1px solid #f5c6cb;
+.purgeInput { /* Reusable style for number input */
+    width: 60px; /* Smaller width */
+    padding: 0.5rem;
+    font-size: 1rem;
+    text-align: center;
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
 }
+.purgeInputGroupCard span {
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: 500;
+}
+/* --- End Purge Card Input Styles --- */
 
-/* Modal Styles */
+
+/* --- Modal Styles (Used by ManageUsersModal and ConfirmationModal) --- */
 .modalOverlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center;
@@ -183,6 +198,10 @@
     position: relative; /* For close button */
     box-shadow: 0 5px 20px rgba(0,0,0,0.25);
 }
+.purgeModalContent { /* Specific adjustments for Purge modal */
+    max-width: 450px; /* Purge modal can be narrower */
+}
+
 
 .manageUsersModal { /* Specific adjustments for this modal */
     padding-bottom: 0; /* Footer handles bottom padding */
@@ -218,18 +237,38 @@
 .userListItem:hover { background-color: #f8f9fa; }
 .userListItem.selected { background-color: #eaf4ff; border-left-color: #3498db; }
 
+/* Style for Super Admin rows in user list */
+.superAdminRow {
+    opacity: 0.7;
+    background-color: #f8f9fa;
+    cursor: default;
+}
+.superAdminRow:hover {
+    background-color: #f8f9fa;
+}
+.superAdminText {
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: #95a5a6;
+    flex-shrink: 0;
+}
+
+
 .userListItem input[type="checkbox"] { width: 18px; height: 18px; accent-color: #3498db; flex-shrink: 0; }
 .userInfoSmall { display: flex; flex-direction: column; flex-grow: 1; font-size: 0.9rem; overflow: hidden; }
 .userInfoSmall span:first-child { font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.userIdSmall { font-size: 0.8rem; color: #7f8c8d; }
+.userIdSmall { font-size: 0.8rem; color: #7f8c8d; display: inline-flex; align-items: center; gap: 0.3rem;} /* Icon gap */
+.userIdSmall svg { font-size: 0.9em; } /* Icon size */
 
-.modalFooter, .modalActions { /* .modalActions for Purge modal */
+
+.modalFooter, .modalActions { /* .modalActions for Purge modal & Confirmation Modal */
     margin-top: auto; padding: 1rem 1.5rem; border-top: 1px solid #eee; background-color: #f8f9fa;
     display: flex; justify-content: space-between; align-items: center; gap: 1rem;
     border-radius: 0 0 12px 12px; margin-left: -1.5rem; margin-right: -1.5rem; margin-bottom: -1.5rem;
 }
-.modalActions { /* Specific override for Purge modal (which doesn't have footer parent) */
-    margin: 1.5rem -1.5rem -1.5rem; /* Adjust padding */
+.modalActions { /* Specific override for modals without footer parent */
+    margin: 1.5rem -1.5rem -1.5rem;
 }
 
 .modalFooter button, .modalActions button {
@@ -241,13 +280,19 @@
 .confirmDeleteButton { background-color: #e74c3c; color: white; flex-grow: 1; }
 .modalFooter button:disabled, .modalActions button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
 
-.notifyCheckboxLabel {
+.notifyCheckboxLabel { /* Checkbox inside footer/modal */
     display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #333; cursor: pointer; margin-right: auto;
 }
 .notifyCheckboxLabel input { width: 16px; height: 16px; accent-color: #3498db; }
 
-.message {
-    display: flex; align-items: center; gap: 0.5rem; margin: 1rem 0; padding: 0.75rem; border-radius: 8px; font-weight: 500; font-size: 0.9rem;
+.message { /* Message box for results/errors */
+    display: flex; flex-direction: column; /* Allow list stacking */ gap: 0.5rem; margin: 1rem 0; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 500; font-size: 0.9rem;
+    align-items: flex-start; /* Align icon/text top-left */
+}
+.message div { /* Ensure inner divs are block */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 .message.error { background-color: #f8d7da; border: 1px solid #e74c3c; color: #721c24; }
 .message.success { background-color: #d4edda; border: 1px solid #2ecc71; color: #155724;}
@@ -260,19 +305,21 @@
     margin-top: 1rem; padding: 0.4rem 0.8rem; font-size: 0.8rem; background-color: #e9ecef; border: 1px solid #dee2e6; color: #495057; border-radius: 4px; cursor: pointer;
 }
 
+
 .spinner { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-.modalError {
+.modalError { /* Error specifically within modal confirmation step */
     color: #e74c3c; text-align: center; padding: 0.75rem; background-color: #fbeae5;
     border-radius: 8px; margin: 1rem 0 0.5rem; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
     border: 1px solid #f5c6cb;
 }
 
-/* --- ✨ Styles for Purge Modal Input --- */
+/* Styles for Purge Modal Input Group */
 .purgeInputGroup {
     display: flex;
     align-items: center;
+    justify-content: center; /* Center items */
     gap: 0.75rem;
     margin: 1.5rem 0;
     padding: 1rem;
@@ -284,17 +331,25 @@
     color: #34495e;
     font-size: 0.95rem;
 }
-.purgeInput {
-    width: 80px; /* Fixed width for the number input */
-    padding: 0.6rem;
-    font-size: 1.1rem;
-    text-align: center;
-    border: 1px solid #bdc3c7;
-    border-radius: 6px;
-}
+/* Reusing .purgeInput from card */
 .purgeInputGroup span {
     font-size: 0.95rem;
     color: #555;
     font-weight: 500;
 }
-/* --- End Purge Styles --- */
+
+/* Loading Styles */
+.loadingContainer { /* Center content */
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    min-height: calc(100vh - 200px); padding: 2rem; color: #7f8c8d;
+}
+.loadingContainerModal { /* Centered spinner inside modal */
+    padding: 2rem; text-align: center; color: #7f8c8d;
+}
+.pawSpinner { margin-bottom: 1.5rem; }
+.pawIcon { font-size: 4rem; color: #fc5c7d; animation: pulse 1.5s infinite ease-in-out; }
+@keyframes pulse { /* Pulse animation */
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}

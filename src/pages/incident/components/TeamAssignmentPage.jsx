@@ -1,7 +1,9 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/components/TeamAssignmentPage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import styles from './TeamAssignmentPage.module.css';
-import { FaArrowLeft, FaMotorcycle, FaMedkit, FaHeart, FaExclamationCircle, FaHistory } from 'react-icons/fa';
+// --- ✨ Import FaPaw for the spinner ---
+import { FaArrowLeft, FaMotorcycle, FaMedkit, FaHeart, FaExclamationCircle, FaHistory, FaPaw } from 'react-icons/fa';
 import CustomSelect from '../../../components/common/CustomSelect.jsx';
 import AssignmentSuccessModal from "./AssignmentSuccessModal.jsx";
 import UnauthorizedModal from "../../../components/common/UnauthorizedModal.jsx";
@@ -152,7 +154,19 @@ const TeamAssignmentPage = ({ token, currentUser }) => {
         { value: 'proximity', label: 'Proximity' }
     ];
 
-    if (loading) return <div className={styles.container}>Loading volunteers...</div>;
+    // --- ✨ UPDATED Loading State ---
+    if (loading) {
+        return (
+            <div className={styles.loadingContainer}>
+                <div className={styles.pawSpinner}>
+                    <FaPaw className={styles.pawIcon} />
+                </div>
+                <p>Loading Volunteers...</p>
+            </div>
+        );
+    }
+    // --- End Update ---
+
     if (error) return <div className={styles.container} style={{ color: 'red' }}>{error}</div>;
 
     return (

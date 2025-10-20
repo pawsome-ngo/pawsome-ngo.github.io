@@ -2,27 +2,25 @@
 import React, { useState, useEffect, useCallback } from 'react'; // Added useEffect and useCallback
 import styles from './SuperAdminPage.module.css';
 import ManageUsersModal from './ManageUsersModal.jsx';
-// --- ✨ Removed FaDatabase, FaTrashAlt, FaCog (if ConfirmationModal isn't used elsewhere) ---
-// --- ✨ Kept FaUsersCog, FaBellSlash, FaTimes, FaSpinner, FaPaw, FaExclamationCircle, FaExclamationTriangle, FaCheckCircle, FaTrash ---
-import { FaUsersCog, FaSpinner, FaPaw, FaExclamationTriangle, FaCheckCircle, FaBellSlash, FaTimes, FaTrash, FaExclamationCircle } from 'react-icons/fa';
-// ConfirmationModal might still be used by ManageUsersModal indirectly, keep import for now, or remove if truly unused.
 import ConfirmationModal from '../../components/common/ConfirmationModal.jsx';
+// --- ✨ Import FaRedo for the Reset button ---
+import { FaUsersCog, FaBellSlash, FaTrash, FaSpinner, FaPaw, FaExclamationTriangle, FaCheckCircle, FaTimes, FaRedo, FaExclamationCircle } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const SuperAdminPage = ({ token, currentUser }) => {
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-    // Removed actionToConfirm and isProcessing state for generic actions
+    // --- ✨ Updated state for generic confirmation ---
+    const [actionToConfirm, setActionToConfirm] = useState(null); // 'purgeNotifications', 'resetKeepUsers'
+    const [isProcessing, setIsProcessing] = useState(false); // Generic processing flag
+    // --- End Update ---
     const [feedback, setFeedback] = useState({ message: '', type: '' }); // type: 'success' or 'error'
 
-    // --- State for Purge Modal ---
-    const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
-    const [purgeDays, setPurgeDays] = useState("7"); // Default to 7 days
-    const [isProcessingPurge, setIsProcessingPurge] = useState(false);
-    const [purgeError, setPurgeError] = useState("");
-    // --- End State ---
+    // State for Purge Modal fields
+    const [purgeDays, setPurgeDays] = useState("7");
+    // Removed purgeError state
 
-    // Basic check to ensure only Super Admins see the content
+    // Basic check
     if (!currentUser?.roles?.includes('ROLE_SUPER_ADMIN')) {
         return (
             <div className={styles.container}>
@@ -31,57 +29,90 @@ const SuperAdminPage = ({ token, currentUser }) => {
         );
     }
 
-    // Removed handleActionConfirm and getConfirmationMessage functions
+    // --- ✨ Generic Confirmation Handler (Handles Purge and Reset) ---
+    const handleActionConfirm = async () => {
+        if (!actionToConfirm) return;
 
-    // --- Handlers for Purge Modal ---
-    const openPurgeModal = () => {
-        setPurgeDays("7"); // Reset to default
-        setPurgeError(""); // Clear old errors
-        setFeedback({ message: '', type: '' }); // Clear main page feedback
-        setIsPurgeModalOpen(true);
-    };
-
-    const closePurgeModal = () => {
-        if (isProcessingPurge) return; // Don't close while processing
-        setIsPurgeModalOpen(false);
-        setPurgeError("");
-    };
-
-    const handlePurgeNotifications = async () => {
-        setIsProcessingPurge(true);
-        setPurgeError("");
+        setIsProcessing(true);
         setFeedback({ message: '', type: '' });
+        let endpoint = '';
+        let successMessage = '';
+        let errorMessage = '';
+        let httpMethod = 'DELETE';
 
-        const days = parseInt(purgeDays, 10);
-        if (isNaN(days) || days <= 0) {
-            setPurgeError("Please enter a valid number of days (1 or more).");
-            setIsProcessingPurge(false);
-            return;
+        switch (actionToConfirm) {
+            case 'purgeNotifications':
+                const days = parseInt(purgeDays, 10);
+                if (isNaN(days) || days <= 0) {
+                    setFeedback({ message: "Invalid number of days for purge.", type: 'error' });
+                    setIsProcessing(false);
+                    setActionToConfirm(null);
+                    setTimeout(() => setFeedback({ message: '', type: '' }), 5000);
+                    return;
+                }
+                endpoint = `${API_BASE_URL}/api/notifications/older-than/${days}`;
+                successMessage = `Successfully purged notifications older than ${days} days.`;
+                errorMessage = 'Failed to purge notifications.';
+                break;
+            // --- ✨ Added Case for Reset ---
+            case 'resetKeepUsers':
+                endpoint = `${API_BASE_URL}/api/admin/reset-application-keep-users`;
+                successMessage = 'Application data reset successfully, keeping users and roles.';
+                errorMessage = 'Failed to reset application data.';
+                break;
+            // --- End Added Case ---
+            default:
+                setIsProcessing(false);
+                setActionToConfirm(null);
+                return;
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/notifications/older-than/${days}`, {
-                method: 'DELETE',
+            const response = await fetch(endpoint, {
+                method: httpMethod,
                 headers: { 'Authorization': `Bearer ${token}` },
             });
-
             const resultData = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(resultData.message || `Failed to purge notifications (Status: ${response.status})`);
+                throw new Error(resultData.message || errorMessage || `Action failed (Status: ${response.status})`);
             }
 
-            // Success
-            setFeedback({ message: resultData.message || `Successfully purged notifications older than ${days} days.`, type: 'success' });
-            closePurgeModal();
+            setFeedback({ message: resultData.message || successMessage, type: 'success' });
 
         } catch (err) {
-            setPurgeError(err.message || 'An unexpected error occurred.');
+            setFeedback({ message: err.message || 'An unexpected error occurred.', type: 'error' });
         } finally {
-            setIsProcessingPurge(false);
+            setIsProcessing(false);
+            setActionToConfirm(null); // Close confirmation modal after action
+            setTimeout(() => setFeedback({ message: '', type: '' }), 5000); // Auto-clear feedback
         }
     };
-    // --- End Purge Handlers ---
+
+    const getConfirmationMessage = () => {
+        switch (actionToConfirm) {
+            case 'purgeNotifications':
+                return `Are you sure you want to permanently delete all notifications older than ${purgeDays} days? This cannot be undone.`;
+            // --- ✨ Added Message for Reset ---
+            case 'resetKeepUsers':
+                return "Are you ABSOLUTELY sure you want to reset the application? This will delete ALL incidents, cases, chats, inventory, etc., but keep user accounts and roles. This cannot be undone.";
+            // --- End Added Message ---
+            default: return "Are you sure?";
+        }
+    };
+    // --- End Generic Handler ---
+
+    // --- Handler to open Purge Confirmation ---
+    const handleOpenPurgeConfirm = () => {
+        const days = parseInt(purgeDays, 10);
+        if (isNaN(days) || days <= 0) {
+            setFeedback({ message: "Please enter a valid number of days (1 or more) to purge.", type: 'error' });
+            setTimeout(() => setFeedback({ message: '', type: '' }), 5000);
+            return;
+        }
+        setActionToConfirm('purgeNotifications'); // Set state to open the generic confirmation modal
+    }
+    // --- End Handler ---
 
     return (
         <>
@@ -109,29 +140,53 @@ const SuperAdminPage = ({ token, currentUser }) => {
                         <button
                             className={styles.actionButton}
                             onClick={() => setIsUserModalOpen(true)}
-                            disabled={isProcessingPurge} // Disable if purge is running
+                            disabled={isProcessing}
                         >
                             Open User Manager
                         </button>
                     </div>
 
-                    {/* --- Purge Notifications Card --- */}
+                    {/* Purge Notifications Card */}
                     <div className={`${styles.actionCard} ${styles.dangerZone}`}>
                         <FaBellSlash className={styles.actionIcon} />
                         <h2>Purge Notifications</h2>
-                        <p>Permanently delete all notifications older than a specified number of days.</p>
+                        <p>Permanently delete old notifications to clean up the database.</p>
+                        <div className={styles.purgeInputGroupCard}>
+                            <label htmlFor="purgeDaysInputCard">Older than:</label>
+                            <input
+                                type="number"
+                                id="purgeDaysInputCard"
+                                className={styles.purgeInput}
+                                value={purgeDays}
+                                onChange={(e) => setPurgeDays(e.target.value)}
+                                min="1"
+                                disabled={isProcessing}
+                            />
+                            <span>days</span>
+                        </div>
                         <button
                             className={`${styles.actionButton} ${styles.dangerButton}`}
-                            onClick={openPurgeModal}
-                            disabled={isProcessingPurge} // Disable if purge is running
+                            onClick={handleOpenPurgeConfirm}
+                            disabled={isProcessing}
                         >
-                            Purge Old Notifications
+                            Purge Notifications
                         </button>
                     </div>
-                    {/* --- End Purge Card --- */}
 
-                    {/* Removed Cleanup and Reset cards */}
-
+                    {/* --- ✨ Reset Application (Keep Users) Card --- */}
+                    <div className={`${styles.actionCard} ${styles.dangerZone}`}>
+                        <FaRedo className={styles.actionIcon} />
+                        <h2>Reset Application (Keep Users)</h2>
+                        <p>Deletes all incidents, cases, chats, inventory, etc., but keeps user accounts and roles. Use with extreme caution!</p>
+                        <button
+                            className={`${styles.actionButton} ${styles.dangerButton}`}
+                            onClick={() => setActionToConfirm('resetKeepUsers')} // Opens confirmation modal
+                            disabled={isProcessing}
+                        >
+                            Reset Application Data
+                        </button>
+                    </div>
+                    {/* --- End Reset Card --- */}
                 </div>
             </div>
 
@@ -144,49 +199,19 @@ const SuperAdminPage = ({ token, currentUser }) => {
                 />
             )}
 
-            {/* Removed Generic Confirmation Modal */}
-
-            {/* --- Purge Notifications Modal --- */}
-            {isPurgeModalOpen && (
-                <div className={styles.modalOverlay} onClick={closePurgeModal}>
-                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                        <button onClick={closePurgeModal} className={styles.closeButton} disabled={isProcessingPurge}><FaTimes /></button>
-                        <h3>Purge Old Notifications</h3>
-                        <p>This will permanently delete all notifications older than the specified number of days. This action cannot be undone.</p>
-
-                        <div className={styles.purgeInputGroup}>
-                            <label htmlFor="purgeDaysInput">Delete notifications older than:</label>
-                            <input
-                                type="number"
-                                id="purgeDaysInput"
-                                className={styles.purgeInput}
-                                value={purgeDays}
-                                onChange={(e) => setPurgeDays(e.target.value)}
-                                min="1"
-                                disabled={isProcessingPurge}
-                            />
-                            <span>days</span>
-                        </div>
-
-                        {/* Display Error inside this modal */}
-                        {purgeError && (
-                            <p className={styles.modalError}>
-                                <FaExclamationCircle/> {purgeError}
-                            </p>
-                        )}
-
-                        <div className={styles.modalActions}>
-                            <button onClick={closePurgeModal} className={styles.cancelButton} disabled={isProcessingPurge}>
-                                Cancel
-                            </button>
-                            <button onClick={handlePurgeNotifications} className={`${styles.confirmDeleteButton} ${styles.dangerButton}`} disabled={isProcessingPurge}>
-                                {isProcessingPurge ? <FaSpinner className={styles.spinner} /> : <><FaTrash /> Confirm Purge</>}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {/* --- Generic Confirmation Modal (Handles Purge and Reset) --- */}
+            {actionToConfirm && (
+                <ConfirmationModal
+                    message={getConfirmationMessage()}
+                    confirmText={isProcessing ? "Processing..." : "Confirm"}
+                    confirmClass="delete" // Use red confirm button
+                    onConfirm={handleActionConfirm}
+                    onCancel={() => setActionToConfirm(null)}
+                    confirmDisabled={isProcessing}
+                    cancelDisabled={isProcessing}
+                />
             )}
-            {/* --- End Purge Modal --- */}
+            {/* --- End Confirmation Modal --- */}
         </>
     );
 };

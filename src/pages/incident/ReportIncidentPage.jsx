@@ -1,9 +1,9 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/ReportIncidentPage.jsx
+
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaMicrophone, FaStop, FaTrash, FaFileAlt, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
-// --- 1. Import the compression library ---
 import imageCompression from 'browser-image-compression';
-// --- End Import ---
 import CustomSelect from '../../components/common/CustomSelect.jsx';
 import SignUpModal from '../../components/common/SignUpModal.jsx';
 import styles from './ReportIncidentPage.module.css';
@@ -25,6 +25,9 @@ const ReportIncidentPage = () => {
     const [mediaFiles, setMediaFiles] = useState([]);
     const [locationStatus, setLocationStatus] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // --- ✨ State for upload progress ---
+    const [uploadProgress, setUploadProgress] = useState(0);
+    // --- End State ---
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
     const [formErrors, setFormErrors] = useState({});
@@ -56,7 +59,6 @@ const ReportIncidentPage = () => {
         }
     };
 
-    // --- ✨ 2. Modify handleFileChange for MORE compression ---
     const handleFileChange = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
@@ -64,11 +66,11 @@ const ReportIncidentPage = () => {
         setLocationStatus(`Compressing 1 of ${files.length} file(s)...`);
 
         const compressionOptions = {
-            maxSizeMB: 0.8,         // 800KB (More aggressive than 1.5MB)
-            maxWidthOrHeight: 1280, // 1280px (More aggressive than 1920px)
+            maxSizeMB: 0.8,
+            maxWidthOrHeight: 1280,
             useWebWorker: true,
             fileType: 'image/jpeg',
-            quality: 0.7,           // Explicitly set JPEG quality to 70%
+            quality: 0.7,
         };
 
         const processedFiles = [];
@@ -77,7 +79,6 @@ const ReportIncidentPage = () => {
             count++;
             setLocationStatus(`Compressing ${count} of ${files.length} file(s)...`);
 
-            // Only compress image files
             if (file.type.startsWith('image/')) {
                 try {
                     const compressedFile = await imageCompression(file, compressionOptions);
@@ -89,10 +90,9 @@ const ReportIncidentPage = () => {
                     processedFiles.push(newFile);
                 } catch (error) {
                     console.error("Image compression failed, adding original file:", error);
-                    processedFiles.push(file); // Add original if compression fails
+                    processedFiles.push(file);
                 }
             } else {
-                // Add non-image files (videos, audio) directly
                 processedFiles.push(file);
             }
         }
@@ -101,7 +101,6 @@ const ReportIncidentPage = () => {
         setLocationStatus(`Added ${processedFiles.length} file(s).`);
         setTimeout(() => setLocationStatus(''), 3000);
     };
-    // --- End Modification ---
 
     const handleGetLocation = () => {
         setLocationStatus('Fetching location...');
@@ -125,6 +124,7 @@ const ReportIncidentPage = () => {
     };
 
     const startRecording = async () => {
+        // ... (function remains the same) ...
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder.current = new MediaRecorder(stream);
@@ -148,23 +148,27 @@ const ReportIncidentPage = () => {
     };
 
     const stopRecording = () => {
+        // ... (function remains the same) ...
         mediaRecorder.current.stop();
         setIsRecording(false);
     };
 
     const removeFile = (fileName) => {
+        // ... (function remains the same) ...
         setMediaFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
         if (fileName.startsWith('voice-report-')) {
             setAudioURL('');
         }
     };
 
+    // --- ✨ 3. Rewrite handleSubmit to use XMLHttpRequest ---
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (Object.keys(formErrors).length > 0) {
             return;
         }
         setIsSubmitting(true);
+        setUploadProgress(0); // Reset progress
 
         const data = new FormData();
         const incidentDetails = {
@@ -178,28 +182,54 @@ const ReportIncidentPage = () => {
             data.append('media', file);
         });
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/incidents/report`, {
-                method: 'POST',
-                body: data,
-            });
+        // Use XMLHttpRequest instead of fetch
+        const xhr = new XMLHttpRequest();
 
-            const result = await response.json();
+        xhr.open('POST', `${API_BASE_URL}/api/incidents/report`);
 
-            if (response.ok) {
+        // --- This is the key part for upload progress ---
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                setUploadProgress(Math.round(percentComplete));
+            }
+        };
+
+        xhr.onload = () => {
+            // When the request is complete
+            setIsSubmitting(false);
+            setUploadProgress(0);
+
+            let result;
+            try {
+                result = JSON.parse(xhr.responseText);
+            } catch (parseError) {
+                setModalMessage('An unexpected error occurred. Please try again.');
+                setIsModalOpen(true);
+                return;
+            }
+
+            if (xhr.status >= 200 && xhr.status < 300) {
                 setModalMessage(result.message || 'Incident reported successfully!');
                 setIsModalOpen(true);
             } else {
                 setModalMessage(result.message || 'Failed to report incident.');
                 setIsModalOpen(true);
             }
-        } catch (error) {
-            setModalMessage('An error occurred. Please try again.');
-            setIsModalOpen(true);
-        } finally {
+        };
+
+        xhr.onerror = () => {
+            // Handle network errors
             setIsSubmitting(false);
-        }
+            setUploadProgress(0);
+            setModalMessage('Could not connect to the server. Please check your connection and try again.');
+            setIsModalOpen(true);
+        };
+
+        // Send the request
+        xhr.send(data);
     };
+    // --- End Modification ---
 
     const closeModal = () => {
         setIsModalOpen(false);
@@ -223,6 +253,7 @@ const ReportIncidentPage = () => {
                 </div>
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formGrid}>
+                        {/* ... (All form groups: informerName, contactNumber, location, etc.) ... */}
                         <div className={styles.formGroup}>
                             <label htmlFor="informerName" className={styles.formLabel}>Your Name</label>
                             <input type="text" id="informerName" name="informerName" className={styles.formInput} value={formData.informerName} onChange={handleChange} required />
@@ -296,8 +327,25 @@ const ReportIncidentPage = () => {
                             {locationStatus && <p className={styles.locationStatus}>{locationStatus}</p>}
                         </div>
                     </div>
+
+                    {/* --- ✨ 4. Add Progress Bar --- */}
+                    {isSubmitting && (
+                        <div className={styles.progressBarContainer}>
+                            <div
+                                className={styles.progressBar}
+                                style={{ width: `${uploadProgress}%` }}
+                            >
+                                {uploadProgress > 10 ? `${uploadProgress}%` : ''}
+                            </div>
+                            <span className={styles.progressText}>
+                                {uploadProgress === 100 ? 'Processing...' : 'Uploading...'}
+                            </span>
+                        </div>
+                    )}
+                    {/* --- End Progress Bar --- */}
+
                     <button type="submit" className={`${appStyles.btn} ${appStyles.btnEmergency} ${appStyles.btnFullWidth}`} disabled={isSubmitting || Object.keys(formErrors).length > 0}>
-                        {isSubmitting ? <FaSpinner className={appStyles.spinner} /> : 'Submit Emergency Report'}
+                        {isSubmitting ? 'Submitting...' : 'Submit Emergency Report'}
                     </button>
                 </form>
             </div>

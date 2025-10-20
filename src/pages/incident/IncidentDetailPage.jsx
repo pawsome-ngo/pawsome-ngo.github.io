@@ -1,14 +1,18 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/IncidentDetailPage.jsx
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './IncidentDetailPage.module.css';
 import {
     FaArrowLeft, FaSpinner, FaCopy, FaHeart, FaRegHeart,
     FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaImages, FaUsers, FaHistory, FaTrash, FaUndo, FaClipboard
-} from 'react-icons/fa';
+} from 'react-icons/fa'; // FaPaw is used for the spinner
 import { jwtDecode } from 'jwt-decode';
 import CloseIncidentModal from "../../components/common/CloseIncidentModal.jsx";
 import TeamDetailsModal from "./components/TeamDetailsModal.jsx";
 import IncidentHistoryModal from "./components/IncidentHistoryModal.jsx";
+// --- ✨ Import Archive Modal ---
+import ArchiveConfirmationModal from "../../components/common/ArchiveConfirmationModal.jsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -34,18 +38,6 @@ const copyToClipboard = (text) => {
 };
 
 
-const ConfirmationModal = ({ onConfirm, onCancel, message, confirmText, cancelText }) => (
-    <div className={styles.modalOverlay}>
-        <div className={styles.confirmationModalContent}>
-            <p>{message}</p>
-            <div className={styles.confirmationModalActions}>
-                <button onClick={onCancel} className={styles.cancelButton}>{cancelText || 'Cancel'}</button>
-                <button onClick={onConfirm} className={styles.confirmButton}>{confirmText || 'Confirm'}</button>
-            </div>
-        </div>
-    </div>
-);
-
 const IncidentDetailPage = ({ token }) => {
     const { incidentId } = useParams();
     const navigate = useNavigate();
@@ -61,7 +53,7 @@ const IncidentDetailPage = ({ token }) => {
     const [teamDetails, setTeamDetails] = useState(null);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [incidentHistory, setIncidentHistory] = useState(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // For archive modal
 
     const [isInterested, setIsInterested] = useState(false);
     const [interestLoading, setInterestLoading] = useState(false);
@@ -82,6 +74,7 @@ const IncidentDetailPage = ({ token }) => {
         if (!token || !incidentId || !loggedInUser) return;
 
         setLoading(true);
+        setError(null); // Clear previous errors
         try {
             const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}`, {
                 headers: { 'Authorization': `Bearer ${token}` },
@@ -187,11 +180,25 @@ Please coordinate and proceed to the location. Thank you! 🙏
 
             if (response.ok) {
                 setIsInterested(!isInterested);
+                // Optimistically update the interested users array in the local state
+                if (loggedInUser) {
+                    setIncident(prev => {
+                        let updatedInterestedUsers = prev.interestedUsers || [];
+                        if (!isInterested) { // If adding interest
+                            updatedInterestedUsers = [...updatedInterestedUsers, { id: loggedInUser.id, firstName: loggedInUser.firstName }];
+                        } else { // If removing interest
+                            updatedInterestedUsers = updatedInterestedUsers.filter(user => user.id !== loggedInUser.id);
+                        }
+                        return { ...prev, interestedUsers: updatedInterestedUsers };
+                    });
+                }
             } else {
                 console.error("Failed to update interest.");
+                alert("Failed to update interest status. Please try again.");
             }
         } catch (err) {
             console.error("Error updating interest:", err);
+            alert("Network error updating interest status. Please try again.");
         } finally {
             setInterestLoading(false);
         }
@@ -265,7 +272,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
             });
 
             if (response.ok) {
-                fetchIncident();
+                await fetchIncident(); // Re-fetch data
                 setUpdateMessage('Incident has been marked as Resolved!');
             } else {
                 const errorData = await response.text();
@@ -296,7 +303,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
             });
 
             if (response.ok) {
-                fetchIncident();
+                await fetchIncident(); // Re-fetch data
                 setUpdateMessage('Incident closed successfully.');
             } else {
                 const errorData = await response.text();
@@ -327,7 +334,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
             if (response.ok) {
                 const data = await response.json();
                 setIncidentHistory(data);
-                // Only open the modal AFTER the data has been successfully set
                 setIsHistoryModalOpen(true);
             } else {
                 throw new Error("Could not fetch incident history.");
@@ -347,7 +353,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             if (response.ok) {
-                await fetchIncident(); // Re-fetch data to show updated status
+                await fetchIncident(); // Re-fetch data
                 setUpdateMessage('Incident has been reactivated to ONGOING.');
             } else {
                 const errorData = await response.text();
@@ -362,29 +368,39 @@ Please coordinate and proceed to the location. Thank you! 🙏
         }
     };
 
-    const handleDelete = async () => {
+    // --- ✨ MODIFIED handleDelete function ---
+    const handleDelete = async (shouldArchive) => { // Takes boolean from modal
         setIsDeleteModalOpen(false);
-        setIsUpdating(true);
+        setIsUpdating(true); // Use isUpdating for loading state
         setUpdateMessage('Deleting incident...');
+
         try {
             const response = await fetch(`${API_BASE_URL}/api/incidents/${incident.id}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` },
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json' // Add Content-Type
+                },
+                body: JSON.stringify({ archive: shouldArchive }) // Send the archive flag
             });
+
+            const resultData = await response.json().catch(() => ({}));
+
             if (response.ok) {
-                setUpdateMessage('Incident deleted successfully. Redirecting...');
-                setTimeout(() => navigate('/live'), 2000);
+                setUpdateMessage(resultData.message || 'Incident deleted successfully. Redirecting...');
+                setTimeout(() => navigate('/live'), 2000); // Redirect after message
             } else {
-                const errorData = await response.text();
-                throw new Error(errorData || 'Failed to delete incident.');
+                throw new Error(resultData.message || 'Failed to delete incident.');
             }
         } catch (err) {
             console.error(err);
             setUpdateMessage(`Error: ${err.message}`);
-            setIsUpdating(false);
-            setTimeout(() => setUpdateMessage(''), 3000);
+            setIsUpdating(false); // Stop loading on error
+            setTimeout(() => setUpdateMessage(''), 3000); // Clear error message after a while
         }
+        // No finally block needed here as navigation happens on success
     };
+    // --- End Modification ---
 
 
     const formatDateTime = (dateTimeString) => {
@@ -401,7 +417,19 @@ Please coordinate and proceed to the location. Thank you! 🙏
         });
     };
 
-    if (loading) return <div className={styles.pageContainer}>Loading details...</div>;
+    // --- ✨ UPDATED Loading State ---
+    if (loading) {
+        return (
+            <div className={styles.loadingContainer}>
+                <div className={styles.pawSpinner}>
+                    <FaPaw className={styles.pawIcon} />
+                </div>
+                <p>Loading Incident Details...</p>
+            </div>
+        );
+    }
+    // --- End Update ---
+
     if (error) return <div className={styles.pageContainer} style={{ color: 'red' }}>{error}</div>;
     if (!incident) return <div className={styles.pageContainer}>Incident not found.</div>;
 
@@ -422,17 +450,20 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         </span>
                     </div>
                 </div>
+                {/* Conditionally render history button */}
                 {incident.caseCount > 0 ? (
-                    <button onClick={handleViewHistory} className={styles.historyButton}>
+                    <button onClick={handleViewHistory} className={styles.historyButton} title="View Case History">
                         <FaHistory />
                         <span>History</span>
                     </button>
                 ) : (
+                    // Render a placeholder div to maintain layout balance
                     <div className={styles.historyButtonPlaceholder} />
                 )}
             </div>
 
             <div className={styles.detailGrid}>
+                {/* Informer Card */}
                 <div className={styles.detailCard}>
                     <div className={styles.iconWrapper}>
                         <FaUser className={styles.icon} />
@@ -443,6 +474,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     </div>
                 </div>
 
+                {/* Contact Card */}
                 <div className={styles.detailCard}>
                     <div className={styles.iconWrapper}>
                         <FaPhone className={styles.icon} />
@@ -451,13 +483,14 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         <strong>Contact</strong>
                         <div className={styles.contactGroup}>
                             <a href={`tel:${incident.contactNumber}`}>{incident.contactNumber}</a>
-                            <button onClick={handleCopyContact} className={styles.copyButton}>
+                            <button onClick={handleCopyContact} className={styles.copyButton} title="Copy phone number">
                                 {isCopied ? 'Copied!' : <FaCopy />}
                             </button>
                         </div>
                     </div>
                 </div>
 
+                {/* Location Card */}
                 <div className={`${styles.detailCard} ${styles.fullWidth}`}>
                     <div className={styles.iconWrapper}>
                         <FaMapMarkerAlt className={styles.icon} />
@@ -468,6 +501,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     </div>
                 </div>
 
+                {/* Reported At Card */}
                 <div className={`${styles.detailCard} ${styles.fullWidth}`}>
                     <div className={styles.iconWrapper}>
                         <FaClock className={styles.icon} />
@@ -478,6 +512,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     </div>
                 </div>
 
+                {/* Description Card */}
                 <div className={`${styles.detailCard} ${styles.fullWidth}`}>
                     <div className={styles.iconWrapper}>
                         <FaInfoCircle className={styles.icon} />
@@ -489,11 +524,16 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 </div>
             </div>
 
+            {/* Status update message */}
+            {updateMessage && <p className={styles.updateMessage}>{updateMessage}</p>}
+
+
+            {/* Action Buttons */}
             <div className={styles.actionsContainer}>
                 {incident.mediaFiles && incident.mediaFiles.length > 0 && (
                     <Link
                         to={`/incident/${incident.id}/media`}
-                        state={{ incident: incident }}
+                        state={{ incident: incident }} // Pass incident data to media page
                         className={`${styles.actionButton} ${styles.mediaButton}`}
                     >
                         <FaImages />
@@ -511,17 +551,17 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 {!incident.latitude && !incident.longitude &&
                     (incident.status === 'REPORTED' || incident.status === 'ASSIGNED' || incident.status === 'IN_PROGRESS' || incident.status === 'ONGOING') && (
                         <button onClick={handleUpdateLocation} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
-                            {isUpdating ? <FaSpinner className={styles.spinner} /> : 'Update Location'}
+                            {isUpdating && updateMessage.includes('Location') ? <FaSpinner className={styles.spinner} /> : <FaMapMarkerAlt />}
+                            <span>Update Location</span>
                         </button>
                     )}
 
-
-                {updateMessage && <p className={styles.updateMessage}>{updateMessage}</p>}
+                {/* --- Conditional Actions based on Status --- */}
 
                 {incident.status === 'REPORTED' && (
                     <>
                         <button onClick={handleInterestToggle} disabled={interestLoading} className={`${styles.actionButton} ${styles.interestButton} ${isInterested ? styles.interested : ''}`}>
-                            {isInterested ? <FaHeart /> : <FaRegHeart />}
+                            {interestLoading ? <FaSpinner className={styles.spinner}/> : (isInterested ? <FaHeart /> : <FaRegHeart />)}
                             <span>{isInterested ? "Remove Interest" : "I'm Interested"}</span>
                         </button>
 
@@ -569,7 +609,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 {incident.status === 'ONGOING' && (
                     <>
                         <button onClick={handleInterestToggle} disabled={interestLoading} className={`${styles.actionButton} ${styles.interestButton} ${isInterested ? styles.interested : ''}`}>
-                            {isInterested ? <FaHeart /> : <FaRegHeart />}
+                            {interestLoading ? <FaSpinner className={styles.spinner}/> : (isInterested ? <FaHeart /> : <FaRegHeart />)}
                             <span>{isInterested ? "Remove Interest" : "I'm Interested"}</span>
                         </button>
                         <Link
@@ -580,17 +620,17 @@ Please coordinate and proceed to the location. Thank you! 🙏
                             <span>Assign Team</span>
                         </Link>
                         <button onClick={handleMarkAsResolved} disabled={isUpdating} className={`${styles.actionButton} ${styles.resolveButton}`}>
-                            {isUpdating ? <FaSpinner className={styles.spinner} /> : 'Mark as Resolved'}
+                            {isUpdating && updateMessage.includes('Resolved') ? <FaSpinner className={styles.spinner} /> : 'Mark as Resolved'}
                         </button>
                     </>
                 )}
                 {incident.status === 'RESOLVED' && (
                     <>
                         <button onClick={handleReactivate} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
-                            <FaUndo />
+                            {isUpdating && updateMessage.includes('Reactivating') ? <FaSpinner className={styles.spinner} /> : <FaUndo />}
                             <span>Reactivate</span>
                         </button>
-                        <button onClick={() => setIsDeleteModalOpen(true)} disabled={isUpdating} className={`${styles.actionButton} ${styles.interestButton}`}>
+                        <button onClick={() => setIsDeleteModalOpen(true)} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
                             <FaTrash />
                             <span>Delete Incident</span>
                         </button>
@@ -598,12 +638,14 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 )}
 
                 {incident.status === 'CLOSED' && (
-                    <button onClick={() => setIsDeleteModalOpen(true)} disabled={isUpdating} className={`${styles.actionButton} ${styles.interestButton}`}>
+                    <button onClick={() => setIsDeleteModalOpen(true)} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
                         <FaTrash />
                         <span>Delete Incident</span>
                     </button>
                 )}
             </div>
+
+            {/* --- Modals --- */}
             <CloseIncidentModal
                 isOpen={isCloseModalOpen}
                 onClose={() => setIsCloseModalOpen(false)}
@@ -623,15 +665,18 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     history={incidentHistory}
                 />
             )}
+            {/* --- ✨ Use the new ArchiveConfirmationModal --- */}
             {isDeleteModalOpen && (
-                <ConfirmationModal
-                    message="Are you sure you want to permanently delete this incident and all its related data (cases, chats, media)? This action cannot be undone."
-                    onConfirm={handleDelete}
+                <ArchiveConfirmationModal
+                    message="Deleting an incident (RESOLVED or CLOSED) is permanent. This will remove all associated cases, chats, and media."
+                    onConfirm={handleDelete} // Pass the modified handler
                     onCancel={() => setIsDeleteModalOpen(false)}
                     confirmText="Yes, Delete"
                     cancelText="No, Keep It"
+                    isProcessing={isUpdating} // Use isUpdating for loading state
                 />
             )}
+            {/* --- End Modification --- */}
         </div>
     );
 };

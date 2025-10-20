@@ -1,3 +1,5 @@
+/* File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/components/TeamAssignmentPage.module.css */
+
 .container {
     max-width: 800px;
     margin: 0 auto;
@@ -50,14 +52,19 @@
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     cursor: pointer;
-    border: 2px solid transparent;
+    /* --- ✨ Make border thicker and transparent --- */
+    border: 3px solid transparent;
     transition: all 0.2s ease-in-out;
 }
 
+/* --- ✨ More prominent highlight --- */
 .volunteerCard.selected {
+    background-color: #eaf4ff; /* Light blue background */
     border-color: #3498db;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.15);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+    transform: scale(1.02); /* Pop out */
 }
+/* --- End Update --- */
 
 .volunteerCard.engaged {
     background-color: #fcf3e6;
@@ -136,3 +143,41 @@
     background-color: #bdc3c7;
     cursor: not-allowed;
 }
+
+/* --- ✨ NEW Loading Spinner Styles --- */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 120px); /* Adjust height */
+    padding: 2rem;
+    color: #7f8c8d;
+    background-color: #f8f8f8; /* Match page background */
+}
+
+.pawSpinner {
+    margin-bottom: 1.5rem;
+}
+
+.pawIcon {
+    font-size: 4rem;
+    color: #fc5c7d; /* Theme color */
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+}
+/* --- End Loading Styles --- */

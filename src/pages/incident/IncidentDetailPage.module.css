@@ -61,27 +61,14 @@
     font-weight: 700;
     padding: 0.3rem 0.8rem;
     border-radius: 20px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .status {
     background-color: rgba(255,255,255,0.2);
 }
-/* Specific Status colors (using background instead of text color) */
-.reported { background-color: #e74c3c; color: white;}
-.assigned { background-color: #3498db; color: white;}
-.in_progress { background-color: #f39c12; color: white;}
-.ongoing { background-color: #9b59b6; color: white;}
-.resolved { background-color: #2ecc71; color: white;}
-.closed { background-color: #95a5a6; color: white;}
-
 
 .animalTag {
     background-color: rgba(0,0,0,0.1);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
 }
 
 .historyButton {
@@ -96,16 +83,11 @@
     align-items: center;
     gap: 0.5rem;
     flex-shrink: 0;
-    transition: background-color 0.2s;
-}
-.historyButton:hover {
-    background: rgba(255,255,255,0.3);
 }
 
 .historyButtonPlaceholder {
-    width: 105px; /* Adjust width to roughly match the button */
+    width: 105px; /* Same width as the history button */
     visibility: hidden;
-    flex-shrink: 0;
 }
 
 /* --- Detail Grid --- */

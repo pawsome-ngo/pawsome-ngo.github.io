@@ -5,9 +5,12 @@ import styles from './VolunteerProfilePage.module.css';
 import { FaSpinner, FaShieldAlt, FaUser, FaClock, FaPhone, FaArrowLeft, FaFirstAid, FaUserCircle, FaExclamationTriangle, FaCheckCircle, FaCar, FaHome, FaGraduationCap } from 'react-icons/fa';
 import CustomSelect from '../../components/common/CustomSelect.jsx';
 import Avatar from '../../components/common/Avatar.jsx';
-import Lightbox from '../../components/common/Lightbox.jsx';
+import Lightbox from '../../components/common/Lightbox.jsx'; //
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
+// --- ✨ FIX: Corrected the glob path relative to this file ---
+const avatarModules = import.meta.glob('/src/assets/avatars/*');
 
 // --- ✨ Define Experience Level options ---
 const experienceOptions = [
@@ -40,16 +43,15 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
     const [loading, setLoading] = useState(true);
 
     const [feedback, setFeedback] = useState('');
-    const [feedbackType, setFeedbackType] = useState(''); // 'success' or 'error'
+    const [feedbackType, setFeedbackType] = useState('');
     const [firstAidKit, setFirstAidKit] = useState(null);
     const [selectedPosition, setSelectedPosition] = useState('');
     const [selectedRoles, setSelectedRoles] = useState([]);
-    // --- ✨ Add state for Experience Level ---
     const [selectedExperience, setSelectedExperience] = useState('');
-    // --- End Add ---
 
+    // --- ✨ State to manage the lightbox source image ---
     const [lightboxSrc, setLightboxSrc] = useState(null);
-    const [isSaving, setIsSaving] = useState(false); // State for save spinner
+    const [isSaving, setIsSaving] = useState(false);
 
     const isSuperAdmin = useMemo(() => currentUser?.roles.includes('ROLE_SUPER_ADMIN'), [currentUser]);
     const isAdmin = useMemo(() => currentUser?.roles.includes('ROLE_ADMIN'), [currentUser]);
@@ -79,7 +81,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
             setDetails({ ...detailedUser, memberSince });
             setSelectedPosition(detailedUser.position || 'MEMBER');
             setSelectedRoles(detailedUser.roles || ['MEMBER']);
-            // --- ✨ Initialize experience state ---
             setSelectedExperience(detailedUser.experienceLevel || 'Beginner');
 
             if (detailedUser.hasMedicineBox) {
@@ -91,7 +92,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                     setFirstAidKit(kitData);
                 }
             } else {
-                setFirstAidKit(null);
+                setFirstAidKit(null); // Ensure kit is cleared if user has no medicine box
             }
 
         } catch (err) {
@@ -110,14 +111,13 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
     }, [volunteerId, fetchUserDetails]);
 
     const handleSaveChanges = async () => {
-        setIsSaving(true); // --- ✨ Show spinner
+        setIsSaving(true);
         setFeedback('Saving changes...');
         setFeedbackType('');
 
         try {
-            const requests = []; // Array to hold all API request promises
+            const requests = [];
 
-            // --- ✨ 1. Add Experience Level update request (Super Admin only) ---
             if (isSuperAdmin) {
                 requests.push(
                     fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/experience`, {
@@ -127,9 +127,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                     })
                 );
             }
-            // --- End Add ---
 
-            // 2. Add Position update request (Super Admin only)
             if (isSuperAdmin) {
                 requests.push(
                     fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/position`, {
@@ -140,7 +138,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                 );
             }
 
-            // 3. Add Roles update request (Admin or Super Admin)
             requests.push(
                 fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/roles`, {
                     method: 'PUT',
@@ -149,10 +146,8 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                 })
             );
 
-            // Execute all requests in parallel
             const responses = await Promise.all(requests);
 
-            // Check all responses for errors
             for (const response of responses) {
                 if (!response.ok) {
                     const responseData = await response.json().catch(() => ({}));
@@ -164,14 +159,14 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
             setFeedbackType('success');
 
             await fetchUserDetails(); // Refresh data
-            setTimeout(() => setFeedback(''), 1500); // Clear feedback
+            setTimeout(() => setFeedback(''), 1500);
 
         } catch (err) {
             console.error("Error saving changes:", err);
             setFeedback(`Error: ${err.message}`);
             setFeedbackType('error');
         } finally {
-            setIsSaving(false); // --- ✨ Hide spinner
+            setIsSaving(false);
         }
     };
 
@@ -183,18 +178,22 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
         );
     };
 
+    // --- ✨ FIX: Added the correct logic to this handler ---
     const handleAvatarClick = (user) => {
-        // ... (function remains the same)
         if (!user) return;
+        // Search for an image that matches the user ID
         for (const path in avatarModules) {
+            // Check for /avatars/USER_ID. (e.g., /src/assets/avatars/7.png)
             if (path.includes(`/avatars/${user.id}.`)) {
+                // Asynchronously load the module
                 avatarModules[path]().then(mod => {
-                    setLightboxSrc(mod.default);
+                    setLightboxSrc(mod.default); // Set the image source
                 });
-                break;
+                break; // Stop searching once found
             }
         }
     };
+    // --- End Fix ---
 
     if (loading || !details) {
         return (
@@ -219,6 +218,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                     <span>Back to Volunteers</span>
                 </Link>
                 <div className={styles.profileHeader}>
+                    {/* ✨ Add the onClick handler here */}
                     <div className={styles.avatar} onClick={() => handleAvatarClick(details)}>
                         <Avatar userId={details.id} name={fullName} />
                     </div>
@@ -239,7 +239,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                             <p>{details.phoneNumber || 'N/A'}</p>
                         </div>
                         <div className={styles.detailItem}>
-                            {/* --- ✨ Use GraduationCap icon --- */}
                             <FaGraduationCap className={styles.detailIcon}/>
                             <strong>Experience</strong>
                             <p>{(details.experienceLevel || 'N/A').replace('_', ' ')}</p>
@@ -320,7 +319,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                                         onChange={(e) => setSelectedPosition(e.target.value)}
                                     />
                                 </div>
-                                {/* --- ✨ Add Experience Level Dropdown --- */}
                                 <div className={styles.formGroup}>
                                     <label className={styles.formLabel}>Update Experience Level</label>
                                     <CustomSelect
@@ -330,7 +328,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                                         onChange={(e) => setSelectedExperience(e.target.value)}
                                     />
                                 </div>
-                                {/* --- End Add --- */}
                             </>
                         )}
 
@@ -371,6 +368,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                 )}
             </div>
 
+            {/* ✨ Render the Lightbox component ✨ */}
             <Lightbox
                 src={lightboxSrc}
                 alt={`${fullName}'s Avatar`}

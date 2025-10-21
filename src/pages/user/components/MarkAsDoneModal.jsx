@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import styles from './MarkAsDoneModal.module.css';
 import { FaMapMarkerAlt, FaSpinner, FaExclamationTriangle, FaClipboard } from 'react-icons/fa';
+// --- ✨ 1. Import image compression library ---
+import imageCompression from 'browser-image-compression';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 // A helper function for robust copying to clipboard
 const copyToClipboard = (text) => {
+    // ... (copyToClipboard function remains the same)
     if (navigator.clipboard && window.isSecureContext) {
         return navigator.clipboard.writeText(text);
     } else {
@@ -55,6 +58,7 @@ const MarkAsDoneModal = ({ incident, token, onClose, onCaseCompleted }) => {
 
 
     const handleCopyDetails = () => {
+        // ... (function remains the same) ...
         if (!resolutionNotes.trim()) {
             setFeedback('Please write the resolution notes before copying.');
             return;
@@ -92,6 +96,7 @@ Team has successfully attended the issue. The case is now closed. 🙏
     };
 
     const handleGetLocation = () => {
+        // ... (function remains the same) ...
         if (!navigator.geolocation) {
             setFeedback('Geolocation is not supported by your browser.');
             return;
@@ -109,9 +114,51 @@ Team has successfully attended the issue. The case is now closed. 🙏
         );
     };
 
-    const handleFileChange = (e) => {
-        setMediaFiles([...e.target.files]);
+    // --- ✨ 2. Update handleFileChange to be async and compress images ---
+    const handleFileChange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        setFeedback(`Compressing 1 of ${files.length} file(s)...`);
+
+        const compressionOptions = {
+            maxSizeMB: 0.8,         // 800KB
+            maxWidthOrHeight: 1280, // 1280px
+            useWebWorker: true,
+            fileType: 'image/jpeg',
+            quality: 0.7,
+        };
+
+        const processedFiles = [];
+        let count = 0;
+        for (const file of files) {
+            count++;
+            setFeedback(`Compressing ${count} of ${files.length} file(s)...`);
+
+            if (file.type.startsWith('image/')) {
+                try {
+                    const compressedFile = await imageCompression(file, compressionOptions);
+                    const newFileName = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg';
+                    const newFile = new File([compressedFile], newFileName, {
+                        type: 'image/jpeg',
+                        lastModified: file.lastModified,
+                    });
+                    processedFiles.push(newFile);
+                } catch (error) {
+                    console.error("Image compression failed, adding original file:", error);
+                    processedFiles.push(file); // Add original if compression fails
+                }
+            } else {
+                // Add non-image files (videos, audio) directly
+                processedFiles.push(file);
+            }
+        }
+
+        setMediaFiles(prevFiles => [...prevFiles, ...processedFiles]);
+        setFeedback(`Added ${processedFiles.length} file(s).`);
+        setTimeout(() => setFeedback(''), 3000); // Clear status
     };
+    // --- End Modification ---
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -126,9 +173,11 @@ Team has successfully attended the issue. The case is now closed. 🙏
         };
         formData.append('details', new Blob([JSON.stringify(details)], { type: 'application/json' }));
 
+        // --- ✨ 3. Use the mediaFiles state which now contains compressed files ---
         mediaFiles.forEach(file => {
             formData.append('mediaFiles', file);
         });
+        // --- End Modification ---
 
         try {
             const response = await fetch(`${API_BASE_URL}/api/cases/${incident.id}/close`, {
@@ -144,11 +193,12 @@ Team has successfully attended the issue. The case is now closed. 🙏
                     onClose();
                 }, 1500);
             } else {
-                throw new Error('Failed to complete the case.');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to complete the case.');
             }
         } catch (err) {
             console.error(err);
-            setFeedback('An error occurred. Please try again.');
+            setFeedback(`An error occurred: ${err.message}`);
             setIsSubmitting(false);
         }
     };
@@ -212,4 +262,3 @@ Team has successfully attended the issue. The case is now closed. 🙏
 };
 
 export default MarkAsDoneModal;
-

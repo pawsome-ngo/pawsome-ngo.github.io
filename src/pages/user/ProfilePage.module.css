@@ -35,7 +35,7 @@
 
 /* --- Header Section (Top Gradient Bar) --- */
 .topHeaderBackground {
-    background: linear-gradient(45deg, #fc5c7d, #e74c3c); /* Updated gradient */
+    background: linear-gradient(45deg, #fc5c7d, #fc5c7d); /* Updated gradient */
     padding-top: 2rem;
     padding-bottom: 70px;
     position: relative;

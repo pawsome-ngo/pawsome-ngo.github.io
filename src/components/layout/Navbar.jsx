@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import styles from './Navbar.module.css';
-import { FaPaw, FaSignOutAlt } from 'react-icons/fa';
+// --- ✨ Import FaFirstAid ---
+import { FaPaw, FaSignOutAlt, FaFirstAid } from 'react-icons/fa';
 
-const Navbar = ({ user, onLogout }) => {
+// --- ✨ Accept fullUserProfile as a prop ---
+const Navbar = ({ user, fullUserProfile, onLogout }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     // Effect to lock body scroll when the menu is open on mobile
@@ -24,10 +26,16 @@ const Navbar = ({ user, onLogout }) => {
 
     const closeMenu = () => setIsMenuOpen(false);
 
-    // Role checks (assuming roles are available in the user object from JWT)
-    const isAdmin = user && user.roles && user.roles.includes('ROLE_ADMIN');
-    const isSuperAdmin = user && user.roles && user.roles.includes('ROLE_SUPER_ADMIN');
-    const isInventoryManager = user && user.roles && (user.roles.includes('ROLE_INVENTORY_MANAGER') || user.roles.includes('ROLE_SUPER_ADMIN'));
+    // Role checks
+    const isAdmin = user && user.roles.includes('ROLE_ADMIN');
+    const isSuperAdmin = user && user.roles.includes('ROLE_SUPER_ADMIN');
+    const isInventoryManager = user && (user.roles.includes('ROLE_INVENTORY_MANAGER') || user.roles.includes('ROLE_SUPER_ADMIN'));
+
+    // --- ✨ Check if user has a kit from the full profile ---
+    const hasKit = fullUserProfile?.hasMedicineBox;
+    // Get the user ID from the full profile or fall back to the JWT
+    const profileUserId = fullUserProfile?.id || user?.id;
+    // --- End Check ---
 
     // Function to apply active styles to NavLink
     const getNavLinkClass = ({ isActive }) => {
@@ -50,15 +58,28 @@ const Navbar = ({ user, onLogout }) => {
             ></div>
 
             <nav className={`${styles.nav} ${isMenuOpen ? styles.navOpen : ''}`}>
-                {/* Core User Links */}
                 <NavLink to="/live" className={getNavLinkClass} onClick={closeMenu}>Live</NavLink>
                 <NavLink to="/my-cases" className={getNavLinkClass} onClick={closeMenu}>My Cases</NavLink>
                 <NavLink to="/notifications" className={getNavLinkClass} onClick={closeMenu}>Notifications</NavLink>
-                <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>Report Incident</NavLink>
+                <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>Report</NavLink>
                 <NavLink to="/leaderboard" className={getNavLinkClass} onClick={closeMenu}>Leaderboard</NavLink>
                 <NavLink to="/volunteers" className={getNavLinkClass} onClick={closeMenu}>Volunteers</NavLink>
 
-                {/* Static/Info Links */}
+                {/* --- ✨ 3. Conditionally render "My Kit" link (Simplified) --- */}
+                {hasKit && (
+                    <NavLink
+                        to={`/profile/first-aid-kit/${profileUserId}`}
+                        className={getNavLinkClass}
+                        onClick={closeMenu}
+                        title="My First-Aid Kit"
+                    >
+                        <span>My Kit </span>
+                        <FaFirstAid />
+
+                    </NavLink>
+                )}
+                {/* --- End Link --- */}
+
                 <NavLink to="/adoptions" className={getNavLinkClass} onClick={closeMenu}>Adoptions</NavLink>
                 <NavLink to="/events" className={getNavLinkClass} onClick={closeMenu}>Events</NavLink>
 
@@ -69,16 +90,12 @@ const Navbar = ({ user, onLogout }) => {
                 {isInventoryManager && (
                     <NavLink to="/inventory" className={getNavLinkClass} onClick={closeMenu}>Inventory</NavLink>
                 )}
-                {/* --- ✨ Add Super Admin Link --- */}
                 {isSuperAdmin && (
                     <NavLink to="/superadmin" className={getNavLinkClass} onClick={closeMenu}>Super Admin</NavLink>
                 )}
-                {/* --- End Link --- */}
 
-                {/* Profile Link */}
                 <NavLink to="/profile" className={getNavLinkClass} onClick={closeMenu}>Profile</NavLink>
 
-                {/* Logout Button */}
                 <button
                     onClick={() => {
                         closeMenu();

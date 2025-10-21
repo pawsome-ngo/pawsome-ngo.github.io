@@ -14,7 +14,7 @@ export default defineConfig({
       filename: 'sw.js',
       manifest: {
         name: 'Pawsome NGO Chat',
-        short_name: 'Pawsome Chat',
+        short_name: 'Pawsome',
         description: 'Chat application for Pawsome NGO',
         theme_color: '#fc5c7d',
         background_color: '#fc5c7d',

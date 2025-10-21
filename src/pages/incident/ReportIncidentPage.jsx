@@ -1,5 +1,3 @@
-// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/ReportIncidentPage.jsx
-
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaMicrophone, FaStop, FaTrash, FaFileAlt, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
@@ -7,7 +5,7 @@ import imageCompression from 'browser-image-compression';
 import CustomSelect from '../../components/common/CustomSelect.jsx';
 import SignUpModal from '../../components/common/SignUpModal.jsx';
 import styles from './ReportIncidentPage.module.css';
-import appStyles from '../../App.module.css';
+import appStyles from '../../App.module.css'; // Keep appStyles for button styling
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -25,9 +23,7 @@ const ReportIncidentPage = () => {
     const [mediaFiles, setMediaFiles] = useState([]);
     const [locationStatus, setLocationStatus] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    // --- ✨ State for upload progress ---
     const [uploadProgress, setUploadProgress] = useState(0);
-    // --- End State ---
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
     const [formErrors, setFormErrors] = useState({});
@@ -124,7 +120,6 @@ const ReportIncidentPage = () => {
     };
 
     const startRecording = async () => {
-        // ... (function remains the same) ...
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder.current = new MediaRecorder(stream);
@@ -148,20 +143,18 @@ const ReportIncidentPage = () => {
     };
 
     const stopRecording = () => {
-        // ... (function remains the same) ...
         mediaRecorder.current.stop();
         setIsRecording(false);
     };
 
     const removeFile = (fileName) => {
-        // ... (function remains the same) ...
         setMediaFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
         if (fileName.startsWith('voice-report-')) {
             setAudioURL('');
         }
     };
 
-    // --- ✨ 3. Rewrite handleSubmit to use XMLHttpRequest ---
+    // --- Using XMLHttpRequest for Progress ---
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (Object.keys(formErrors).length > 0) {
@@ -182,12 +175,9 @@ const ReportIncidentPage = () => {
             data.append('media', file);
         });
 
-        // Use XMLHttpRequest instead of fetch
         const xhr = new XMLHttpRequest();
-
         xhr.open('POST', `${API_BASE_URL}/api/incidents/report`);
 
-        // --- This is the key part for upload progress ---
         xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
                 const percentComplete = (event.loaded / event.total) * 100;
@@ -196,7 +186,6 @@ const ReportIncidentPage = () => {
         };
 
         xhr.onload = () => {
-            // When the request is complete
             setIsSubmitting(false);
             setUploadProgress(0);
 
@@ -219,21 +208,19 @@ const ReportIncidentPage = () => {
         };
 
         xhr.onerror = () => {
-            // Handle network errors
             setIsSubmitting(false);
             setUploadProgress(0);
             setModalMessage('Could not connect to the server. Please check your connection and try again.');
             setIsModalOpen(true);
         };
 
-        // Send the request
         xhr.send(data);
     };
-    // --- End Modification ---
+    // --- End handleSubmit ---
 
     const closeModal = () => {
         setIsModalOpen(false);
-        navigate('/');
+        navigate('/'); // Redirect after closing success modal
     };
 
     const animalOptions = [
@@ -253,7 +240,7 @@ const ReportIncidentPage = () => {
                 </div>
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formGrid}>
-                        {/* ... (All form groups: informerName, contactNumber, location, etc.) ... */}
+                        {/* --- Form Fields (Name, Contact, Location, etc.) --- */}
                         <div className={styles.formGroup}>
                             <label htmlFor="informerName" className={styles.formLabel}>Your Name</label>
                             <input type="text" id="informerName" name="informerName" className={styles.formInput} value={formData.informerName} onChange={handleChange} required />
@@ -288,6 +275,7 @@ const ReportIncidentPage = () => {
                             <CustomSelect name="animalType" options={animalOptions} value={formData.animalType} onChange={handleChange} />
                         </div>
 
+                        {/* --- File Upload Section --- */}
                         <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
                             <label className={styles.formLabel}>Upload Media (Optional)</label>
                             <input
@@ -301,8 +289,13 @@ const ReportIncidentPage = () => {
                             <label htmlFor="file-upload" className={styles.fileInputLabel}>
                                 <FaFileAlt /> Choose Photos or Videos
                             </label>
+                            {/* --- ✨ Add Patience Message --- */}
+                            <p className={styles.patienceMessage}>
+                                Large files may take time to compress & upload. Please be patient.
+                            </p>
                         </div>
 
+                        {/* --- File List --- */}
                         {mediaFiles.length > 0 && (
                             <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
                                 <label className={styles.formLabel}>Files to Upload</label>
@@ -319,6 +312,7 @@ const ReportIncidentPage = () => {
                             </div>
                         )}
 
+                        {/* --- Location Section --- */}
                         <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
                             <label className={styles.formLabel}>Pinpoint Location with GPS (Optional)</label>
                             <button type="button" onClick={handleGetLocation} className={`${appStyles.btn} ${appStyles.btnSecondary}`}>
@@ -328,27 +322,36 @@ const ReportIncidentPage = () => {
                         </div>
                     </div>
 
-                    {/* --- ✨ 4. Add Progress Bar --- */}
+                    {/* --- ✨ Progress Bar --- */}
                     {isSubmitting && (
                         <div className={styles.progressBarContainer}>
                             <div
                                 className={styles.progressBar}
                                 style={{ width: `${uploadProgress}%` }}
                             >
-                                {uploadProgress > 10 ? `${uploadProgress}%` : ''}
+                                {/* Only show % inside if > 10% and NOT 100% */}
+                                {uploadProgress > 10 && uploadProgress < 100 ? `${uploadProgress}%` : ''}
+                                {/* Show Processing text only when 100% */}
+                                {uploadProgress === 100 ? 'Processing...' : ''}
                             </div>
-                            <span className={styles.progressText}>
-                                {uploadProgress === 100 ? 'Processing...' : 'Uploading...'}
-                            </span>
+                            {/* Only show background text if NOT 100% */}
+                            {uploadProgress < 100 && (
+                                <span className={styles.progressText}>
+                                    Uploading...
+                                </span>
+                            )}
                         </div>
                     )}
                     {/* --- End Progress Bar --- */}
 
                     <button type="submit" className={`${appStyles.btn} ${appStyles.btnEmergency} ${appStyles.btnFullWidth}`} disabled={isSubmitting || Object.keys(formErrors).length > 0}>
-                        {isSubmitting ? 'Submitting...' : 'Submit Emergency Report'}
+                        {/* --- ✨ Conditional Spinner in Button --- */}
+                        {isSubmitting ? <FaSpinner className={appStyles.spinner} /> : 'Submit Emergency Report'}
+                        {/* --- End Conditional Spinner --- */}
                     </button>
                 </form>
             </div>
+            {/* --- Success Modal --- */}
             <SignUpModal isOpen={isModalOpen} onClose={closeModal}>
                 <div className={appStyles.successModal}>
                     <div className={appStyles.successModalIcon}>✔</div>

@@ -1,5 +1,3 @@
-// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/user/ProfilePage.jsx
-
 import React, { useState, useEffect } from 'react';
 import styles from './ProfilePage.module.css';
 // --- ✨ Import all icons ---
@@ -9,14 +7,15 @@ import { subscribeToPushNotifications } from '../../pushSubscription.js'; // Imp
 import UpdatePasswordModal from '../../components/common/UpdatePasswordModal.jsx';
 import Lightbox from '../../components/common/Lightbox.jsx';
 import Avatar from '../../components/common/Avatar.jsx';
-import { Link } from 'react-router-dom';
+// --- ✨ Import Link and useOutletContext ---
+import { Link, useOutletContext } from 'react-router-dom';
+// --- End Import ---
 import CustomSelect from '../../components/common/CustomSelect.jsx'; // Import CustomSelect
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const avatarModules = import.meta.glob('/src/assets/avatars/*');
 
 const getAvatarSrc = async (userId) => {
-    // ... (function remains the same)
     for (const path in avatarModules) {
         if (path.includes(`/avatars/${userId}.`)) {
             const mod = await avatarModules[path]();
@@ -40,6 +39,10 @@ const ProfilePage = ({ token }) => {
     const [isSubscribing, setIsSubscribing] = useState(false);
     const [vehicleType, setVehicleType] = useState('Bike'); // State for vehicle type dropdown
     // --- End State ---
+
+    // --- ✨ 2. Get the setFullUserProfile function from context ---
+    const { setFullUserProfile } = useOutletContext();
+    // --- End ---
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -65,7 +68,6 @@ const ProfilePage = ({ token }) => {
     }, [token]);
 
     const handleAvatarClick = async () => {
-        // ... (function remains the same)
         if (profile) {
             const src = await getAvatarSrc(profile.id);
             if (src) {
@@ -77,6 +79,7 @@ const ProfilePage = ({ token }) => {
     // --- ✨ Generic Toggle Handler ---
     // Handles simple boolean toggles by sending to a specific endpoint
     const handleToggle = async (field, endpoint, newValue) => {
+        const oldValue = profile[field]; // Store old value for revert
         // Optimistic UI update
         setProfile(prev => ({ ...prev, [field]: newValue }));
 
@@ -86,9 +89,14 @@ const ProfilePage = ({ token }) => {
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ [field]: newValue }), // e.g., { "availabilityStatus": "Available" }
             });
+            // --- ✨ On success, update the global state ---
+            if (setFullUserProfile) { // Check if function exists
+                setFullUserProfile(prev => ({ ...prev, [field]: newValue }));
+            }
+
         } catch (err) {
-            // Revert on error
-            setProfile(prev => ({ ...prev, [field]: !newValue }));
+            // Revert local state on error
+            setProfile(prev => ({ ...prev, [field]: oldValue }));
             alert(`Failed to update ${field}. Please try again.`);
         }
     };
@@ -96,6 +104,7 @@ const ProfilePage = ({ token }) => {
     // --- ✨ Vehicle Toggle Handler (Slightly complex) ---
     const handleVehicleToggle = async () => {
         const newStatus = !profile.hasVehicle;
+        const oldStatus = profile.hasVehicle; // Store old value
         // Optimistic UI update
         setProfile(prev => ({ ...prev, hasVehicle: newStatus }));
 
@@ -105,8 +114,12 @@ const ProfilePage = ({ token }) => {
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ hasVehicle: newStatus, vehicleType: newStatus ? vehicleType : null }),
             });
+            // --- ✨ On success, update the global state ---
+            if (setFullUserProfile) { // Check if function exists
+                setFullUserProfile(prev => ({ ...prev, hasVehicle: newStatus, vehicleType: newStatus ? vehicleType : null }));
+            }
         } catch (err) {
-            setProfile(prev => ({ ...prev, hasVehicle: !newStatus }));
+            setProfile(prev => ({ ...prev, hasVehicle: oldStatus }));
             alert('Failed to update vehicle status. Please try again.');
         }
     };
@@ -114,26 +127,29 @@ const ProfilePage = ({ token }) => {
     // --- ✨ Vehicle Type Change Handler (Calls same endpoint) ---
     const handleVehicleTypeChange = async (e) => {
         const newType = e.target.value;
-        setVehicleType(newType); // Update local state for dropdown
+        const oldType = profile.vehicleType; // Store old value
+        setVehicleType(newType); // Update local dropdown state
+        setProfile(prev => ({ ...prev, vehicleType: newType })); // Optimistic local
 
-        // Send update to backend immediately
         try {
             await fetch(`${API_BASE_URL}/api/profile/vehicle`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ hasVehicle: profile.hasVehicle, vehicleType: newType }),
             });
-            // Update profile object as well
-            setProfile(prev => ({ ...prev, vehicleType: newType }));
+            // --- ✨ On success, update the global state ---
+            if (setFullUserProfile) { // Check if function exists
+                setFullUserProfile(prev => ({ ...prev, vehicleType: newType }));
+            }
         } catch (err) {
             alert('Failed to update vehicle type. Please try again.');
-            // Revert local state (optional)
-            setVehicleType(profile.vehicleType || 'Bike');
+            // Revert local state
+            setVehicleType(oldType || 'Bike');
+            setProfile(prev => ({ ...prev, vehicleType: oldType }));
         }
     };
 
     const handleUpdateLocation = () => {
-        // ... (function remains the same)
         if (!navigator.geolocation) {
             setLocationMessage({ type: 'error', text: 'Geolocation is not supported by your browser.' });
             return;
@@ -168,7 +184,6 @@ const ProfilePage = ({ token }) => {
     };
 
     const handleSubscribeClick = async () => {
-        // ... (function remains the same)
         setIsSubscribing(true);
         setLocationMessage({ type: '', text: '' }); // Clear other messages
 
@@ -216,7 +231,6 @@ const ProfilePage = ({ token }) => {
                 <div className={styles.card}>
                     <h2>My Stats</h2>
                     <div className={styles.statsGrid}>
-                        {/* ... (stats items remain the same) ... */}
                         <div className={styles.statItem}>
                             <span className={styles.gradientText}>{profile.casesCompleted}</span>
                             <p>Cases Completed</p>

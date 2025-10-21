@@ -61,7 +61,7 @@ const Navbar = ({ user, fullUserProfile, onLogout }) => {
                 <NavLink to="/live" className={getNavLinkClass} onClick={closeMenu}>Live</NavLink>
                 <NavLink to="/my-cases" className={getNavLinkClass} onClick={closeMenu}>My Cases</NavLink>
                 <NavLink to="/notifications" className={getNavLinkClass} onClick={closeMenu}>Notifications</NavLink>
-                <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>Report</NavLink>
+                <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>Report Incident</NavLink>
                 <NavLink to="/leaderboard" className={getNavLinkClass} onClick={closeMenu}>Leaderboard</NavLink>
                 <NavLink to="/volunteers" className={getNavLinkClass} onClick={closeMenu}>Volunteers</NavLink>
 

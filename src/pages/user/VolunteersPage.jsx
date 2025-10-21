@@ -1,7 +1,11 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/user/VolunteersPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './VolunteersPage.module.css';
-import { FaSpinner, FaUserCheck, FaUserClock, FaUser } from 'react-icons/fa';
+// --- ✨ Import Avatar and remove FaUser ---
+import { FaSpinner, FaUserCheck, FaUserClock } from 'react-icons/fa';
+import Avatar from '../../components/common/Avatar'; // <-- 1. Import Avatar
+// --- End Fix ---
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -22,7 +26,9 @@ const VolunteersPage = ({ token, currentUser }) => {
     const [volunteers, setVolunteers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedUser, setSelectedUser] = useState(null);
+    // --- ✨ FIX: Removed unused state for modal ---
+    // const [selectedUser, setSelectedUser] = useState(null);
+    // --- End Fix ---
     const navigate = useNavigate();
 
     const fetchVolunteers = useCallback(async () => {
@@ -54,8 +60,8 @@ const VolunteersPage = ({ token, currentUser }) => {
         <>
             <div className={styles.container}>
                 {/*<header className={styles.header}>*/}
-                {/*    <h1>Our Volunteers</h1>*/}
-                {/*    <p>A dedicated team ready to make a difference.</p>*/}
+                {/* <h1>Our Volunteers</h1>*/}
+                {/* <p>A dedicated team ready to make a difference.</p>*/}
                 {/*</header>*/}
                 <div className={styles.userGrid}>
                     {volunteers.map((user, index) => (
@@ -70,7 +76,7 @@ const VolunteersPage = ({ token, currentUser }) => {
                             </div>
                             <div className={styles.cardContent}>
                                 <div className={styles.profilePlaceholder}>
-                                    <FaUser />
+                                    <Avatar userId={user.id} name={user.fullName} />
                                 </div>
                                 <div className={styles.userInfo}>
                                     <h3>{user.fullName}</h3>
@@ -81,18 +87,10 @@ const VolunteersPage = ({ token, currentUser }) => {
                     ))}
                 </div>
             </div>
-            {selectedUser && (
-                <VolunteerProfileModal
-                    user={selectedUser}
-                    token={token}
-                    currentUser={currentUser}
-                    onClose={() => setSelectedUser(null)}
-                    onUpdate={() => {
-                        setSelectedUser(null);
-                        fetchVolunteers();
-                    }}
-                />
-            )}
+
+            {/* --- ✨ FIX: Removed reference to non-existent VolunteerProfileModal --- */}
+            {/* {selectedUser && ( ... )} */}
+            {/* --- End Fix --- */}
         </>
     );
 };

@@ -1,14 +1,22 @@
+// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/user/VolunteerProfilePage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import styles from './VolunteerProfilePage.module.css';
-import { FaSpinner, FaShieldAlt, FaUser, FaClock, FaPhone, FaArrowLeft, FaFirstAid, FaUserCircle } from 'react-icons/fa';
+import { FaSpinner, FaShieldAlt, FaUser, FaClock, FaPhone, FaArrowLeft, FaFirstAid, FaUserCircle, FaExclamationTriangle, FaCheckCircle, FaCar, FaHome, FaGraduationCap } from 'react-icons/fa';
 import CustomSelect from '../../components/common/CustomSelect.jsx';
 import Avatar from '../../components/common/Avatar.jsx';
-// ✨ 1. Import the Lightbox component and avatarModules
-import Lightbox from '../../components/common/Lightbox.jsx'; // Adjust path if needed
+import Lightbox from '../../components/common/Lightbox.jsx';
 
-const avatarModules = import.meta.glob('/src/assets/avatars/*');
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
+// --- ✨ Define Experience Level options ---
+const experienceOptions = [
+    { value: 'Beginner', label: 'Beginner' },
+    { value: 'Intermediate', label: 'Intermediate' },
+    { value: 'Advanced', label: 'Advanced' },
+    { value: 'Expert', label: 'Expert' }
+];
+// --- End ---
 
 const positionOptions = [
     { value: 'FOUNDER', label: 'Founder' },
@@ -30,20 +38,22 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
     const { volunteerId } = useParams();
     const [details, setDetails] = useState(null);
     const [loading, setLoading] = useState(true);
-    // ... other states
+
     const [feedback, setFeedback] = useState('');
-    const [feedbackType, setFeedbackType] = useState('');
+    const [feedbackType, setFeedbackType] = useState(''); // 'success' or 'error'
     const [firstAidKit, setFirstAidKit] = useState(null);
     const [selectedPosition, setSelectedPosition] = useState('');
     const [selectedRoles, setSelectedRoles] = useState([]);
+    // --- ✨ Add state for Experience Level ---
+    const [selectedExperience, setSelectedExperience] = useState('');
+    // --- End Add ---
 
-    // ✨ 2. Add state to manage the lightbox source image
     const [lightboxSrc, setLightboxSrc] = useState(null);
+    const [isSaving, setIsSaving] = useState(false); // State for save spinner
 
     const isSuperAdmin = useMemo(() => currentUser?.roles.includes('ROLE_SUPER_ADMIN'), [currentUser]);
     const isAdmin = useMemo(() => currentUser?.roles.includes('ROLE_ADMIN'), [currentUser]);
 
-    // ... (fetchUserDetails and other functions remain the same)
     const fetchUserDetails = useCallback(async () => {
         setLoading(true);
         try {
@@ -69,6 +79,8 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
             setDetails({ ...detailedUser, memberSince });
             setSelectedPosition(detailedUser.position || 'MEMBER');
             setSelectedRoles(detailedUser.roles || ['MEMBER']);
+            // --- ✨ Initialize experience state ---
+            setSelectedExperience(detailedUser.experienceLevel || 'Beginner');
 
             if (detailedUser.hasMedicineBox) {
                 const kitResponse = await fetch(`${API_BASE_URL}/api/first-aid-kit/${volunteerId}`, {
@@ -79,7 +91,7 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                     setFirstAidKit(kitData);
                 }
             } else {
-                setFirstAidKit(null); // Ensure kit is cleared if user has no medicine box
+                setFirstAidKit(null);
             }
 
         } catch (err) {
@@ -98,51 +110,68 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
     }, [volunteerId, fetchUserDetails]);
 
     const handleSaveChanges = async () => {
+        setIsSaving(true); // --- ✨ Show spinner
         setFeedback('Saving changes...');
         setFeedbackType('');
-        try {
-            const getResponseData = async (response) => {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.indexOf('application/json') !== -1) {
-                    return await response.json();
-                }
-                return { message: 'Changes saved successfully.' };
-            };
 
+        try {
+            const requests = []; // Array to hold all API request promises
+
+            // --- ✨ 1. Add Experience Level update request (Super Admin only) ---
             if (isSuperAdmin) {
-                const positionResponse = await fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/position`, {
+                requests.push(
+                    fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/experience`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ experience: selectedExperience }),
+                    })
+                );
+            }
+            // --- End Add ---
+
+            // 2. Add Position update request (Super Admin only)
+            if (isSuperAdmin) {
+                requests.push(
+                    fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/position`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ position: selectedPosition }),
+                    })
+                );
+            }
+
+            // 3. Add Roles update request (Admin or Super Admin)
+            requests.push(
+                fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/roles`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ position: selectedPosition }),
-                });
+                    body: JSON.stringify(selectedRoles),
+                })
+            );
 
-                const responseData = await getResponseData(positionResponse);
-                if (!positionResponse.ok) {
-                    throw new Error(responseData.message || 'Failed to save position.');
+            // Execute all requests in parallel
+            const responses = await Promise.all(requests);
+
+            // Check all responses for errors
+            for (const response of responses) {
+                if (!response.ok) {
+                    const responseData = await response.json().catch(() => ({}));
+                    throw new Error(responseData.message || 'One or more updates failed.');
                 }
             }
 
-            const rolesResponse = await fetch(`${API_BASE_URL}/api/admin/users/${volunteerId}/roles`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(selectedRoles),
-            });
-
-            const responseData = await getResponseData(rolesResponse);
-            if (!rolesResponse.ok) {
-                throw new Error(responseData.message || 'Failed to save roles.');
-            }
-
-            setFeedback(responseData.message);
+            setFeedback('Changes saved successfully!');
             setFeedbackType('success');
 
-            await fetchUserDetails();
-            setTimeout(() => setFeedback(''), 1500);
+            await fetchUserDetails(); // Refresh data
+            setTimeout(() => setFeedback(''), 1500); // Clear feedback
 
         } catch (err) {
             console.error("Error saving changes:", err);
             setFeedback(`Error: ${err.message}`);
             setFeedbackType('error');
+        } finally {
+            setIsSaving(false); // --- ✨ Hide spinner
         }
     };
 
@@ -154,8 +183,8 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
         );
     };
 
-    // ✨ 3. Create a handler to find the image and open the lightbox
     const handleAvatarClick = (user) => {
+        // ... (function remains the same)
         if (!user) return;
         for (const path in avatarModules) {
             if (path.includes(`/avatars/${user.id}.`)) {
@@ -183,7 +212,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
 
 
     return (
-        // ✨ 4. Wrap the component in a React Fragment
         <>
             <div className={styles.pageContainer}>
                 <Link to="/volunteers" className={styles.backLink}>
@@ -191,7 +219,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                     <span>Back to Volunteers</span>
                 </Link>
                 <div className={styles.profileHeader}>
-                    {/* ✨ 5. Add the onClick handler to the avatar's container */}
                     <div className={styles.avatar} onClick={() => handleAvatarClick(details)}>
                         <Avatar userId={details.id} name={fullName} />
                     </div>
@@ -199,7 +226,6 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                     <p className={styles.currentPosition}>{(details.position || 'MEMBER').replace(/_/g, ' ')}</p>
                 </div>
 
-                {/* ... (rest of the page JSX is unchanged) */}
                 <div className={styles.profileBody}>
                     <div className={styles.detailGrid}>
                         <div className={styles.detailItem}>
@@ -213,10 +239,27 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                             <p>{details.phoneNumber || 'N/A'}</p>
                         </div>
                         <div className={styles.detailItem}>
-                            <FaUser className={styles.detailIcon}/>
+                            {/* --- ✨ Use GraduationCap icon --- */}
+                            <FaGraduationCap className={styles.detailIcon}/>
                             <strong>Experience</strong>
                             <p>{(details.experienceLevel || 'N/A').replace('_', ' ')}</p>
                         </div>
+                        <div className={styles.detailItem}>
+                            <FaCar className={styles.detailIcon}/>
+                            <strong>Vehicle</strong>
+                            <p>{details.hasVehicle ? (details.vehicleType || 'Yes') : 'No'}</p>
+                        </div>
+                        <div className={styles.detailItem}>
+                            <FaHome className={styles.detailIcon}/>
+                            <strong>Shelter</strong>
+                            <p>{details.canProvideShelter ? 'Yes' : 'No'}</p>
+                        </div>
+                        <div className={styles.detailItem}>
+                            <FaFirstAid className={styles.detailIcon}/>
+                            <strong>First-Aid Kit</strong>
+                            <p>{details.hasMedicineBox ? 'Yes' : 'No'}</p>
+                        </div>
+
                         <div className={`${styles.detailItem} ${styles.rolesItem}`}>
                             <FaShieldAlt className={styles.detailIcon}/>
                             <strong>Current Roles</strong>
@@ -267,15 +310,28 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
                         <h4 className={styles.adminTitle}><FaShieldAlt /> Admin Controls</h4>
 
                         {isSuperAdmin && (
-                            <div className={styles.formGroup}>
-                                <label className={styles.formLabel}>Update Position</label>
-                                <CustomSelect
-                                    name="position"
-                                    options={positionOptions}
-                                    value={selectedPosition}
-                                    onChange={(e) => setSelectedPosition(e.target.value)}
-                                />
-                            </div>
+                            <>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Update Position</label>
+                                    <CustomSelect
+                                        name="position"
+                                        options={positionOptions}
+                                        value={selectedPosition}
+                                        onChange={(e) => setSelectedPosition(e.target.value)}
+                                    />
+                                </div>
+                                {/* --- ✨ Add Experience Level Dropdown --- */}
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>Update Experience Level</label>
+                                    <CustomSelect
+                                        name="experience"
+                                        options={experienceOptions}
+                                        value={selectedExperience}
+                                        onChange={(e) => setSelectedExperience(e.target.value)}
+                                    />
+                                </div>
+                                {/* --- End Add --- */}
+                            </>
                         )}
 
                         <div className={styles.formGroup}>
@@ -304,17 +360,17 @@ const VolunteerProfilePage = ({ token, currentUser }) => {
 
                         {feedback && (
                             <p className={`${styles.feedbackMessage} ${styles[feedbackType]}`}>
+                                {feedbackType === 'error' ? <FaExclamationTriangle /> : <FaCheckCircle />}
                                 {feedback}
                             </p>
                         )}
-                        <button onClick={handleSaveChanges} className={styles.saveButton}>
-                            Save Changes
+                        <button onClick={handleSaveChanges} className={styles.saveButton} disabled={isSaving}>
+                            {isSaving ? <FaSpinner className={styles.spinner} /> : 'Save Changes'}
                         </button>
                     </div>
                 )}
             </div>
 
-            {/* ✨ 6. Render the Lightbox component */}
             <Lightbox
                 src={lightboxSrc}
                 alt={`${fullName}'s Avatar`}

@@ -1,3 +1,5 @@
+/* File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/user/VolunteersPage.module.css */
+
 .container {
     padding: 1.5rem;
     max-width: 1200px;
@@ -86,19 +88,18 @@
     gap: 1rem; /* ✨ This creates the space between the icon and the text */
 }
 
-/* Find and replace this class in VolunteersPage.module.css */
-
+/* This class now acts as a container for the Avatar component */
 .profilePlaceholder {
     width: 50px;
     height: 50px;
     border-radius: 50%;
     background-color: rgba(0, 0, 0, 0.1);
-    display: flex; /* This remains useful for alignment */
+    display: flex;
     justify-content: center;
     align-items: center;
     border: 2px solid rgba(255, 255, 255, 0.7);
     flex-shrink: 0;
-    /* Removed font-size and color, as the Avatar component handles its own styling */
+    /* The Avatar component will fill this 50x50 circle */
 }
 
 .userInfo {

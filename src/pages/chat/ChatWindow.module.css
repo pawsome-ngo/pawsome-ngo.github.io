@@ -128,8 +128,7 @@
 .messageContent {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
-    min-width: 0; /* <-- This is the new line */
+    width: 100%;
 }
 
 .bubbleContainer {

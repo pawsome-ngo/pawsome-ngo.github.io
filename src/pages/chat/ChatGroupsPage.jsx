@@ -1,8 +1,7 @@
-// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/chat/ChatGroupsPage.jsx
+// File: pawsome-client-react/src/pages/chat/ChatGroupsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-// --- ✨ Import FaPaw ---
 import { FaComments, FaInbox, FaUsers, FaPaw } from 'react-icons/fa';
 import styles from './ChatGroupsPage.module.css';
 
@@ -15,6 +14,16 @@ const getColorForChatGroup = (chatGroupId) => {
     const hash = chatGroupId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
 };
+
+// --- NEW HELPER FUNCTION ---
+const truncateMessage = (message, maxLength = 30) => {
+    if (!message) return '';
+    if (message.length <= maxLength) {
+        return message;
+    }
+    return message.substring(0, maxLength) + '...';
+};
+// --- END HELPER FUNCTION ---
 
 const ChatGroupsPage = ({ token, onLogout }) => {
     const [chatGroups, setChatGroups] = useState([]);
@@ -58,10 +67,9 @@ const ChatGroupsPage = ({ token, onLogout }) => {
         navigate(`/chat/${chatId}`);
     };
 
-    // --- ✨ UPDATED Loading State ---
     if (loading) {
         return (
-            <div className={styles.loadingContainer}> {/* Use loadingContainer for full page center */}
+            <div className={styles.loadingContainer}>
                 <div className={styles.pawSpinner}>
                     <FaPaw className={styles.pawIcon} />
                 </div>
@@ -69,7 +77,6 @@ const ChatGroupsPage = ({ token, onLogout }) => {
             </div>
         );
     }
-    // --- End Update ---
 
     if (error) return <div className={styles.container}><div className={styles.errorMessage}>{error}</div></div>;
 
@@ -105,7 +112,11 @@ const ChatGroupsPage = ({ token, onLogout }) => {
                             <div className={styles.cardContent}>
                                 <h3 className={styles.cardTitle}>{participant.chatGroup.name}</h3>
                                 {participant.lastMessage && (
-                                    <p className={styles.lastMessage}>{participant.lastMessage}</p>
+                                    // --- APPLY TRUNCATION HERE ---
+                                    <p className={styles.lastMessage} title={participant.lastMessage}> {/* Added title attribute to show full message on hover */}
+                                        {truncateMessage(participant.lastMessage)}
+                                    </p>
+                                    // --- END TRUNCATION ---
                                 )}
                             </div>
                         </div>

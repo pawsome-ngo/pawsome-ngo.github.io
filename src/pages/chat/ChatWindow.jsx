@@ -8,6 +8,9 @@ import ChatIncidentDetailModal from './components/ChatIncidentDetailModal.jsx';
 import styles from './ChatWindow.module.css';
 import { FaPaperPlane, FaInfoCircle, FaCheckDouble } from 'react-icons/fa';
 
+// Import the Avatar component (adjust path if necessary)
+import Avatar from '../../components/common/Avatar.jsx';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // --- Helper Functions ---
@@ -21,14 +24,8 @@ const getUserInfoFromToken = (token) => {
     }
 };
 
-const stringToHslColor = (str) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const h = hash % 360;
-    return `hsl(${h}, 70%, 50%)`;
-};
+// This function is no longer needed as Avatar.jsx handles colors
+// const stringToHslColor = (str) => { ... };
 
 const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -323,8 +320,10 @@ const ChatWindow = ({ token, onLogout }) => {
 
                     const parentMessage = msg.parentMessageId ? messages.find(m => m.id === msg.parentMessageId) : null;
                     const reactionsCount = msg.reactions ? Object.values(msg.reactions).flat().length : 0;
-                    const senderInitials = msg.sender.firstName.charAt(0).toUpperCase() + (msg.sender.lastName ? msg.sender.lastName.charAt(0).toUpperCase() : '');
-                    const avatarColor = stringToHslColor(msg.sender.id.toString());
+
+                    // These lines are no longer needed
+                    // const senderInitials = msg.sender.firstName.charAt(0).toUpperCase() + (msg.sender.lastName ? msg.sender.lastName.charAt(0).toUpperCase() : '');
+                    // const avatarColor = stringToHslColor(msg.sender.id.toString());
 
                     const messageNodeRef = (node) => {
                         if (node && readObserver.current) {
@@ -343,7 +342,14 @@ const ChatWindow = ({ token, onLogout }) => {
                             >
                                 {!isSentByCurrentUser && (
                                     <div className={styles.avatarContainer}>
-                                        {isFirstInGroup && <div className={styles.avatar} style={{ backgroundColor: avatarColor }}>{senderInitials}</div>}
+                                        {isFirstInGroup && (
+                                            <div className={styles.chatAvatarWrapper}>
+                                                <Avatar
+                                                    userId={msg.sender.id}
+                                                    name={msg.sender.firstName}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                                 <div className={styles.messageContent}>

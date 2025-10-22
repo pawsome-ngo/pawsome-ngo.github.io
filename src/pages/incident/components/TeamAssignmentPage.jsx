@@ -18,6 +18,15 @@ const experienceOrder = {
     'Expert': 4
 };
 
+// --- ✨ NEW: Helper function to get experience class ---
+const getExperienceClass = (level) => {
+    if (level === 'Expert') return 'expert';
+    if (level === 'Advanced') return 'advanced';
+    if (level === 'Intermediate') return 'intermediate';
+    return 'beginner'; // Default for 'Beginner' or null
+};
+// --- End Helper ---
+
 const TeamAssignmentPage = ({ token, currentUser }) => {
     const { incidentId } = useParams();
     const navigate = useNavigate();
@@ -178,7 +187,7 @@ const TeamAssignmentPage = ({ token, currentUser }) => {
                         <span>Back to Incident</span>
                     </Link>
                     <div className={styles.sortContainer}>
-                        <label htmlFor="sort-order">     </label>
+                        <label htmlFor="sort-order">Sort By:</label>
                         <CustomSelect
                             name="sortOrder"
                             options={sortOptions}
@@ -198,7 +207,10 @@ const TeamAssignmentPage = ({ token, currentUser }) => {
                             <div className={styles.volunteerInfo}>
                                 <h3>{v.firstName}</h3>
                                 <div className={styles.volunteerSubInfo}>
-                                    <span>{v.experienceLevel}</span>
+                                    {/* --- ✨ Apply conditional class for experience --- */}
+                                    <span className={styles[getExperienceClass(v.experienceLevel)]}>
+                                        {v.experienceLevel}
+                                    </span>
                                     {v.distanceFromIncident !== null && (
                                         <>
                                             <span className={styles.separator}>•</span>
@@ -213,8 +225,9 @@ const TeamAssignmentPage = ({ token, currentUser }) => {
                                 {v.hasPreviouslyWorkedOnIncident && <FaHistory className={styles.historyIcon} title="Previously worked on this incident" />}
                                 {v.isEngagedInActiveCase && <FaExclamationCircle className={styles.engagedIcon} title="Engaged in another case" />}
                                 {v.hasShownInterest && <FaHeart className={styles.interestIcon} title="Has shown interest" />}
-                                {v.hasVehicle && <FaMotorcycle title="Has two-wheeler" />}
-                                {v.hasMedicineBox && <FaMedkit title="Has medicine box" />}
+                                {/* --- ✨ Apply color classes to icons --- */}
+                                {v.hasVehicle && <FaMotorcycle className={styles.vehicleIcon} title="Has vehicle" />}
+                                {v.hasMedicineBox && <FaMedkit className={styles.medkitIcon} title="Has medicine box" />}
                             </div>
                         </div>
                     ))}

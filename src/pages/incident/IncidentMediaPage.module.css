@@ -1,4 +1,4 @@
-/* File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/IncidentMediaPage.module.css */
+/* File: pawsome-client-react/src/pages/incident/IncidentMediaPage.module.css */
 
 .container {
     padding: 1.5rem;
@@ -74,7 +74,7 @@
 .categorySection:not([open]) .folderIconOpen { display: none; }
 
 
-/* --- ✨ NEW Media Grid Styles --- */
+/* --- Media Grid Styles --- */
 .mediaGrid {
     display: grid;
     /* Responsive grid: 2 columns on small, 3 on medium, 4 on large */
@@ -83,14 +83,23 @@
     padding: 1.5rem;
 }
 
+/* --- Updated Styles for Delete Button Container --- */
+.mediaItemContainer {
+    position: relative; /* To position the delete button */
+    border-radius: 8px; /* Apply radius here */
+    overflow: hidden; /* Keep content clipped */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Moved shadow here */
+}
+
+/* --- Adjusted Media Item Styles --- */
 .mediaItem {
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     background: #f0f0f0; /* Background color for loading */
     display: block; /* For <a> tags */
     text-decoration: none; /* For <a> tags */
+    width: 100%; /* Ensure it fills the container */
+    height: 100%; /* Ensure it fills the container */
 }
+
 
 .mediaImage, .mediaVideo, .mediaAudio {
     width: 100%;
@@ -102,12 +111,14 @@
     object-fit: cover;
     transition: transform 0.2s ease;
 }
-.mediaItem:hover .mediaImage {
+/* Removed hover effect from image to avoid conflict with button */
+/* .mediaItemContainer:hover .mediaImage {
     transform: scale(1.05);
-}
+} */
 
 .mediaVideo, .mediaAudio {
     aspect-ratio: 16 / 9; /* Give videos/audio players a standard shape */
+    background-color: #000; /* Black background for video/audio */
 }
 
 /* Fallback for link items (non-media) */
@@ -123,6 +134,9 @@
     font-size: 0.9rem;
     text-align: center;
     transition: background-color 0.2s ease;
+    height: 100%; /* Ensure it fills container */
+    box-sizing: border-box; /* Include padding in height */
+    aspect-ratio: 1 / 1; /* Match image aspect ratio */
 }
 .linkItem:hover {
     background-color: #f1f3f5;
@@ -130,6 +144,62 @@
 .linkItem svg {
     font-size: 2rem;
     color: #6a82fb;
+}
+
+/* --- UPDATED Styles for Delete Button (always visible) --- */
+.deleteButton {
+    position: absolute;
+    top: 8px; /* Slightly more padding from top */
+    right: 8px; /* Slightly more padding from right */
+    background-color: rgba(231, 76, 60, 0.9); /* Slightly more opaque red */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 34px; /* Slightly larger for better touch target */
+    height: 34px; /* Slightly larger for better touch target */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    /* --- REMOVED OPACITY AND TRANSITION FOR ALWAYS VISIBLE --- */
+    /* opacity: 0; */
+    transition: background-color 0.2s; /* Only transition background on hover */
+    font-size: 1rem; /* Slightly larger icon */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
+    padding: 0; /* Reset padding */
+}
+
+/* Removed hover effect for opacity, button is now always visible */
+/* .mediaItemContainer:hover .deleteButton {
+    opacity: 1;
+} */
+
+.deleteButton:hover {
+    background-color: rgba(192, 57, 43, 1); /* Darker red on hover */
+}
+
+.deleteButton:disabled {
+    background-color: rgba(149, 165, 166, 0.8);
+    cursor: not-allowed;
+    box-shadow: none; /* No shadow when disabled */
+}
+/* --- End Updated Delete Button Styles --- */
+
+
+/* --- Error Message Style (for confirmation modal) --- */
+.errorMessage {
+    color: #e74c3c;
+    background-color: #fbeae5;
+    border: 1px solid #f5c6cb;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
 }
 
 

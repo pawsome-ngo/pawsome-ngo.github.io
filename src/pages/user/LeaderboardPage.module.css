@@ -1,3 +1,5 @@
+/* File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/user/LeaderboardPage.module.css */
+
 .container {
     background-color: #f7f8fc;
     min-height: 100vh;
@@ -113,16 +115,15 @@
     text-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
-/* --- ✨ Podium Points Bubble Style ✨ --- */
 .podiumPoints {
     font-size: 0.85rem;
     font-weight: 600;
-    margin-top: 0.5rem; /* Added space for the bubble */
+    margin-top: 0.5rem;
     color: #fff;
-    background-color: rgba(255, 255, 255, 0.25); /* Made it slightly more opaque */
-    padding: 0.3rem 0.8rem; /* Added padding */
-    border-radius: 12px; /* Rounded corners */
-    border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle border to make it stand out */
+    background-color: rgba(255, 255, 255, 0.25);
+    padding: 0.3rem 0.8rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
@@ -174,13 +175,17 @@
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
+/* --- ✨ This is the updated style --- */
 .rank {
-    font-weight: 600;
-    font-size: 1rem;
-    color: #8a94a6;
+    font-family: Georgia, 'Times New Roman', Times, serif; /* 1. Stylish font */
+    font-weight: 700; /* 2. Bolder */
+    font-size: 1.2rem; /* 3. Larger */
+    font-style: italic; /* 4. Stylistic */
+    color: #fe5196; /* 5. Theme color */
     width: 30px;
-    text-align: left;
+    text-align: center; /* 6. Centered in its column */
 }
+/* --- End Update --- */
 
 .listAvatarWrapper {
     width: 45px;

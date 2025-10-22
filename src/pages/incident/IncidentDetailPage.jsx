@@ -1,4 +1,4 @@
-// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/pages/incident/IncidentDetailPage.jsx
+// File: pawsome-client-react/src/pages/incident/IncidentDetailPage.jsx
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -6,12 +6,11 @@ import styles from './IncidentDetailPage.module.css';
 import {
     FaArrowLeft, FaSpinner, FaCopy, FaHeart, FaRegHeart,
     FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaImages, FaUsers, FaHistory, FaTrash, FaUndo, FaClipboard
-} from 'react-icons/fa'; // FaPaw is used for the spinner
+} from 'react-icons/fa';
 import { jwtDecode } from 'jwt-decode';
 import CloseIncidentModal from "../../components/common/CloseIncidentModal.jsx";
 import TeamDetailsModal from "./components/TeamDetailsModal.jsx";
 import IncidentHistoryModal from "./components/IncidentHistoryModal.jsx";
-// --- ✨ Import Archive Modal ---
 import ArchiveConfirmationModal from "../../components/common/ArchiveConfirmationModal.jsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -63,7 +62,12 @@ const IncidentDetailPage = ({ token }) => {
         if (token) {
             try {
                 const decodedToken = jwtDecode(token);
-                setLoggedInUser(decodedToken);
+                // Extract necessary user info (adjust keys based on your JWT payload)
+                setLoggedInUser({
+                    id: decodedToken.id, // Assuming 'id' is in the token payload
+                    firstName: decodedToken.firstName // Assuming 'firstName' is in the payload
+                    // Add other fields if needed
+                });
             } catch (e) {
                 console.error("Failed to decode token", e);
             }
@@ -71,6 +75,7 @@ const IncidentDetailPage = ({ token }) => {
     }, [token]);
 
     const fetchIncident = async () => {
+        // Ensure loggedInUser is set before fetching
         if (!token || !incidentId || !loggedInUser) return;
 
         setLoading(true);
@@ -84,6 +89,7 @@ const IncidentDetailPage = ({ token }) => {
                 const data = await response.json();
                 setIncident(data);
 
+                // Check interest status using the fetched incident data and loggedInUser state
                 if (data.interestedUsers && loggedInUser) {
                     const userIsInterested = data.interestedUsers.some(user => user.id === loggedInUser.id);
                     setIsInterested(userIsInterested);
@@ -123,10 +129,14 @@ const IncidentDetailPage = ({ token }) => {
     };
 
 
+    // Fetch incident only when loggedInUser state is updated
     useEffect(() => {
-        fetchIncident();
-    }, [token, incidentId, loggedInUser]);
+        if (loggedInUser) {
+            fetchIncident();
+        }
+    }, [token, incidentId, loggedInUser]); // Add loggedInUser dependency
 
+    // --- Other handlers (handleCopyDetails, handleInterestToggle, handleCopyContact, etc. remain the same) ---
     const handleCopyDetails = async () => {
         const currentTeamDetails = await fetchTeamDetails();
         if (!incident || !currentTeamDetails) return;
@@ -170,6 +180,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
     };
 
     const handleInterestToggle = async () => {
+        if (!loggedInUser) return; // Guard against missing user info
         setInterestLoading(true);
         const method = isInterested ? 'DELETE' : 'POST';
         try {
@@ -368,7 +379,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
         }
     };
 
-    // --- ✨ MODIFIED handleDelete function ---
     const handleDelete = async (shouldArchive) => { // Takes boolean from modal
         setIsDeleteModalOpen(false);
         setIsUpdating(true); // Use isUpdating for loading state
@@ -398,10 +408,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setIsUpdating(false); // Stop loading on error
             setTimeout(() => setUpdateMessage(''), 3000); // Clear error message after a while
         }
-        // No finally block needed here as navigation happens on success
     };
-    // --- End Modification ---
-
 
     const formatDateTime = (dateTimeString) => {
         if (!dateTimeString) return 'N/A';
@@ -417,7 +424,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
         });
     };
 
-    // --- ✨ UPDATED Loading State ---
     if (loading) {
         return (
             <div className={styles.loadingContainer}>
@@ -428,7 +434,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
             </div>
         );
     }
-    // --- End Update ---
 
     if (error) return <div className={styles.pageContainer} style={{ color: 'red' }}>{error}</div>;
     if (!incident) return <div className={styles.pageContainer}>Incident not found.</div>;
@@ -530,19 +535,22 @@ Please coordinate and proceed to the location. Thank you! 🙏
 
             {/* Action Buttons */}
             <div className={styles.actionsContainer}>
-                {incident.mediaFiles && incident.mediaFiles.length > 0 && (
+                {/* --- MODIFIED MEDIA BUTTON CONDITION --- */}
+                {incident.mediaFileCount > 0 && (
                     <Link
                         to={`/incident/${incident.id}/media`}
-                        state={{ incident: incident }} // Pass incident data to media page
+                        // state={{ incident: incident }} // Pass incident data if needed by media page (if NOT fetching there)
                         className={`${styles.actionButton} ${styles.mediaButton}`}
                     >
                         <FaImages />
-                        <span>View Media ({incident.mediaFiles.length})</span>
+                        {/* Use mediaFileCount */}
+                        <span>View Media ({incident.mediaFileCount})</span>
                     </Link>
                 )}
+                {/* --- END MODIFICATION --- */}
 
                 {incident.latitude && incident.longitude && (
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
+                    <a href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
                         <FaMapMarkerAlt />
                         <span>View on Map</span>
                     </a>
@@ -556,8 +564,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         </button>
                     )}
 
-                {/* --- Conditional Actions based on Status --- */}
-
+                {/* --- Conditional Actions based on Status (No changes needed here) --- */}
                 {incident.status === 'REPORTED' && (
                     <>
                         <button onClick={handleInterestToggle} disabled={interestLoading} className={`${styles.actionButton} ${styles.interestButton} ${isInterested ? styles.interested : ''}`}>
@@ -645,7 +652,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 )}
             </div>
 
-            {/* --- Modals --- */}
+            {/* --- Modals (No changes needed here) --- */}
             <CloseIncidentModal
                 isOpen={isCloseModalOpen}
                 onClose={() => setIsCloseModalOpen(false)}
@@ -665,7 +672,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     history={incidentHistory}
                 />
             )}
-            {/* --- ✨ Use the new ArchiveConfirmationModal --- */}
             {isDeleteModalOpen && (
                 <ArchiveConfirmationModal
                     message="Deleting an incident (RESOLVED or CLOSED) is permanent. This will remove all associated cases, chats, and media."
@@ -676,7 +682,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     isProcessing={isUpdating} // Use isUpdating for loading state
                 />
             )}
-            {/* --- End Modification --- */}
         </div>
     );
 };

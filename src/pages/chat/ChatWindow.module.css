@@ -115,19 +115,14 @@
     position: relative;
 }
 
-/* Renamed from .avatar to .chatAvatar to avoid conflict */
-.chatAvatar {
+/* This new wrapper holds the Avatar component */
+.chatAvatarWrapper {
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    color: white;
-    font-weight: bold;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.9rem;
     position: absolute;
     bottom: 0;
+    overflow: hidden; /* This is key to clip the image to a circle */
 }
 
 .messageContent {

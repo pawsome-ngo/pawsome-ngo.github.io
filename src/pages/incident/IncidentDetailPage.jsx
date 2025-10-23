@@ -1,19 +1,19 @@
-// File: pawsome-client-react/src/pages/incident/IncidentDetailPage.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './IncidentDetailPage.module.css';
 import {
     FaArrowLeft, FaSpinner, FaCopy, FaHeart, FaRegHeart,
     FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaImages,
-    FaUsers, FaHistory, FaTrash, FaUndo, FaClipboard, FaBriefcaseMedical // ✨ ADDED ICON
+    FaUsers, FaHistory, FaTrash, FaUndo, FaClipboard, FaBriefcaseMedical
 } from 'react-icons/fa';
 import { jwtDecode } from 'jwt-decode';
 import CloseIncidentModal from "../../components/common/CloseIncidentModal.jsx";
 import TeamDetailsModal from "./components/TeamDetailsModal.jsx";
 import IncidentHistoryModal from "./components/IncidentHistoryModal.jsx";
 import ArchiveConfirmationModal from "../../components/common/ArchiveConfirmationModal.jsx";
-import TeamItemsListModal from "./components/TeamItemsListModal.jsx"; // ✨ IMPORT NEW MODAL
+import TeamItemsListModal from "./components/TeamItemsListModal.jsx";
+// ✨ Using the existing UnauthorizedModal as requested
+import UnauthorizedModal from '../../components/common/UnauthorizedModal.jsx';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -55,25 +55,33 @@ const IncidentDetailPage = ({ token }) => {
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [incidentHistory, setIncidentHistory] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [isTeamItemsModalOpen, setIsTeamItemsModalOpen] = useState(false); // ✨ ADD STATE
+    const [isTeamItemsModalOpen, setIsTeamItemsModalOpen] = useState(false);
+
+    // State for the UnauthorizedModal
+    const [isUnauthorizedModalOpen, setIsUnauthorizedModalOpen] = useState(false);
+    const [unauthorizedMessage, setUnauthorizedMessage] = useState('');
 
     const [isInterested, setIsInterested] = useState(false);
     const [interestLoading, setInterestLoading] = useState(false);
     const [loggedInUser, setLoggedInUser] = useState(null);
+    const [userRoles, setUserRoles] = useState([]); // State for user roles
 
     useEffect(() => {
         if (token) {
             try {
                 const decodedToken = jwtDecode(token);
-                // Extract necessary user info (adjust keys based on your JWT payload)
                 setLoggedInUser({
-                    id: decodedToken.id, // Assuming 'id' is in the token payload
-                    firstName: decodedToken.firstName // Assuming 'firstName' is in the payload
-                    // Add other fields if needed
+                    id: decodedToken.id,
+                    firstName: decodedToken.firstName
                 });
+                // Extract roles from the token
+                setUserRoles(decodedToken.roles || []);
             } catch (e) {
                 console.error("Failed to decode token", e);
+                setUserRoles([]);
             }
+        } else {
+            setUserRoles([]);
         }
     }, [token]);
 
@@ -139,7 +147,14 @@ const IncidentDetailPage = ({ token }) => {
         }
     }, [token, incidentId, loggedInUser]); // Add loggedInUser dependency
 
-    // --- Other handlers (handleCopyDetails, handleInterestToggle, handleCopyContact, etc. remain the same) ---
+    // --- Helper function to check roles ---
+    const hasCaptainOrHigherRole = () => {
+        return userRoles.includes('ROLE_RESCUE_CAPTAIN') ||
+            userRoles.includes('ROLE_ADMIN') ||
+            userRoles.includes('ROLE_SUPER_ADMIN');
+    };
+
+    // --- Other handlers ---
     const handleCopyDetails = async () => {
         const currentTeamDetails = await fetchTeamDetails();
         if (!incident || !currentTeamDetails) return;
@@ -275,6 +290,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
         });
     };
 
+    // Actual API call for resolving
     const handleMarkAsResolved = async () => {
         setIsUpdating(true);
         setUpdateMessage('Updating status to Resolved...');
@@ -301,6 +317,17 @@ Please coordinate and proceed to the location. Thank you! 🙏
         }
     };
 
+    // Wrapper function to check permission for resolving
+    const handleResolveClick = () => {
+        if (hasCaptainOrHigherRole()) {
+            handleMarkAsResolved();
+        } else {
+            setUnauthorizedMessage('You need to be a Rescue Captain or higher to resolve this incident.');
+            setIsUnauthorizedModalOpen(true);
+        }
+    };
+
+    // Actual API call for closing
     const handleCloseIncident = async (reason) => {
         setIsUpdating(true);
         setUpdateMessage('Closing incident...');
@@ -332,11 +359,26 @@ Please coordinate and proceed to the location. Thank you! 🙏
         }
     };
 
+    // Wrapper function to check permission for closing
+    const handleCloseClick = () => {
+        if (hasCaptainOrHigherRole()) {
+            setIsCloseModalOpen(true);
+        } else {
+            setUnauthorizedMessage('You need to be a Rescue Captain or higher to close this incident.');
+            setIsUnauthorizedModalOpen(true);
+        }
+    };
+
     const handleViewTeam = async () => {
         const details = await fetchTeamDetails();
         if (details) {
             setIsTeamModalOpen(true);
         }
+    };
+
+    // This is the handler for the "View Team Kit" button
+    const handleViewKits = async () => {
+        setIsTeamItemsModalOpen(true);
     };
 
     const handleViewHistory = async () => {
@@ -358,6 +400,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
         }
     };
 
+    // Actual API call for reactivating
     const handleReactivate = async () => {
         setIsUpdating(true);
         setUpdateMessage('Reactivating incident...');
@@ -382,6 +425,18 @@ Please coordinate and proceed to the location. Thank you! 🙏
         }
     };
 
+    // ✨ WRAPPER FUNCTION TO CHECK PERMISSION FOR REACTIVATE
+    const handleReactivateClick = () => {
+        if (hasCaptainOrHigherRole()) {
+            handleReactivate(); // User has permission, proceed
+        } else {
+            // User does NOT have permission, show modal
+            setUnauthorizedMessage('You need to be a Rescue Captain or higher to reactivate this incident.');
+            setIsUnauthorizedModalOpen(true);
+        }
+    };
+
+    // Actual API call for deleting
     const handleDelete = async (shouldArchive) => { // Takes boolean from modal
         setIsDeleteModalOpen(false);
         setIsUpdating(true); // Use isUpdating for loading state
@@ -410,6 +465,16 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setUpdateMessage(`Error: ${err.message}`);
             setIsUpdating(false); // Stop loading on error
             setTimeout(() => setUpdateMessage(''), 3000); // Clear error message after a while
+        }
+    };
+
+    // Wrapper function to check permission for deleting
+    const handleDeleteClick = () => {
+        if (hasCaptainOrHigherRole()) {
+            setIsDeleteModalOpen(true);
+        } else {
+            setUnauthorizedMessage('You need to be a Rescue Captain or higher to delete this incident.');
+            setIsUnauthorizedModalOpen(true);
         }
     };
 
@@ -538,20 +603,18 @@ Please coordinate and proceed to the location. Thank you! 🙏
 
             {/* Action Buttons */}
             <div className={styles.actionsContainer}>
-                {/* --- MODIFIED MEDIA BUTTON CONDITION --- */}
+                {/* --- Media Button --- */}
                 {incident.mediaFileCount > 0 && (
                     <Link
                         to={`/incident/${incident.id}/media`}
-                        // state={{ incident: incident }} // Pass incident data if needed by media page (if NOT fetching there)
                         className={`${styles.actionButton} ${styles.mediaButton}`}
                     >
                         <FaImages />
-                        {/* Use mediaFileCount */}
                         <span>View Media ({incident.mediaFileCount})</span>
                     </Link>
                 )}
-                {/* --- END MODIFICATION --- */}
 
+                {/* --- Map Button --- */}
                 {incident.latitude && incident.longitude && (
                     <a href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
                         <FaMapMarkerAlt />
@@ -559,6 +622,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     </a>
                 )}
 
+                {/* --- Update Location Button --- */}
                 {!incident.latitude && !incident.longitude &&
                     (incident.status === 'REPORTED' || incident.status === 'ASSIGNED' || incident.status === 'IN_PROGRESS' || incident.status === 'ONGOING') && (
                         <button onClick={handleUpdateLocation} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
@@ -567,7 +631,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         </button>
                     )}
 
-                {/* --- Conditional Actions based on Status (No changes needed here) --- */}
+                {/* --- Conditional Actions based on Status --- */}
                 {incident.status === 'REPORTED' && (
                     <>
                         <button onClick={handleInterestToggle} disabled={interestLoading} className={`${styles.actionButton} ${styles.interestButton} ${isInterested ? styles.interested : ''}`}>
@@ -583,7 +647,8 @@ Please coordinate and proceed to the location. Thank you! 🙏
                             <span>Assign Team</span>
                         </Link>
 
-                        <button onClick={() => setIsCloseModalOpen(true)} className={`${styles.actionButton} ${styles.closeButton}`}>
+                        {/* ✨ UPDATED onClick handler for CLOSE */}
+                        <button onClick={handleCloseClick} className={`${styles.actionButton} ${styles.closeButton}`}>
                             Close Incident
                         </button>
                     </>
@@ -596,8 +661,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                             <span>View Team</span>
                         </button>
 
-                        {/* ✨ ADD NEW BUTTON HERE */}
-                        <button onClick={() => setIsTeamItemsModalOpen(true)} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
+                        <button onClick={handleViewKits} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
                             <FaBriefcaseMedical />
                             <span>View Team Kit</span>
                         </button>
@@ -623,8 +687,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                             <span>View Team</span>
                         </button>
 
-                        {/* ✨ ADD NEW BUTTON HERE */}
-                        <button onClick={() => setIsTeamItemsModalOpen(true)} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
+                        <button onClick={handleViewKits} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
                             <FaBriefcaseMedical />
                             <span>View Team Kit</span>
                         </button>
@@ -633,30 +696,33 @@ Please coordinate and proceed to the location. Thank you! 🙏
 
                 {incident.status === 'ONGOING' && (
                     <>
-                        {/* ✨ ADDING BUTTONS TO ONGOING AS REQUESTED */}
                         <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
                             <FaUsers />
                             <span>View Team</span>
                         </button>
 
-                        <button onClick={() => setIsTeamItemsModalOpen(true)} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
+                        <button onClick={handleViewKits} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
                             <FaBriefcaseMedical />
                             <span>View Team Kit</span>
                         </button>
 
-                        {/* This button was originally under 'ONGOING' in your file */}
-                        <button onClick={handleMarkAsResolved} disabled={isUpdating} className={`${styles.actionButton} ${styles.resolveButton}`}>
+                        {/* ✨ UPDATED onClick handler for RESOLVE */}
+                        <button onClick={handleResolveClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.resolveButton}`}>
                             {isUpdating && updateMessage.includes('Resolved') ? <FaSpinner className={styles.spinner} /> : 'Mark as Resolved'}
                         </button>
                     </>
                 )}
+
                 {incident.status === 'RESOLVED' && (
                     <>
-                        <button onClick={handleReactivate} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
+                        {/* ✨ UPDATED onClick handler for REACTIVATE */}
+                        <button onClick={handleReactivateClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
                             {isUpdating && updateMessage.includes('Reactivating') ? <FaSpinner className={styles.spinner} /> : <FaUndo />}
                             <span>Reactivate</span>
                         </button>
-                        <button onClick={() => setIsDeleteModalOpen(true)} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
+
+                        {/* ✨ UPDATED onClick handler for DELETE */}
+                        <button onClick={handleDeleteClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
                             <FaTrash />
                             <span>Delete Incident</span>
                         </button>
@@ -664,7 +730,8 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 )}
 
                 {incident.status === 'CLOSED' && (
-                    <button onClick={() => setIsDeleteModalOpen(true)} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
+                    /* ✨ UPDATED onClick handler for DELETE */
+                    <button onClick={handleDeleteClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
                         <FaTrash />
                         <span>Delete Incident</span>
                     </button>
@@ -675,7 +742,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
             <CloseIncidentModal
                 isOpen={isCloseModalOpen}
                 onClose={() => setIsCloseModalOpen(false)}
-                onSubmit={handleCloseIncident}
+                onSubmit={handleCloseIncident} // Calls the actual close handler
             />
             {teamDetails && (
                 <TeamDetailsModal
@@ -684,6 +751,14 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     teamDetails={teamDetails}
                 />
             )}
+
+            <TeamItemsListModal
+                isOpen={isTeamItemsModalOpen}
+                onClose={() => setIsTeamItemsModalOpen(false)}
+                incidentId={incidentId}
+                token={token}
+            />
+
             {incidentHistory && (
                 <IncidentHistoryModal
                     isOpen={isHistoryModalOpen}
@@ -694,20 +769,19 @@ Please coordinate and proceed to the location. Thank you! 🙏
             {isDeleteModalOpen && (
                 <ArchiveConfirmationModal
                     message="Deleting an incident (RESOLVED or CLOSED) is permanent. This will remove all associated cases, chats, and media."
-                    onConfirm={handleDelete} // Pass the modified handler
+                    onConfirm={handleDelete} // Calls the actual delete handler
                     onCancel={() => setIsDeleteModalOpen(false)}
                     confirmText="Yes, Delete"
                     cancelText="No, Keep It"
-                    isProcessing={isUpdating} // Use isUpdating for loading state
+                    isProcessing={isUpdating}
                 />
             )}
 
-            {/* ✨ RENDER THE NEW MODAL */}
-            <TeamItemsListModal
-                isOpen={isTeamItemsModalOpen}
-                onClose={() => setIsTeamItemsModalOpen(false)}
-                incidentId={incidentId}
-                token={token}
+            {/* ✨ RENDER THE UNAUTHORIZED MODAL */}
+            <UnauthorizedModal
+                isOpen={isUnauthorizedModalOpen}
+                onClose={() => setIsUnauthorizedModalOpen(false)}
+                message={unauthorizedMessage}
             />
         </div>
     );

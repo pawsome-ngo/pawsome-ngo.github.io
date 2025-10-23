@@ -61,7 +61,7 @@ const Navbar = ({ user, fullUserProfile, onLogout }) => {
                 <NavLink to="/live" className={getNavLinkClass} onClick={closeMenu}>Live</NavLink>
                 <NavLink to="/my-cases" className={getNavLinkClass} onClick={closeMenu}>My Cases</NavLink>
                 <NavLink to="/notifications" className={getNavLinkClass} onClick={closeMenu}>Notifications</NavLink>
-                <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>Report Incident</NavLink>
+                <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>Report An Incident</NavLink>
                 <NavLink to="/leaderboard" className={getNavLinkClass} onClick={closeMenu}>Leaderboard</NavLink>
                 <NavLink to="/volunteers" className={getNavLinkClass} onClick={closeMenu}>Volunteers</NavLink>
 
@@ -80,8 +80,9 @@ const Navbar = ({ user, fullUserProfile, onLogout }) => {
                 )}
                 {/* --- End Link --- */}
 
-                <NavLink to="/adoptions" className={getNavLinkClass} onClick={closeMenu}>Adoptions</NavLink>
-                <NavLink to="/events" className={getNavLinkClass} onClick={closeMenu}>Events</NavLink>
+                {/*<NavLink to="/adoptions" className={getNavLinkClass} onClick={closeMenu}>Adoptions</NavLink>*/}
+                {/*<NavLink to="/events" className={getNavLinkClass} onClick={closeMenu}>Events</NavLink>*/}
+
 
                 {/* Role-Specific Links */}
                 {(isAdmin || isSuperAdmin) && (
@@ -93,7 +94,7 @@ const Navbar = ({ user, fullUserProfile, onLogout }) => {
                 {isSuperAdmin && (
                     <NavLink to="/superadmin" className={getNavLinkClass} onClick={closeMenu}>Super Admin</NavLink>
                 )}
-
+                <NavLink to="/chat" className={getNavLinkClass} onClick={closeMenu}>Active Chats</NavLink>
                 <NavLink to="/profile" className={getNavLinkClass} onClick={closeMenu}>Profile</NavLink>
 
                 <button

@@ -1,3 +1,5 @@
+// File: pawsome-client-react/src/pages/incident/IncidentDetailPage.jsx
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './IncidentDetailPage.module.css';
@@ -57,14 +59,14 @@ const IncidentDetailPage = ({ token }) => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isTeamItemsModalOpen, setIsTeamItemsModalOpen] = useState(false);
 
-    // State for the UnauthorizedModal
+    // ✨ State for the UnauthorizedModal
     const [isUnauthorizedModalOpen, setIsUnauthorizedModalOpen] = useState(false);
     const [unauthorizedMessage, setUnauthorizedMessage] = useState('');
 
     const [isInterested, setIsInterested] = useState(false);
     const [interestLoading, setInterestLoading] = useState(false);
     const [loggedInUser, setLoggedInUser] = useState(null);
-    const [userRoles, setUserRoles] = useState([]); // State for user roles
+    const [userRoles, setUserRoles] = useState([]); // ✨ State for user roles
 
     useEffect(() => {
         if (token) {
@@ -74,7 +76,7 @@ const IncidentDetailPage = ({ token }) => {
                     id: decodedToken.id,
                     firstName: decodedToken.firstName
                 });
-                // Extract roles from the token
+                // ✨ Extract roles from the token
                 setUserRoles(decodedToken.roles || []);
             } catch (e) {
                 console.error("Failed to decode token", e);
@@ -87,7 +89,7 @@ const IncidentDetailPage = ({ token }) => {
 
     const fetchIncident = async () => {
         // Ensure loggedInUser is set before fetching
-        if (!token || !incidentId || !loggedInUser) return;
+        if (!token || !incidentId) return; // Removed loggedInUser dependency here for initial load
 
         setLoading(true);
         setError(null); // Clear previous errors
@@ -101,6 +103,7 @@ const IncidentDetailPage = ({ token }) => {
                 setIncident(data);
 
                 // Check interest status using the fetched incident data and loggedInUser state
+                // Need to ensure loggedInUser is available before checking interest
                 if (data.interestedUsers && loggedInUser) {
                     const userIsInterested = data.interestedUsers.some(user => user.id === loggedInUser.id);
                     setIsInterested(userIsInterested);
@@ -118,6 +121,15 @@ const IncidentDetailPage = ({ token }) => {
             setLoading(false);
         }
     };
+
+    // Separate useEffect to check interest once loggedInUser is set
+    useEffect(() => {
+        if (incident && loggedInUser && incident.interestedUsers) {
+            const userIsInterested = incident.interestedUsers.some(user => user.id === loggedInUser.id);
+            setIsInterested(userIsInterested);
+        }
+    }, [loggedInUser, incident]); // Rerun when loggedInUser or incident data updates
+
 
     const fetchTeamDetails = async () => {
         if (teamDetails) return teamDetails; // Return cached details if available
@@ -140,14 +152,13 @@ const IncidentDetailPage = ({ token }) => {
     };
 
 
-    // Fetch incident only when loggedInUser state is updated
+    // Fetch incident initially
     useEffect(() => {
-        if (loggedInUser) {
-            fetchIncident();
-        }
-    }, [token, incidentId, loggedInUser]); // Add loggedInUser dependency
+        fetchIncident();
+    }, [token, incidentId]); // Fetch on mount and if token/id changes
 
-    // --- Helper function to check roles ---
+
+    // --- ✨ Helper function to check roles ---
     const hasCaptainOrHigherRole = () => {
         return userRoles.includes('ROLE_RESCUE_CAPTAIN') ||
             userRoles.includes('ROLE_ADMIN') ||
@@ -376,7 +387,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
         }
     };
 
-    // This is the handler for the "View Team Kit" button
+    // Handler for the "View Team Kit" button
     const handleViewKits = async () => {
         setIsTeamItemsModalOpen(true);
     };
@@ -428,9 +439,8 @@ Please coordinate and proceed to the location. Thank you! 🙏
     // ✨ WRAPPER FUNCTION TO CHECK PERMISSION FOR REACTIVATE
     const handleReactivateClick = () => {
         if (hasCaptainOrHigherRole()) {
-            handleReactivate(); // User has permission, proceed
+            handleReactivate();
         } else {
-            // User does NOT have permission, show modal
             setUnauthorizedMessage('You need to be a Rescue Captain or higher to reactivate this incident.');
             setIsUnauthorizedModalOpen(true);
         }
@@ -601,9 +611,11 @@ Please coordinate and proceed to the location. Thank you! 🙏
             {updateMessage && <p className={styles.updateMessage}>{updateMessage}</p>}
 
 
-            {/* Action Buttons */}
+            {/* ====================================================== */}
+            {/* ✨ ACTION BUTTONS - RESTORED ORIGINAL LOGIC ✨ */}
+            {/* ====================================================== */}
             <div className={styles.actionsContainer}>
-                {/* --- Media Button --- */}
+                {/* --- Always Visible (if applicable) --- */}
                 {incident.mediaFileCount > 0 && (
                     <Link
                         to={`/incident/${incident.id}/media`}
@@ -613,8 +625,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         <span>View Media ({incident.mediaFileCount})</span>
                     </Link>
                 )}
-
-                {/* --- Map Button --- */}
                 {incident.latitude && incident.longitude && (
                     <a href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`} target="_blank" rel="noopener noreferrer" className={`${styles.actionButton} ${styles.mapButton}`}>
                         <FaMapMarkerAlt />
@@ -622,7 +632,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     </a>
                 )}
 
-                {/* --- Update Location Button --- */}
+                {/* --- Update Location (Conditional based on location & status) --- */}
                 {!incident.latitude && !incident.longitude &&
                     (incident.status === 'REPORTED' || incident.status === 'ASSIGNED' || incident.status === 'IN_PROGRESS' || incident.status === 'ONGOING') && (
                         <button onClick={handleUpdateLocation} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
@@ -631,14 +641,13 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         </button>
                     )}
 
-                {/* --- Conditional Actions based on Status --- */}
+                {/* --- STATUS: REPORTED --- */}
                 {incident.status === 'REPORTED' && (
                     <>
                         <button onClick={handleInterestToggle} disabled={interestLoading} className={`${styles.actionButton} ${styles.interestButton} ${isInterested ? styles.interested : ''}`}>
                             {interestLoading ? <FaSpinner className={styles.spinner}/> : (isInterested ? <FaHeart /> : <FaRegHeart />)}
                             <span>{isInterested ? "Remove Interest" : "I'm Interested"}</span>
                         </button>
-
                         <Link
                             to={`/incident/${incident.id}/assign`}
                             className={`${styles.actionButton} ${styles.assignButton}`}
@@ -646,26 +655,24 @@ Please coordinate and proceed to the location. Thank you! 🙏
                             <FaUsers />
                             <span>Assign Team</span>
                         </Link>
-
-                        {/* ✨ UPDATED onClick handler for CLOSE */}
+                        {/* Use permission check for close */}
                         <button onClick={handleCloseClick} className={`${styles.actionButton} ${styles.closeButton}`}>
                             Close Incident
                         </button>
                     </>
                 )}
 
-                {(incident.status === 'ASSIGNED') && (
+                {/* --- STATUS: ASSIGNED --- */}
+                {incident.status === 'ASSIGNED' && (
                     <>
                         <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
                             <FaUsers />
                             <span>View Team</span>
                         </button>
-
                         <button onClick={handleViewKits} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
                             <FaBriefcaseMedical />
                             <span>View Team Kit</span>
                         </button>
-
                         <button onClick={handleCopyDetails} className={`${styles.actionButton} ${styles.copyDetailsButton}`}>
                             <FaClipboard />
                             <span>{isDetailsCopied ? 'Copied!' : 'Copy Details'}</span>
@@ -680,13 +687,13 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     </>
                 )}
 
+                {/* --- STATUS: IN_PROGRESS --- */}
                 {(incident.status === 'IN_PROGRESS') && (
                     <>
                         <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
                             <FaUsers />
                             <span>View Team</span>
                         </button>
-
                         <button onClick={handleViewKits} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
                             <FaBriefcaseMedical />
                             <span>View Team Kit</span>
@@ -694,34 +701,38 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     </>
                 )}
 
+                {/* --- STATUS: ONGOING --- */}
+                {/* ✨ Restored original buttons for ONGOING (No team buttons) */}
                 {incident.status === 'ONGOING' && (
                     <>
-                        <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
+                        <button onClick={handleInterestToggle} disabled={interestLoading} className={`${styles.actionButton} ${styles.interestButton} ${isInterested ? styles.interested : ''}`}>
+                            {interestLoading ? <FaSpinner className={styles.spinner}/> : (isInterested ? <FaHeart /> : <FaRegHeart />)}
+                            <span>{isInterested ? "Remove Interest" : "I'm Interested"}</span>
+                        </button>
+                        {/* This Assign Team button was in the original code for ONGOING */}
+                        <Link
+                            to={`/incident/${incident.id}/assign`}
+                            className={`${styles.actionButton} ${styles.assignButton}`}
+                        >
                             <FaUsers />
-                            <span>View Team</span>
-                        </button>
-
-                        <button onClick={handleViewKits} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
-                            <FaBriefcaseMedical />
-                            <span>View Team Kit</span>
-                        </button>
-
-                        {/* ✨ UPDATED onClick handler for RESOLVE */}
+                            <span>Assign Team</span>
+                        </Link>
+                        {/* Use permission check for resolve */}
                         <button onClick={handleResolveClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.resolveButton}`}>
                             {isUpdating && updateMessage.includes('Resolved') ? <FaSpinner className={styles.spinner} /> : 'Mark as Resolved'}
                         </button>
                     </>
                 )}
 
+                {/* --- STATUS: RESOLVED --- */}
                 {incident.status === 'RESOLVED' && (
                     <>
-                        {/* ✨ UPDATED onClick handler for REACTIVATE */}
+                        {/* Use permission check for reactivate */}
                         <button onClick={handleReactivateClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
                             {isUpdating && updateMessage.includes('Reactivating') ? <FaSpinner className={styles.spinner} /> : <FaUndo />}
                             <span>Reactivate</span>
                         </button>
-
-                        {/* ✨ UPDATED onClick handler for DELETE */}
+                        {/* Use permission check for delete */}
                         <button onClick={handleDeleteClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
                             <FaTrash />
                             <span>Delete Incident</span>
@@ -729,14 +740,21 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     </>
                 )}
 
+                {/* --- STATUS: CLOSED --- */}
                 {incident.status === 'CLOSED' && (
-                    /* ✨ UPDATED onClick handler for DELETE */
-                    <button onClick={handleDeleteClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
-                        <FaTrash />
-                        <span>Delete Incident</span>
-                    </button>
+                    <>
+                        {/* Use permission check for delete */}
+                        <button onClick={handleDeleteClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
+                            <FaTrash />
+                            <span>Delete Incident</span>
+                        </button>
+                    </>
                 )}
             </div>
+            {/* ====================================================== */}
+            {/* ✨ END ACTION BUTTONS SECTION ✨ */}
+            {/* ====================================================== */}
+
 
             {/* --- Modals --- */}
             <CloseIncidentModal
@@ -777,7 +795,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 />
             )}
 
-            {/* ✨ RENDER THE UNAUTHORIZED MODAL */}
+            {/* ✨ RENDER THE UNAUTHORIZED MODAL ✨ */}
             <UnauthorizedModal
                 isOpen={isUnauthorizedModalOpen}
                 onClose={() => setIsUnauthorizedModalOpen(false)}

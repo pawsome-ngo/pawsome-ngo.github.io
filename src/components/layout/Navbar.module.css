@@ -11,7 +11,7 @@
 
     /* --- ✨ FIX --- */
     /* Replaced '0 0px 0px' with a standard, downward-only shadow */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0);
     /* Explicitly remove any top border that might be rendered */
     border-top: none;
     /* --- End Fix --- */
@@ -147,7 +147,7 @@
         transition: transform 0.4s cubic-bezier(0.86, 0, 0.07, 1);
         z-index: 1001;
         overflow-y: auto;
-        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0);
     }
 
     .navOpen {

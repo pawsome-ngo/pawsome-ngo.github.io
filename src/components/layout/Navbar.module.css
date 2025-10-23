@@ -1,4 +1,4 @@
-/* File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/components/layout/Navbar.module.css */
+/* File: pawsome-client-react/src/components/layout/Navbar.module.css */
 
 /* --- Base Header Styles --- */
 .header {
@@ -6,10 +6,16 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
-    /* ✨ UPDATED: Solid background by default */
     background-color: #fc5c7d;
     color: white;
-    box-shadow: 0 0px 0px rgba(0, 0, 0, 0.0);
+
+    /* --- ✨ FIX --- */
+    /* Replaced '0 0px 0px' with a standard, downward-only shadow */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    /* Explicitly remove any top border that might be rendered */
+    border-top: none;
+    /* --- End Fix --- */
+
     position: sticky;
     top: 0;
     z-index: 1000;

@@ -1,0 +1,176 @@
+/* File: pawsome-client-react/src/pages/incident/components/TeamItemsListModal.module.css */
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modalContent {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 450px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid #e0e0e0;
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    background: linear-gradient(135deg, #f0f4f8, #e8edf2);
+}
+
+.modalHeader h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    font-size: 1.6rem;
+    color: #95a5a6;
+    cursor: pointer;
+    transition: color 0.2s ease-in-out;
+}
+
+.closeButton:hover {
+    color: #e74c3c;
+}
+
+.modalBody {
+    padding: 1.5rem;
+    overflow-y: auto;
+    background-color: #fcfdff;
+}
+
+.loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    color: #7f8c8d;
+}
+
+.spinner {
+    font-size: 3rem;
+    color: #8e44ad;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.itemList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* ✨ MODIFIED ITEM STYLES FOR MORE PROMINENT GRADIENTS ✨ */
+.item {
+    padding: 0.9rem 1.2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    color: #34495e;
+    border: none; /* Remove border for cleaner gradient look */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Slightly stronger shadow */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    text-align: center; /* Center item text */
+    display: flex; /* Use flex to easily center content vertically */
+    align-items: center;
+    justify-content: center;
+    min-height: 60px; /* Ensure a consistent height for items */
+
+    /* Default gradient, will be overridden by .item:nth-child */
+    background: linear-gradient(135deg, #ffffff, #f0f0f0);
+}
+
+.item:hover {
+    transform: translateY(-5px) scale(1.02); /* More noticeable lift and slight scale */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Specific gradients for each item using nth-child */
+.itemList .item:nth-child(1) {
+    background: linear-gradient(135deg, #a7e9af, #76c7c0); /* Green to Teal */
+    color: #2c3e50;
+}
+.itemList .item:nth-child(2) {
+    background: linear-gradient(135deg, #f7d9a3, #f5a962); /* Light Orange to Deeper Orange */
+    color: #2c3e50;
+}
+.itemList .item:nth-child(3) {
+    background: linear-gradient(135deg, #b0e0e6, #87ceeb); /* Light Blue to Sky Blue */
+    color: #2c3e50;
+}
+.itemList .item:nth-child(4) {
+    background: linear-gradient(135deg, #e6b0e6, #cc88ee); /* Light Purple to Deeper Purple */
+    color: #2c3e50;
+}
+.itemList .item:nth-child(5) {
+    background: linear-gradient(135deg, #f0e68c, #ffd700); /* Khaki to Gold */
+    color: #2c3e50;
+}
+.itemList .item:nth-child(6) {
+    background: linear-gradient(135deg, #ffb6c1, #ff69b4); /* Light Pink to Hot Pink */
+    color: #2c3e50;
+}
+/* Add more as needed, they will cycle if there are more than 6 items */
+.itemList .item:nth-child(7) {
+    background: linear-gradient(135deg, #98fb98, #3cb371); /* Pale Green to Medium Sea Green */
+    color: #2c3e50;
+}
+.itemList .item:nth-child(8) {
+    background: linear-gradient(135deg, #add8e6, #6495ed); /* Light Blue to Cornflower Blue */
+    color: #2c3e50;
+}
+
+.emptyText,
+.errorText {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #7f8c8d;
+    padding: 1.5rem;
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.emptyText .faPaw {
+    font-size: 2rem;
+    color: #bdc3c7;
+    margin-bottom: 0.8rem;
+}
+
+.errorText {
+    color: #c0392b;
+    font-weight: 600;
+}

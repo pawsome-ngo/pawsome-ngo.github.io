@@ -5,13 +5,15 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './IncidentDetailPage.module.css';
 import {
     FaArrowLeft, FaSpinner, FaCopy, FaHeart, FaRegHeart,
-    FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaImages, FaUsers, FaHistory, FaTrash, FaUndo, FaClipboard
+    FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaImages,
+    FaUsers, FaHistory, FaTrash, FaUndo, FaClipboard, FaBriefcaseMedical // ✨ ADDED ICON
 } from 'react-icons/fa';
 import { jwtDecode } from 'jwt-decode';
 import CloseIncidentModal from "../../components/common/CloseIncidentModal.jsx";
 import TeamDetailsModal from "./components/TeamDetailsModal.jsx";
 import IncidentHistoryModal from "./components/IncidentHistoryModal.jsx";
 import ArchiveConfirmationModal from "../../components/common/ArchiveConfirmationModal.jsx";
+import TeamItemsListModal from "./components/TeamItemsListModal.jsx"; // ✨ IMPORT NEW MODAL
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -52,7 +54,8 @@ const IncidentDetailPage = ({ token }) => {
     const [teamDetails, setTeamDetails] = useState(null);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [incidentHistory, setIncidentHistory] = useState(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // For archive modal
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isTeamItemsModalOpen, setIsTeamItemsModalOpen] = useState(false); // ✨ ADD STATE
 
     const [isInterested, setIsInterested] = useState(false);
     const [interestLoading, setInterestLoading] = useState(false);
@@ -592,6 +595,13 @@ Please coordinate and proceed to the location. Thank you! 🙏
                             <FaUsers />
                             <span>View Team</span>
                         </button>
+
+                        {/* ✨ ADD NEW BUTTON HERE */}
+                        <button onClick={() => setIsTeamItemsModalOpen(true)} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
+                            <FaBriefcaseMedical />
+                            <span>View Team Kit</span>
+                        </button>
+
                         <button onClick={handleCopyDetails} className={`${styles.actionButton} ${styles.copyDetailsButton}`}>
                             <FaClipboard />
                             <span>{isDetailsCopied ? 'Copied!' : 'Copy Details'}</span>
@@ -607,25 +617,34 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 )}
 
                 {(incident.status === 'IN_PROGRESS') && (
-                    <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
-                        <FaUsers />
-                        <span>View Team</span>
-                    </button>
+                    <>
+                        <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
+                            <FaUsers />
+                            <span>View Team</span>
+                        </button>
+
+                        {/* ✨ ADD NEW BUTTON HERE */}
+                        <button onClick={() => setIsTeamItemsModalOpen(true)} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
+                            <FaBriefcaseMedical />
+                            <span>View Team Kit</span>
+                        </button>
+                    </>
                 )}
 
                 {incident.status === 'ONGOING' && (
                     <>
-                        <button onClick={handleInterestToggle} disabled={interestLoading} className={`${styles.actionButton} ${styles.interestButton} ${isInterested ? styles.interested : ''}`}>
-                            {interestLoading ? <FaSpinner className={styles.spinner}/> : (isInterested ? <FaHeart /> : <FaRegHeart />)}
-                            <span>{isInterested ? "Remove Interest" : "I'm Interested"}</span>
-                        </button>
-                        <Link
-                            to={`/incident/${incident.id}/assign`}
-                            className={`${styles.actionButton} ${styles.assignButton}`}
-                        >
+                        {/* ✨ ADDING BUTTONS TO ONGOING AS REQUESTED */}
+                        <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
                             <FaUsers />
-                            <span>Assign Team</span>
-                        </Link>
+                            <span>View Team</span>
+                        </button>
+
+                        <button onClick={() => setIsTeamItemsModalOpen(true)} className={`${styles.actionButton} ${styles.viewKitsButton}`}>
+                            <FaBriefcaseMedical />
+                            <span>View Team Kit</span>
+                        </button>
+
+                        {/* This button was originally under 'ONGOING' in your file */}
                         <button onClick={handleMarkAsResolved} disabled={isUpdating} className={`${styles.actionButton} ${styles.resolveButton}`}>
                             {isUpdating && updateMessage.includes('Resolved') ? <FaSpinner className={styles.spinner} /> : 'Mark as Resolved'}
                         </button>
@@ -652,7 +671,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 )}
             </div>
 
-            {/* --- Modals (No changes needed here) --- */}
+            {/* --- Modals --- */}
             <CloseIncidentModal
                 isOpen={isCloseModalOpen}
                 onClose={() => setIsCloseModalOpen(false)}
@@ -682,6 +701,14 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     isProcessing={isUpdating} // Use isUpdating for loading state
                 />
             )}
+
+            {/* ✨ RENDER THE NEW MODAL */}
+            <TeamItemsListModal
+                isOpen={isTeamItemsModalOpen}
+                onClose={() => setIsTeamItemsModalOpen(false)}
+                incidentId={incidentId}
+                token={token}
+            />
         </div>
     );
 };

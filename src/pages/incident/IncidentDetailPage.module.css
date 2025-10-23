@@ -312,4 +312,11 @@
         opacity: 0.8;
     }
 }
+
+/* ... (all your existing styles) ... */
+
+/* ✨ ADD THIS NEW STYLE AT THE END OF THE FILE */
+.viewKitsButton {
+    background: linear-gradient(45deg, #5c6bc0, #4f46e5); /* Indigo/Purple Gradient */
+}
 /* --- End Loading Styles --- */

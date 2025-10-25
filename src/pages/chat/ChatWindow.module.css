@@ -1,25 +1,44 @@
 /* =============================================== */
 /* Base Window & Message List Styles             */
 /* =============================================== */
+
+/*
+* FIX FOR iOS KEYBOARD DISTORTION:
+* This is the most critical part for your specific bug.
+* 1. We set the height to 100vh to fill the *entire* screen,
+* ignoring the keyboard. -webkit-fill-available is a
+* fallback for some older iOS PWA behaviors.
+* 2. overflow: hidden; prevents the *entire window* from
+* moving or scrolling.
+* 3. The flex-direction: column; layout pushes the input
+* bar to the bottom.
+*/
 .chatWindow {
     display: flex;
     flex-direction: column;
+
     /* --- PWA LAYOUT FIX --- */
-    height: 100%; /* Fallback for non-mobile */
-
-    /* FIX 1: Use 100vh. On mobile Safari, this maps to the "large" viewport
-       (without the keyboard). This PREVENTS the entire window from
-       shrinking when the keyboard appears, which was causing the distortion.
-    */
-    height: 100vh;
-
+    height: 100vh; /* Use 100% of the viewport height */
+    height: -webkit-fill-available; /* iOS-specific fallback */
+    width: 100%;
     /* --- END FIX --- */
+
     background-color: #FFFFFF;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, '.SFNSText-Regular', sans-serif;
-    overflow: hidden; /* CRITICAL: Prevents main window scrolling/resizing */
+
+    /* CRITICAL: Prevents the whole page from scrolling */
+    overflow: hidden;
     position: relative;
 }
 
+/*
+* This is the *only* element that should scroll.
+* 1. flex-grow: 1; tells it to take up all available
+* vertical space between the header and the input.
+* 2. overflow-y: auto; creates the scrollbar.
+* When the keyboard appears, this element's effective
+* height shrinks, but the .chatWindow itself does not.
+*/
 .messageList {
     flex-grow: 1;
     padding: 8px 12px 12px;
@@ -32,9 +51,17 @@
 /* Header Styles (Compact Version)    */
 /* ================================== */
 .chatHeader {
-    display: flex; align-items: center; justify-content: space-between; padding: 6px 10px;
-    background-color: #FFFFFF; border-bottom: none; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-    flex-shrink: 0; z-index: 10; min-height: 52px; box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background-color: #FFFFFF;
+    border-bottom: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0; /* Don't shrink */
+    z-index: 10;
+    min-height: 52px;
+    box-sizing: border-box;
 }
 .backButton { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #0084ff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s ease; flex-shrink: 0; margin: 0; padding: 0; }
 .backButton:hover { background-color: #f0f2f5; }
@@ -116,9 +143,21 @@
 /* Input Bar                          */
 /* ================================== */
 .messageInputForm {
-    flex-shrink: 0; /* CRITICAL for PWA layout */
-    background-color: #FFFFFF; padding: 6px 8px; border-top: 1px solid #dadde1;
-    display: flex; align-items: flex-end; gap: 6px; transition: padding 0.2s ease; position: relative;
+    /* CRITICAL: This must not grow or shrink */
+    flex-shrink: 0;
+
+    background-color: #FFFFFF;
+    padding: 6px 8px;
+    border-top: 1px solid #dadde1;
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    transition: padding 0.2s ease;
+    position: relative;
+
+    /* This helps ensure the input bar renders correctly
+       at the bottom of the viewport on iOS */
+    box-sizing: border-box;
 }
 
 .actionButtonsContainer {
@@ -127,11 +166,7 @@
     gap: 4px;
     padding-bottom: 5px;
 
-    /* FIX 3: Make container responsive.
-       - Set a sane max-width (just enough for 2 buttons).
-       - Add flex-shrink: 0 so it doesn't get crushed.
-       - Remove redundant margin-right.
-    */
+    /* Responsive max-width */
     max-width: 80px;
     flex-shrink: 0;
 
@@ -154,7 +189,7 @@
 .messageInput { /* Textarea */
     flex-grow: 1;
 
-    /* FIX 2: This is the key fix for the overflow bug.
+    /* FIX: This is the key fix for the overflow bug.
        - flex-basis: 0 allows the item to grow from a 0px base.
        - min-width: 0 allows the textarea to shrink below its
          implicit minimum width, preventing it from pushing
@@ -190,7 +225,7 @@
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 /* --- THIS HIDES ICONS WHEN TYPING --- */
-/* This animation now works correctly because of FIX 2 */
+/* This animation now works correctly because of the min-width: 0 fix */
 .messageInputForm.typingActive .actionButtonsContainer {
     max-width: 0;
     opacity: 0;

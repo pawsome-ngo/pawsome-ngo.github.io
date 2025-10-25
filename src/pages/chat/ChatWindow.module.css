@@ -5,13 +5,11 @@
     display: flex;
     flex-direction: column;
     /* --- PWA LAYOUT FIX --- */
-    height: 100%; /* Fills the .contentArea parent */
+    height: 100%; /* Fallback for non-mobile */
 
-    /* Use 100vh. On mobile Safari, this maps to the "large" viewport
-      (without the keyboard). This PREVENTS the entire window from
-      shrinking when the keyboard appears, which was causing the distortion.
-      The flexbox layout will then correctly shrink the .messageList
-      while the .messageInputForm is pushed up.
+    /* FIX 1: Use 100vh. On mobile Safari, this maps to the "large" viewport
+       (without the keyboard). This PREVENTS the entire window from
+       shrinking when the keyboard appears, which was causing the distortion.
     */
     height: 100vh;
 
@@ -122,11 +120,27 @@
     background-color: #FFFFFF; padding: 6px 8px; border-top: 1px solid #dadde1;
     display: flex; align-items: flex-end; gap: 6px; transition: padding 0.2s ease; position: relative;
 }
+
 .actionButtonsContainer {
-    display: flex; align-items: center; gap: 4px; padding-bottom: 5px;
-    transition: max-width 0.2s ease, opacity 0.2s ease, margin-right 0.2s ease, visibility 0.2s ease;
-    max-width: 200px; opacity: 1; overflow: hidden; margin-right: 6px; visibility: visible;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-bottom: 5px;
+
+    /* FIX 3: Make container responsive.
+       - Set a sane max-width (just enough for 2 buttons).
+       - Add flex-shrink: 0 so it doesn't get crushed.
+       - Remove redundant margin-right.
+    */
+    max-width: 80px;
+    flex-shrink: 0;
+
+    transition: max-width 0.2s ease, opacity 0.2s ease, visibility 0.2s ease;
+    opacity: 1;
+    overflow: hidden;
+    visibility: visible;
 }
+
 .chatActionButton {
     background: none; border: none; color: #0084ff; font-size: 1.3rem; padding: 6px; border-radius: 50%;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -138,9 +152,29 @@
 @keyframes pulseRecord { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
 .messageInput { /* Textarea */
-    flex-grow: 1; padding: 8px 12px; border: none; border-radius: 18px; background-color: #f0f2f5;
-    color: #050505; font-size: 0.95rem; outline: none; resize: none; max-height: 100px;
-    line-height: 1.4; font-family: inherit; margin: 0;
+    flex-grow: 1;
+
+    /* FIX 2: This is the key fix for the overflow bug.
+       - flex-basis: 0 allows the item to grow from a 0px base.
+       - min-width: 0 allows the textarea to shrink below its
+         implicit minimum width, preventing it from pushing
+         other flex items off-screen.
+    */
+    flex-basis: 0;
+    min-width: 0;
+
+    padding: 8px 12px;
+    border: none;
+    border-radius: 18px;
+    background-color: #f0f2f5;
+    color: #050505;
+    font-size: 0.95rem;
+    outline: none;
+    resize: none;
+    max-height: 100px;
+    line-height: 1.4;
+    font-family: inherit;
+    margin: 0;
 }
 .messageInput:disabled { background-color: #e4e6eb; cursor: not-allowed; }
 
@@ -156,8 +190,11 @@
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 /* --- THIS HIDES ICONS WHEN TYPING --- */
+/* This animation now works correctly because of FIX 2 */
 .messageInputForm.typingActive .actionButtonsContainer {
-    max-width: 0; opacity: 0; margin-right: 0; visibility: hidden;
+    max-width: 0;
+    opacity: 0;
+    visibility: hidden;
 }
 
 /* Upload Error Bar */

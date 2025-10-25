@@ -1,30 +1,37 @@
-// File: src/pages/admin/ManageUsersModal.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styles from './SuperAdminPage.module.css';
-import { FaPaw, FaTrash, FaSpinner, FaBell, FaBellSlash, FaExclamationTriangle, FaTimes, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
+// Import necessary icons
+import { FaPaw, FaTrash, FaSpinner, FaBell, FaBellSlash, FaExclamationTriangle, FaTimes, FaCheckCircle, FaExclamationCircle, FaKey } from 'react-icons/fa';
+import ConfirmationModal from '../../components/common/ConfirmationModal.jsx'; // Reuse for password reset confirmation
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// Helper to format roles
+// Helper function to format roles
 const formatRoles = (roles) => {
     return roles?.map(role => role.replace('ROLE_', '').replace('_', ' ')).join(', ') || 'None';
 };
 
 const ManageUsersModal = ({ token, currentUser, onClose }) => {
-    const [users, setUsers] = useState([]); // Full user list fetched initially
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedUserIds, setSelectedUserIds] = useState(new Set());
-    const [showFinalConfirm, setShowFinalConfirm] = useState(false);
+    const [showFinalConfirm, setShowFinalConfirm] = useState(false); // For delete confirmation
     const [notifyOnDelete, setNotifyOnDelete] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [deletionResult, setDeletionResult] = useState(null); // To show final success/skip messages
+    const [deletionResult, setDeletionResult] = useState(null);
 
-    // Fetch users when modal opens
+    // State for Password Reset
+    const [isResetting, setIsResetting] = useState(false); // Tracks the API call
+    const [userToReset, setUserToReset] = useState(null); // Stores the user object {userId, username} for confirmation
+    const [resetFeedback, setResetFeedback] = useState({ message: '', type: '' }); // For success/error message display
+
+    // Fetch user list
     const fetchUsers = useCallback(async () => {
         setLoading(true);
         setError(null);
-        setDeletionResult(null); // Clear previous results
+        setDeletionResult(null);
+        setResetFeedback({ message: '', type: '' }); // Clear reset feedback on refresh
         try {
             const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
                 headers: { 'Authorization': `Bearer ${token}` },
@@ -35,8 +42,8 @@ const ManageUsersModal = ({ token, currentUser, onClose }) => {
             }
             const data = await response.json();
             setUsers(data);
-            setSelectedUserIds(new Set()); // Reset selection on fetch/refresh
-            setShowFinalConfirm(false); // Reset confirmation state
+            setSelectedUserIds(new Set()); // Clear selection on refresh
+            setShowFinalConfirm(false);
         } catch (err) {
             setError(err.message || 'Could not connect to the server.');
         } finally {
@@ -48,6 +55,7 @@ const ManageUsersModal = ({ token, currentUser, onClose }) => {
         fetchUsers();
     }, [fetchUsers]);
 
+    // Handle user selection for deletion
     const handleCheckboxChange = (userId) => {
         setSelectedUserIds(prev => {
             const newSelection = new Set(prev);
@@ -58,220 +66,274 @@ const ManageUsersModal = ({ token, currentUser, onClose }) => {
             }
             return newSelection;
         });
-        setDeletionResult(null); // Clear previous results when selection changes
-        setError(null); // Clear error when selection changes
-        setShowFinalConfirm(false); // Go back to selection mode if confirming
+        // Clear feedback when selection changes
+        setDeletionResult(null);
+        setError(null);
+        setResetFeedback({ message: '', type: '' });
+        setShowFinalConfirm(false);
     };
 
-    // This button now directly opens the final confirmation step
+    // --- Deletion Handlers ---
     const handleOpenFinalConfirm = () => {
         if (selectedUserIds.size === 0) {
             setError("Please select at least one user to delete.");
             return;
         }
-        setError(null); // Clear selection error if present
-        setNotifyOnDelete(false); // Reset notify checkbox
-        setShowFinalConfirm(true); // Open the confirmation part of the modal
+        setError(null);
+        setResetFeedback({ message: '', type: '' }); // Clear other feedback
+        setNotifyOnDelete(false); // Reset notification option
+        setShowFinalConfirm(true);
     };
 
-    // This function is now called by the *final* confirm button
     const executeDeleteUsers = async () => {
         if (selectedUserIds.size === 0) return;
-
         setIsDeleting(true);
-        setError(null);
         setDeletionResult(null);
+        setError(null);
+        setResetFeedback({ message: '', type: '' });
 
         try {
-            // Call the combined batch delete endpoint
             const response = await fetch(`${API_BASE_URL}/api/admin/users/batch`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    userIds: Array.from(selectedUserIds), // Send all selected IDs
-                    notifyUsers: notifyOnDelete
+                    userIds: Array.from(selectedUserIds),
+                    notifyUsers: notifyOnDelete,
                 }),
             });
-
             const resultData = await response.json();
-
             if (!response.ok) {
-                // This will be caught by the catch block below
-                throw new Error(resultData.message || `Failed to process deletion request (Status: ${response.status})`);
+                throw new Error(resultData.message || 'Batch deletion failed.');
             }
-
-            // --- ✨ CRITICAL FIX: Check the 200 OK response for SKIPPED users ---
-            const skipped = resultData.details?.skipped || [];
-            const deleted = resultData.details?.deleted || [];
-
-            if (skipped.length > 0) {
-                // This is the "error" you want to see.
-                // We set the ERROR state, not the success/result state.
-                const skippedMessages = skipped.map(s => `@${s.username || `ID: ${s.userId}`} (${s.reason})`).join(', ');
-                setError(`Deletion failed for ${skipped.length} user(s): ${skippedMessages}`);
-
-                // If some users were successfully deleted in the same batch, refresh the list
-                if (deleted.length > 0) {
-                    await fetchUsers(); // Refresh the list
-                    // Keep modal open to show error, selection will be cleared by fetch
-                }
-                // Stay on the confirmation screen to show the error
-                setShowFinalConfirm(true);
-
-            } else if (deleted.length > 0) {
-                // Pure success, no one was skipped
-                setDeletionResult(resultData); // Show the green success box
-                await fetchUsers(); // Refresh the list
-                setShowFinalConfirm(false); // Go back to selection view
-            } else {
-                // No one deleted, no one skipped
-                setError("No users were processed. Please check your selection.");
-                setShowFinalConfirm(true); // Stay on confirm screen to show error
-            }
-            // --- End Fix ---
-
+            setDeletionResult(resultData); // Store the result { deleted: [...], skipped: [...] }
+            fetchUsers(); // Refresh the list after deletion
         } catch (err) {
-            // This catches network errors or !response.ok errors
-            setError(err.message || "An error occurred during deletion.");
-            setDeletionResult(null); // Ensure success box is hidden
-            setShowFinalConfirm(true); // Keep modal open to show the error
+            setError(err.message || 'An error occurred during deletion.');
         } finally {
-            setIsDeleting(false); // Stop loading spinner in all cases
+            setIsDeleting(false);
+            setShowFinalConfirm(false); // Close confirmation step
+            // Keep deletionResult visible until next action
         }
     };
+    // --- End Deletion Handlers ---
 
 
+    // --- Password Reset Handlers ---
+    const handleOpenResetConfirm = (e, user) => {
+        e.stopPropagation(); // Prevent row selection when clicking button
+        if (isDeleting || isResetting || showFinalConfirm) return; // Prevent action during other operations
+        setResetFeedback({ message: '', type: '' }); // Clear old feedback
+        setError(null); // Clear main error
+        setUserToReset(user); // Set the user object for the confirmation modal
+    };
+
+    const executePasswordReset = async () => {
+        if (!userToReset) return;
+
+        setIsResetting(true);
+        setResetFeedback({ message: '', type: '' });
+        setError(null);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/users/${userToReset.userId}/reset-password`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+
+            const resultData = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(resultData.message || `Failed to reset password (Status: ${response.status})`);
+            }
+
+            // Show success message
+            setResetFeedback({ message: resultData.message || `Password for @${userToReset.username} reset to 'pawsome'.`, type: 'success' });
+
+        } catch (err) {
+            // Show error message
+            setResetFeedback({ message: err.message || "An error occurred during password reset.", type: 'error' });
+        } finally {
+            setIsResetting(false);
+            setUserToReset(null); // Close the confirmation modal
+            // Auto-clear feedback message after a delay
+            setTimeout(() => setResetFeedback({ message: '', type: '' }), 5000);
+        }
+    };
+    // --- End Password Reset Handlers ---
+
+
+    // Render individual user item in the list
     const renderUserItem = (user) => {
         const isSelected = selectedUserIds.has(user.userId);
         return (
             <div
                 key={user.userId}
                 className={`${styles.userListItem} ${isSelected ? styles.selected : ''}`}
-                onClick={() => handleCheckboxChange(user.userId)}
+                // Allow clicking row to toggle checkbox, unless delete confirm is shown
+                onClick={showFinalConfirm ? undefined : () => handleCheckboxChange(user.userId)}
             >
                 <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => handleCheckboxChange(user.userId)}
-                    disabled={isDeleting || (showFinalConfirm && !isSelected)} // Also disable non-selected users in confirm step
+                    // Disable checkbox during operations or if delete confirm is shown and this row isn't selected
+                    disabled={isDeleting || (showFinalConfirm && !isSelected) || isResetting}
                     aria-label={`Select user ${user.username}`}
+                    onClick={(e) => e.stopPropagation()} // Prevent row click when clicking checkbox directly
                 />
                 <div className={styles.userInfoSmall}>
                     <span>{user.firstName} {user.lastName} (@{user.username})</span>
                     <span className={styles.userIdSmall}>ID: {user.userId}</span>
                 </div>
+
+                {/* Reset Password Button */}
+                <button
+                    className={styles.resetPasswordButton}
+                    title={`Reset password for ${user.username}`}
+                    // Open confirmation modal on click
+                    onClick={(e) => handleOpenResetConfirm(e, user)}
+                    // Disable button during operations
+                    disabled={isDeleting || isResetting || showFinalConfirm}
+                >
+                    <FaKey />
+                </button>
             </div>
         );
     }
 
-    // On close, only close if not deleting
+    // Close modal handler, prevents closing during operations
     const handleClose = () => {
-        if (isDeleting) return;
+        if (isDeleting || isResetting) return;
         onClose();
     }
 
     return (
-        <div className={styles.modalOverlay} onClick={handleClose}>
-            <div className={`${styles.modalContent} ${styles.manageUsersModal}`} onClick={(e) => e.stopPropagation()}>
-                <button onClick={handleClose} className={styles.closeButton} disabled={isDeleting}><FaTimes /></button>
-                <h2>Manage Users</h2>
+        <> {/* Use Fragment to allow ConfirmationModal outside the main modal structure */}
+            <div className={styles.modalOverlay} onClick={handleClose}>
+                <div className={`${styles.modalContent} ${styles.manageUsersModal}`} onClick={(e) => e.stopPropagation()}>
+                    <button onClick={handleClose} className={styles.closeButton} disabled={isDeleting || isResetting}><FaTimes /></button>
+                    <h2>Manage Users</h2>
 
-                {loading && (
-                    <div className={styles.loadingContainerModal}>
-                        <div className={styles.pawSpinner}><FaPaw className={styles.pawIcon} /></div>
-                        <p>Loading Users...</p>
-                    </div>
-                )}
-
-                {/* Display General Errors (Fetch error, selection error) OR Deletion Error */}
-                {error && !loading && !deletionResult && (
-                    <p className={`${styles.message} ${styles.error}`}>
-                        <FaExclamationCircle/> {error}
-                    </p>
-                )}
-
-
-                {/* Display Deletion Success/Warning Results */}
-                {deletionResult && (
-                    <div className={`${styles.message} ${deletionResult.details?.skipped?.length > 0 ? styles.warning : styles.success}`}>
-                        {deletionResult.details?.deleted?.length > 0 && (
-                            <div><FaCheckCircle /> Successfully deleted {deletionResult.details.deleted.length} user(s).</div>
-                        )}
-                        {deletionResult.details?.skipped?.length > 0 && (
-                            <div style={{marginTop: deletionResult.details?.deleted?.length > 0 ? '0.5rem' : '0'}}>
-                                <FaExclamationTriangle /> Skipped {deletionResult.details.skipped.length} user(s):
-                                <ul className={styles.skippedList}>
-                                    {deletionResult.details.skipped.map(skipped => (
-                                        <li key={skipped.userId}>@{skipped.username || `ID: ${skipped.userId}`} ({skipped.reason})</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                        {/* Button to clear results and go back to fresh user list */}
-                        <button onClick={() => { setDeletionResult(null); fetchUsers(); }} className={styles.clearResultButton}>OK</button>
-                    </div>
-                )}
-
-                {/* User List - Hide during loading or if showing results */}
-                {!loading && users.length > 0 && !deletionResult && (
-                    <>
-                        <p className={styles.instructionText}>
-                            {showFinalConfirm
-                                ? `Confirm deletion for the selected ${selectedUserIds.size} user(s). The system will skip users in active cases.`
-                                : `Select users to delete.`}
-                        </p>
-                        <div className={styles.userSelectionList}>
-                            {users.map(renderUserItem)}
+                    {loading && (
+                        <div className={styles.loadingContainerModal}>
+                            <div className={styles.pawSpinner}><FaPaw className={styles.pawIcon}/></div>
+                            <p>Loading Users...</p>
                         </div>
-                    </>
-                )}
+                    )}
 
+                    {/* Display General Errors (fetch, delete selection) */}
+                    {error && !loading && !deletionResult && (
+                        <p className={`${styles.message} ${styles.error}`}>
+                            <FaExclamationCircle/> {error}
+                        </p>
+                    )}
 
-                {!loading && users.length === 0 && !error && !deletionResult && (
-                    <p>No other users found in the system.</p>
-                )}
+                    {/* Display Password Reset Feedback */}
+                    {resetFeedback.message && (
+                        <div className={`${styles.feedbackBox} ${styles[resetFeedback.type]}`}>
+                            {resetFeedback.type === 'success' ? <FaCheckCircle /> : <FaExclamationTriangle />}
+                            {resetFeedback.message}
+                        </div>
+                    )}
 
-                {/* Footer with actions - Hide during loading or if showing results */}
-                {!loading && users.length > 0 && !deletionResult && (
-                    <div className={styles.modalFooter}>
-                        {showFinalConfirm && (
-                            <label className={styles.notifyCheckboxLabel}>
-                                <input
-                                    type="checkbox"
-                                    checked={notifyOnDelete}
-                                    onChange={(e) => setNotifyOnDelete(e.target.checked)}
-                                    disabled={isDeleting}
-                                />
-                                Notify users?
-                            </label>
-                        )}
-                        <button onClick={showFinalConfirm ? () => { setShowFinalConfirm(false); setError(null); } : handleClose} className={styles.cancelButton} disabled={isDeleting}>
-                            {showFinalConfirm ? 'Back' : 'Cancel'}
-                        </button>
-                        {!showFinalConfirm ? (
-                            <button
-                                onClick={handleOpenFinalConfirm} // Button now opens confirm step
-                                className={styles.actionButton} // Style as primary action
-                                disabled={selectedUserIds.size === 0 || loading || isDeleting}
-                            >
-                                Delete Selected Users...
+                    {/* Display Deletion Result */}
+                    {deletionResult && (
+                        <div className={styles.deletionResult}>
+                            <h4>Deletion Summary:</h4>
+                            {deletionResult.deleted?.length > 0 && (
+                                <p className={styles.success}>
+                                    <FaCheckCircle/> Successfully deleted {deletionResult.deleted.length} user(s): {deletionResult.deleted.map(u => `@${u.username || u.userId}`).join(', ')}
+                                </p>
+                            )}
+                            {deletionResult.skipped?.length > 0 && (
+                                <>
+                                    <p className={styles.warning}><FaExclamationTriangle/> Skipped {deletionResult.skipped.length} user(s):</p>
+                                    <ul className={styles.skippedList}>
+                                        {deletionResult.skipped.map((u, index) => (
+                                            <li key={index}>@{u.username || u.userId}: {u.reason}</li>
+                                        ))}
+                                    </ul>
+                                </>
+                            )}
+                            <button onClick={fetchUsers} className={styles.clearResultButton}>Refresh List</button>
+                        </div>
+                    )}
+
+                    {/* User List */}
+                    {!loading && users.length > 0 && !deletionResult && (
+                        <>
+                            <p className={styles.instructionText}>
+                                {showFinalConfirm
+                                    ? `Confirm deletion for the selected ${selectedUserIds.size} user(s). This action is permanent.`
+                                    : `Select users to delete or click the key icon (🔑) to reset a password to 'pawsome'.`}
+                            </p>
+                            <div className={styles.userSelectionList}>
+                                {users.map(renderUserItem)}
+                            </div>
+                        </>
+                    )}
+
+                    {/* No Users Message */}
+                    {!loading && users.length === 0 && !error && !deletionResult && (
+                        <p>No other users found in the system.</p>
+                    )}
+
+                    {/* Footer Actions */}
+                    {!loading && users.length > 0 && !deletionResult && (
+                        <div className={styles.modalFooter}>
+                            {showFinalConfirm && (
+                                <label className={styles.notifyCheckboxLabel}>
+                                    <input
+                                        type="checkbox"
+                                        checked={notifyOnDelete}
+                                        onChange={(e) => setNotifyOnDelete(e.target.checked)}
+                                        disabled={isDeleting}
+                                    />
+                                    Notify remaining users?
+                                </label>
+                            )}
+                            <button onClick={showFinalConfirm ? () => { setShowFinalConfirm(false); setError(null); } : handleClose} className={styles.cancelButton} disabled={isDeleting || isResetting}>
+                                {showFinalConfirm ? 'Back' : 'Close'}
                             </button>
-                        ) : (
-                            <button
-                                onClick={executeDeleteUsers} // Button executes the delete
-                                className={styles.confirmDeleteButton}
-                                disabled={selectedUserIds.size === 0 || loading || isDeleting}
-                            >
-                                {isDeleting ? <FaSpinner className={styles.spinner}/> : `Confirm Delete (${selectedUserIds.size})`}
-                            </button>
-                        )}
-                    </div>
-                )}
+                            {!showFinalConfirm ? (
+                                <button
+                                    onClick={handleOpenFinalConfirm}
+                                    className={styles.actionButton}
+                                    disabled={selectedUserIds.size === 0 || loading || isDeleting || isResetting}
+                                >
+                                    <FaTrash /> Delete Selected ({selectedUserIds.size})
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={executeDeleteUsers}
+                                    className={styles.confirmDeleteButton} // Uses danger color
+                                    disabled={selectedUserIds.size === 0 || loading || isDeleting || isResetting}
+                                >
+                                    {isDeleting ? <FaSpinner className={styles.spinner}/> : `Confirm Delete (${selectedUserIds.size})`}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
+
+            {/* Confirmation Modal for Password Reset */}
+            {userToReset && (
+                <ConfirmationModal
+                    // Dynamic message including username
+                    message={`Are you sure you want to reset the password for @${userToReset.username}? Their new password will be 'pawsome'.`}
+                    confirmText={isResetting ? "Resetting..." : "Yes, Reset Password"}
+                    confirmClass="delete" // Use the red button style for confirmation
+                    onConfirm={executePasswordReset}
+                    onCancel={() => setUserToReset(null)} // Close modal on cancel
+                    confirmDisabled={isResetting}
+                    cancelDisabled={isResetting}
+                />
+            )}
+        </>
     );
 };
 

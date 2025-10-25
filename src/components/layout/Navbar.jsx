@@ -1,28 +1,26 @@
-// File: pawsome-ngo/full/full-d91a39b5e3886f03789eb932561a5689b5f95888/pawsome-frontend-code-react/src/components/layout/Navbar.jsx
-
+// File: pawsome-client-react/src/components/layout/Navbar.jsx
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import styles from './Navbar.module.css';
-// --- ✨ Import FaFirstAid ---
-import { FaPaw, FaSignOutAlt, FaFirstAid } from 'react-icons/fa';
+// --- 1. IMPORT ICONS ---
+import {
+    FaPaw, FaSignOutAlt, FaFirstAid, FaUsers, FaBroadcastTower, FaBriefcase,
+    FaBell, FaExclamationTriangle, FaTrophy, FaUserFriends, FaUserCheck,
+    FaBoxes, FaUser, FaCalendarAlt, FaHandsHelping, FaCog, FaUserShield
+} from 'react-icons/fa'; // Added many icons
+// --- END IMPORTS ---
 
-// --- ✨ Accept fullUserProfile as a prop ---
 const Navbar = ({ user, fullUserProfile, onLogout }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    // Effect to lock body scroll when the menu is open on mobile
     useEffect(() => {
         if (isMenuOpen) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
         }
-        // Cleanup function to reset scroll when component unmounts
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
+        return () => { document.body.style.overflow = 'unset'; };
     }, [isMenuOpen]);
-
 
     const closeMenu = () => setIsMenuOpen(false);
 
@@ -30,14 +28,9 @@ const Navbar = ({ user, fullUserProfile, onLogout }) => {
     const isAdmin = user && user.roles.includes('ROLE_ADMIN');
     const isSuperAdmin = user && user.roles.includes('ROLE_SUPER_ADMIN');
     const isInventoryManager = user && (user.roles.includes('ROLE_INVENTORY_MANAGER') || user.roles.includes('ROLE_SUPER_ADMIN'));
-
-    // --- ✨ Check if user has a kit from the full profile ---
     const hasKit = fullUserProfile?.hasMedicineBox;
-    // Get the user ID from the full profile or fall back to the JWT
     const profileUserId = fullUserProfile?.id || user?.id;
-    // --- End Check ---
 
-    // Function to apply active styles to NavLink
     const getNavLinkClass = ({ isActive }) => {
         return isActive ? `${styles.navLink} ${styles.activeLink}` : styles.navLink;
     };
@@ -51,21 +44,39 @@ const Navbar = ({ user, fullUserProfile, onLogout }) => {
                 </NavLink>
             </div>
 
-            {/* Backdrop for mobile menu */}
             <div
                 className={`${styles.navBackdrop} ${isMenuOpen ? styles.navBackdropOpen : ''}`}
                 onClick={closeMenu}
             ></div>
 
             <nav className={`${styles.nav} ${isMenuOpen ? styles.navOpen : ''}`}>
-                <NavLink to="/live" className={getNavLinkClass} onClick={closeMenu}>Live</NavLink>
-                <NavLink to="/my-cases" className={getNavLinkClass} onClick={closeMenu}>My Cases</NavLink>
-                <NavLink to="/notifications" className={getNavLinkClass} onClick={closeMenu}>Notifications</NavLink>
-                <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>Report An Incident</NavLink>
-                <NavLink to="/leaderboard" className={getNavLinkClass} onClick={closeMenu}>Leaderboard</NavLink>
-                <NavLink to="/volunteers" className={getNavLinkClass} onClick={closeMenu}>Volunteers</NavLink>
+                {/* --- 2. ADD ICONS TO NavLinks --- */}
 
-                {/* --- ✨ 3. Conditionally render "My Kit" link (Simplified) --- */}
+                <NavLink to="/live" className={getNavLinkClass} onClick={closeMenu}>
+                    <FaBroadcastTower />
+                    <span>Live Incidents</span>
+                </NavLink>
+                <NavLink to="/my-cases" className={getNavLinkClass} onClick={closeMenu}>
+                    <FaBriefcase />
+                    <span>My Cases</span>
+                </NavLink>
+                <NavLink to="/notifications" className={getNavLinkClass} onClick={closeMenu}>
+                    <FaBell />
+                    <span>Notifications</span>
+                </NavLink>
+                <NavLink to="/report" className={getNavLinkClass} onClick={closeMenu}>
+                    <FaExclamationTriangle />
+                    <span>Report Incident</span>
+                </NavLink>
+                <NavLink to="/leaderboard" className={getNavLinkClass} onClick={closeMenu}>
+                    <FaTrophy />
+                    <span>Leaderboard</span>
+                </NavLink>
+                <NavLink to="/volunteers" className={getNavLinkClass} onClick={closeMenu}>
+                    <FaUserFriends />
+                    <span>Volunteers</span>
+                </NavLink>
+
                 {hasKit && (
                     <NavLink
                         to={`/profile/first-aid-kit/${profileUserId}`}
@@ -73,29 +84,55 @@ const Navbar = ({ user, fullUserProfile, onLogout }) => {
                         onClick={closeMenu}
                         title="My First-Aid Kit"
                     >
-                        <span>My Kit </span>
                         <FaFirstAid />
-
+                        <span>My Kit</span>
                     </NavLink>
                 )}
-                {/* --- End Link --- */}
 
-                {/*<NavLink to="/adoptions" className={getNavLinkClass} onClick={closeMenu}>Adoptions</NavLink>*/}
-                {/*<NavLink to="/events" className={getNavLinkClass} onClick={closeMenu}>Events</NavLink>*/}
+                <NavLink to="/gchat" className={getNavLinkClass} onClick={closeMenu}>
+                    <FaUsers />
+                    <span>Global Chat</span>
+                </NavLink>
 
-
-                {/* Role-Specific Links */}
                 {(isAdmin || isSuperAdmin) && (
-                    <NavLink to="/approvals" className={getNavLinkClass} onClick={closeMenu}>Approvals</NavLink>
+                    <NavLink to="/approvals" className={getNavLinkClass} onClick={closeMenu}>
+                        <FaUserCheck />
+                        <span>Approvals</span>
+                    </NavLink>
                 )}
                 {isInventoryManager && (
-                    <NavLink to="/inventory" className={getNavLinkClass} onClick={closeMenu}>Inventory</NavLink>
+                    <NavLink to="/inventory" className={getNavLinkClass} onClick={closeMenu}>
+                        <FaBoxes />
+                        <span>Inventory</span>
+                    </NavLink>
                 )}
                 {isSuperAdmin && (
-                    <NavLink to="/superadmin" className={getNavLinkClass} onClick={closeMenu}>Super Admin</NavLink>
+                    <NavLink to="/superadmin" className={getNavLinkClass} onClick={closeMenu}>
+                        <FaUserShield />
+                        <span>Super Admin</span>
+                    </NavLink>
                 )}
-                <NavLink to="/chat" className={getNavLinkClass} onClick={closeMenu}>Active Chats</NavLink>
-                <NavLink to="/profile" className={getNavLinkClass} onClick={closeMenu}>Profile</NavLink>
+
+                <NavLink to="/chat" className={getNavLinkClass} onClick={closeMenu}>
+                    {/* Reuse FaUsers or choose another like FaComments */}
+                    <FaUsers />
+                    <span>Incident Chats</span>
+                </NavLink>
+                <NavLink to="/profile" className={getNavLinkClass} onClick={closeMenu}>
+                    <FaUser />
+                    <span>Profile</span>
+                </NavLink>
+                {/* Static Pages (Optional Icons) */}
+                {/*
+                 <NavLink to="/adoptions" className={getNavLinkClass} onClick={closeMenu}>
+                     <FaHandsHelping />
+                     <span>Adoptions</span>
+                 </NavLink>
+                 <NavLink to="/events" className={getNavLinkClass} onClick={closeMenu}>
+                     <FaCalendarAlt />
+                     <span>Events</span>
+                 </NavLink>
+                 */}
 
                 <button
                     onClick={() => {
@@ -107,9 +144,9 @@ const Navbar = ({ user, fullUserProfile, onLogout }) => {
                     <FaSignOutAlt />
                     <span>Log Out</span>
                 </button>
+                {/* --- END ICON ADDITIONS --- */}
             </nav>
 
-            {/* Animated Hamburger Menu Button */}
             <button
                 className={`${styles.menuToggle} ${isMenuOpen ? styles.menuToggleOpen : ''}`}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}

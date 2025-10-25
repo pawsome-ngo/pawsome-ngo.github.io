@@ -320,3 +320,75 @@
     background: linear-gradient(45deg, #5c6bc0, #4f46e5); /* Indigo/Purple Gradient */
 }
 /* --- End Loading Styles --- */
+
+/* Add these styles to src/pages/incident/IncidentDetailPage.module.css */
+
+/* Style the container for right-side header buttons */
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Space between buttons */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Style for the new Settings/Gear button */
+.settingsButton {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 40px; /* Consistent size with back button */
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem; /* Adjust icon size */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s;
+    padding: 0; /* Remove default padding */
+}
+
+.settingsButton:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Adjust History Button slightly if needed */
+.historyButton {
+    /* Maybe slightly less padding if space is tight */
+    padding: 0.5rem 0.8rem;
+    height: 40px; /* Match height */
+    box-sizing: border-box; /* Include padding in height */
+}
+
+/* Adjust History Button Placeholder if you keep it */
+.historyButtonPlaceholder {
+    width: auto; /* Adjust width based on final history button size */
+    min-width: 90px; /* Example min-width */
+    height: 40px; /* Match height */
+    visibility: hidden;
+}
+
+
+/* Responsive adjustments if necessary */
+@media (max-width: 600px) {
+    .header {
+        padding: 0.75rem 1rem; /* Adjust padding on smaller screens */
+    }
+    .headerContent h1 {
+        font-size: 1.5rem;
+    }
+    .settingsButton, .historyButton, .backButton {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+    .historyButton span {
+        display: none; /* Hide text on small screens */
+    }
+    .headerActions {
+        gap: 0.5rem;
+    }
+}
+
+/* Keep existing styles below */
+/* ... existing styles ... */

@@ -170,3 +170,136 @@
     animation: spin 1s linear infinite;
 }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Add these styles to MarkAsDoneModal.module.css */
+
+.toggleGroup {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Pushes label and toggle apart */
+    background-color: #f8f9fa; /* Light background for emphasis */
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-top: 0.5rem; /* Space above */
+    margin-bottom: 1.25rem; /* Space below */
+}
+
+.toggleGroup label {
+    margin-bottom: 0; /* Remove default bottom margin */
+    font-size: 0.9rem; /* Match other labels */
+}
+
+.toggleSwitch {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 2rem; /* Adjust size of toggle icon */
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Space between icon and text */
+}
+
+.toggleOn { color: #2ecc71; } /* Green for On */
+.toggleOff { color: #bdc3c7; } /* Gray for Off */
+
+.toggleText {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #555;
+}
+
+
+/* Adjust file input label if needed */
+input[type="file"] {
+    display: block; /* Make sure it takes block space */
+    color: #555;
+    font-size: 0.9rem;
+    /* You might want to style the button that appears */
+}
+input[type="file"]::file-selector-button {
+    margin-right: 0.8rem;
+    border: thin solid #ccc;
+    background: #f1f3f5;
+    padding: 0.5rem 0.8rem;
+    border-radius: 4px;
+    color: #333;
+    cursor: pointer;
+    transition: background-color .2s ease-in-out;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: #e9ecef;
+}
+/* Add these styles for the file list */
+
+.fileList {
+    list-style: none;
+    padding: 0;
+    margin-top: 0.5rem; /* Space below the label */
+    margin-bottom: 1.25rem; /* Space below the list */
+    max-height: 150px; /* Limit height and allow scrolling */
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.fileListItem {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #eee;
+}
+.fileListItem:last-child {
+    border-bottom: none;
+}
+
+.fileIcon {
+    color: #95a5a6; /* Gray icon */
+    margin-right: 0.5rem;
+    flex-shrink: 0; /* Prevent icon shrinking */
+}
+
+.fileName {
+    flex-grow: 1; /* Allow name to take up space */
+    font-size: 0.9rem;
+    color: #34495e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Add ... for long names */
+    margin-right: 0.5rem; /* Space before delete button */
+}
+
+.fileDeleteButton {
+    background: none;
+    border: none;
+    color: #95a5a6; /* Gray icon */
+    cursor: pointer;
+    padding: 0.25rem; /* Small padding */
+    font-size: 0.9rem; /* Adjust icon size */
+    flex-shrink: 0; /* Prevent button shrinking */
+}
+
+.fileDeleteButton:hover:not(:disabled) {
+    color: #e74c3c; /* Red on hover */
+}
+
+.fileDeleteButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+
+/* --- Keep existing styles below --- */
+/* .modalOverlay { ... } */
+/* .modalContent { ... } */
+/* ... etc ... */
+
+/* Adjust formGroup margin if needed */
+.formGroup {
+    margin-bottom: 1rem; /* Slightly reduced default margin */
+}
+
+/* Keep other existing styles below */
+/* ... existing styles ... */

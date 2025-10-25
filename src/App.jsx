@@ -1,4 +1,3 @@
-// File: pawsome-client-react/src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useNavigate, Outlet, Navigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -14,6 +13,7 @@ import LivePage from './pages/incident/LivePage.jsx';
 import ReportIncidentPage from './pages/incident/ReportIncidentPage.jsx';
 import LeaderboardPage from './pages/user/LeaderboardPage.jsx';
 import IncidentDetailPage from './pages/incident/IncidentDetailPage.jsx';
+import UpdateIncidentModal from './pages/incident/components/UpdateIncidentModal.jsx'; // Keep this import
 import IncidentMediaPage from './pages/incident/IncidentMediaPage.jsx';
 import TeamAssignmentPage from './pages/incident/components/TeamAssignmentPage.jsx';
 import MyCasesPage from './pages/user/MyCasesPage.jsx';
@@ -27,15 +27,15 @@ import InventoryPage from "./pages/inventory/InventoryPage.jsx";
 import FirstAidKitPage from "./pages/inventory/FirstAidKitPage.jsx";
 import NotificationsPage from './pages/notification/NotificationsPage.jsx';
 import SuperAdminPage from './pages/admin/SuperAdminPage.jsx';
+import GlobalChatWindow from './pages/chat/GlobalChatWindow.jsx'; // Keep this import
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// This component acts as a layout for all protected pages
+// ProtectedLayout component remains the same
 const ProtectedLayout = ({ user, fullUserProfile, onLogout, setFullUserProfile }) => {
     if (!user) {
         return <Navigate to="/login" />;
     }
-
     return (
         <div className={styles.protectedLayout}>
             <Navbar user={user} fullUserProfile={fullUserProfile} onLogout={onLogout} />
@@ -47,7 +47,7 @@ const ProtectedLayout = ({ user, fullUserProfile, onLogout, setFullUserProfile }
 };
 
 const App = () => {
-    const [user, setUser] = useState(null); // Basic user info from JWT
+    const [user, setUser] = useState(null);
     const [token, setToken] = useState(localStorage.getItem('jwtToken') || null);
     const [fullUserProfile, setFullUserProfile] = useState(null);
     const navigate = useNavigate();
@@ -60,18 +60,17 @@ const App = () => {
             });
             if (response.ok) {
                 const data = await response.json();
-                setFullUserProfile(data); // Store the full profile
+                setFullUserProfile(data);
             } else {
-                throw new Error('Failed to fetch full profile');
+                console.error('Failed to fetch full profile'); // Log error but don't stop app
             }
         } catch (e) {
             console.error("Failed to fetch full profile:", e.message);
-            // Don't log out, just means navbar link might not show
         }
     };
 
     useEffect(() => {
-        const storedToken = localStorage.getItem('jwtToken'); // Use a different variable name
+        const storedToken = localStorage.getItem('jwtToken');
         if (storedToken) {
             try {
                 const decodedUser = jwtDecode(storedToken);
@@ -79,14 +78,14 @@ const App = () => {
                     throw new Error("Token expired");
                 }
                 setUser(decodedUser);
-                setToken(storedToken); // Set the token state
+                setToken(storedToken);
                 fetchProfile(storedToken);
             } catch (e) {
                 console.error("Token validation failed:", e.message);
-                handleLogout(); // Log out if token is invalid or expired
+                handleLogout();
             }
         }
-    }, []); // Removed navigate dependency, handleLogout includes navigation
+    }, []);
 
     const handleLoginSuccess = (newToken) => {
         localStorage.setItem('jwtToken', newToken);
@@ -95,7 +94,8 @@ const App = () => {
             const decodedUser = jwtDecode(newToken);
             setUser(decodedUser);
             fetchProfile(newToken);
-            navigate('/chat');
+            // --- 1. UPDATE LOGIN REDIRECT ---
+            navigate('/chat'); // Navigate to Incident Chat List on login
         } catch (e) {
             console.error("Failed to decode token on login:", e);
             handleLogout();
@@ -107,29 +107,36 @@ const App = () => {
         setToken(null);
         setUser(null);
         setFullUserProfile(null);
-        navigate('/login'); // Ensure navigation happens on logout
+        navigate('/login');
     };
 
     return (
         <div className={styles.app}>
             <Routes>
-                {/* Public Routes */}
+                {/* Public Routes - Redirect logged-in users to /chat */}
                 <Route path="/login" element={token ? <Navigate to="/chat" /> : <LoginPage onLoginSuccess={handleLoginSuccess} />} />
                 <Route path="/signup" element={token ? <Navigate to="/chat" /> : <SignUpPage />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedLayout user={user} fullUserProfile={fullUserProfile} onLogout={handleLogout} setFullUserProfile={setFullUserProfile} />}>
+                    {/* --- 2. UPDATE DEFAULT ROUTE --- */}
                     <Route path="/" element={<Navigate to="/chat" replace />} />
+
+                    {/* Keep Global Chat Route */}
+                    <Route path="/gchat" element={<GlobalChatWindow token={token} onLogout={handleLogout} />} />
+
+                    {/* Incident Chat Routes */}
                     <Route path="/chat" element={<ChatGroupsPage token={token} onLogout={handleLogout} />} />
                     <Route path="/chat/:chatId" element={<ChatWindow token={token} onLogout={handleLogout} />} />
+
+                    {/* Other App Routes */}
                     <Route path="/my-cases" element={<MyCasesPage token={token} />} />
                     <Route path="/live" element={<LivePage token={token} />} />
-                    <Route path="/incident/:incidentId" element={<IncidentDetailPage token={token} />} />
-                    {/* --- Pass 'currentUser' prop here --- */}
+                    <Route path="/incident/:incidentId/update" element={<UpdateIncidentModal token={token} currentUser={user} />} />
+                    <Route path="/incident/:incidentId" element={<IncidentDetailPage token={token} currentUser={user} />} />
                     <Route path="/incident/:incidentId/media" element={<IncidentMediaPage token={token} currentUser={user} />} />
-                    {/* --- END PROP PASS --- */}
                     <Route path="/incident/:incidentId/assign" element={<TeamAssignmentPage token={token} currentUser={user} />} />
-                    <Route path="/report" element={<ReportIncidentPage />} /> {/* Assuming report can be done logged out, adjust if needed */}
+                    <Route path="/report" element={<ReportIncidentPage token={token} />} />
                     <Route path="/leaderboard" element={<LeaderboardPage token={token} />} />
                     <Route path="/adoptions" element={<AdoptionsPage />} />
                     <Route path="/events" element={<EventsPage />} />
@@ -141,17 +148,17 @@ const App = () => {
                     <Route path="/profile/first-aid-kit/:userId" element={<FirstAidKitPage token={token} />} />
                     <Route path="/notifications" element={<NotificationsPage token={token} />} />
                     <Route path="/superadmin" element={<SuperAdminPage token={token} currentUser={user} />} />
-                    {/* Fallback route within protected layout */}
+
+                    {/* --- 3. UPDATE FALLBACK ROUTE --- */}
                     <Route path="*" element={<Navigate to="/chat" replace />} />
                 </Route>
-                {/* Fallback route outside protected layout (e.g., if token is invalid) */}
                 <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
         </div>
     );
 };
 
-// Keep AppWithRouter wrapper for HashRouter
+// Keep AppWithRouter wrapper
 const AppWithRouter = () => (
     <Router>
         <App />

@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'; // Added useMemo
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import useWebSocket from '../../hooks/useWebSocket.js';
 import ReactionsModal from './components/ReactionsModal.jsx';
 import ReactionPicker from './components/ReactionPicker.jsx';
-import ChatIncidentDetailModal from './components/ChatIncidentDetailModal.jsx';
-import styles from './ChatWindow.module.css';
+import styles from './GlobalChatWindow.module.css';
 import {
     FaPaperPlane, FaInfoCircle, FaCheck, FaCheckDouble, FaArrowLeft, FaChevronDown,
     FaPlus, FaCamera, FaImage, FaMicrophone, FaStop, FaSpinner, FaFileAudio, FaFileVideo, FaFileImage, FaFileAlt, FaClock, FaUsers,
-    FaPlay, FaPause // Added Play/Pause
+    FaPlay, FaPause // Added Play/Pause icons
 } from 'react-icons/fa';
 import Avatar from '../../components/common/Avatar.jsx';
 import imageCompression from 'browser-image-compression';
@@ -58,6 +57,7 @@ const AudioPlayer = ({ src }) => {
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
 
+    // Create a static, random waveform once
     const waveformBars = useMemo(() =>
             Array.from({ length: 30 }, () => Math.random() * 80 + 20),
         []);
@@ -71,7 +71,7 @@ const AudioPlayer = ({ src }) => {
     };
 
     const togglePlayPause = (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // Don't trigger long press on bubble
         if (isPlaying) {
             audioRef.current.pause();
         } else {
@@ -89,6 +89,7 @@ const AudioPlayer = ({ src }) => {
 
     return (
         <div className={styles.audioPlayerContainer}>
+            {/* Hidden audio element to control playback */}
             <audio
                 ref={audioRef}
                 src={src}
@@ -112,13 +113,15 @@ const AudioPlayer = ({ src }) => {
             <span className={styles.audioTimestamp}>
                 {formatTime(duration)}
             </span>
+            {/* Optional: Add mic icon like Messenger */}
+            {/* <FaMicrophone className={styles.audioMicIcon} /> */}
         </div>
     );
 };
 // --- END AUDIO PLAYER COMPONENT ---
 
-const ChatWindow = ({ token, onLogout }) => {
-    const { chatId } = useParams();
+
+const GlobalChatWindow = ({ token, onLogout }) => {
     const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
@@ -127,7 +130,7 @@ const ChatWindow = ({ token, onLogout }) => {
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
     const [loggedInUser, setLoggedInUser] = useState(null);
-    const [chatGroup, setChatGroup] = useState(null);
+    const [chatGroup, setChatGroup] = useState({ name: "Global Chat" });
     const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
     const [reactionsModalData, setReactionsModalData] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null);
@@ -139,17 +142,13 @@ const ChatWindow = ({ token, onLogout }) => {
     const userIsAtBottomRef = useRef(true);
     const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
     const [animatedHeart, setAnimatedHeart] = useState(null);
-    const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
     const readObserver = useRef(null);
-
-    // --- State and Refs for Media ---
     const imageInputRef = useRef(null);
     const [isRecording, setIsRecording] = useState(false);
     const mediaRecorder = useRef(null);
     const audioChunks = useRef([]);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
-    // --- End Media State ---
 
     useEffect(() => {
         if (token) setLoggedInUser(getUserInfoFromToken(token));
@@ -184,6 +183,7 @@ const ChatWindow = ({ token, onLogout }) => {
                 return updated;
             }
             if (prevMessages.some(m => m.id === message.id)) {
+                console.warn("Attempted to add duplicate message ID:", message.id);
                 return prevMessages;
             }
             return [...prevMessages, message];
@@ -199,63 +199,52 @@ const ChatWindow = ({ token, onLogout }) => {
         }
     }, [messages]);
 
-    // --- Use 'chatId' prop for useWebSocket ---
     const { sendMessage } = useWebSocket({
         onMessageReceived,
         token,
-        chatId: chatId // Pass the chatId from useParams
+        topic: "/topic/gchat"
     });
-    // --- END UPDATE ---
 
-    // Fetch initial chat data
     useEffect(() => {
         const fetchChatData = async () => {
             setLoading(true);
             setError(null);
             try {
-                // --- Use original /api/chat endpoints ---
-                const [msgRes, grpRes] = await Promise.all([
-                    fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}`} }),
-                    fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } })
-                ]);
+                const msgRes = await fetch(`${API_BASE_URL}/api/gchat/messages`, {
+                    headers: { 'Authorization': `Bearer ${token}`}
+                });
 
-                if (!msgRes.ok) throw new Error(`Failed to fetch messages (Status: ${msgRes.status})`);
-                if (!grpRes.ok) throw new Error(`Failed to fetch chat groups (Status: ${grpRes.status})`);
-
-                const messagesData = await msgRes.json();
-                const groupsData = await grpRes.json();
-
-                const currentGroupParticipant = groupsData.find(p => p.chatGroup.id === chatId);
-                if (currentGroupParticipant) {
-                    setChatGroup(currentGroupParticipant.chatGroup);
-                    setMessages(messagesData);
-                    setTimeout(() => scrollToBottom('auto'), 0);
-                } else {
-                    throw new Error('Chat group not found or you are not a participant.');
+                if (!msgRes.ok) {
+                    const errData = await msgRes.json().catch(() => ({}));
+                    throw new Error(errData.message || `Failed to fetch messages (Status: ${msgRes.status})`);
                 }
+                const messagesData = await msgRes.json();
+                setMessages(messagesData);
+                setChatGroup({ name: "Global Chat" });
+                setTimeout(() => scrollToBottom('auto'), 0);
             } catch (err) {
-                console.error("Error fetching chat data:", err);
+                console.error("Error fetching global chat data:", err);
                 setError(err.message || 'Could not load chat.');
+                if (err.message && err.message.includes("participant")) {
+                    setError("You are not yet a participant of the global chat. Please wait a moment and refresh, or contact an admin.");
+                }
             } finally {
                 setLoading(false);
             }
         };
-        if (chatId && token) { fetchChatData(); }
+        if (token) { fetchChatData(); }
         else if (!token) { setError("Authentication token not found."); setLoading(false); }
-    }, [chatId, token, navigate]); // Added navigate
+    }, [token]);
 
-    // Send read receipt
     const handleMarkAsRead = useCallback((messageId) => {
         if (!messageId || !loggedInUser) return;
         const message = messages.find(m => m.id === messageId);
         if (!message || message.sender?.id === loggedInUser.id || message.seenBy?.some(user => user.id === loggedInUser.id)) {
             return;
         }
-        // --- Use original /app/chat endpoint ---
-        sendMessage({ messageId }, `/app/chat/${chatId}/read`);
-    }, [sendMessage, chatId, messages, loggedInUser]);
+        sendMessage({ messageId }, `/app/gchat/read`);
+    }, [sendMessage, messages, loggedInUser]);
 
-    // IntersectionObserver (unchanged)
     useEffect(() => {
         if (readObserver.current) readObserver.current.disconnect();
         const observerCallback = (entries) => {
@@ -279,7 +268,6 @@ const ChatWindow = ({ token, onLogout }) => {
         return () => { if (readObserver.current) readObserver.current.disconnect(); };
     }, [messages, loggedInUser, handleMarkAsRead]);
 
-    // Handle scrolling
     const handleScroll = () => {
         if (messageListRef.current) {
             const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
@@ -290,7 +278,7 @@ const ChatWindow = ({ token, onLogout }) => {
     };
 
     const handleMediaUpload = async (file) => {
-        if (!file || !chatId || !token || !loggedInUser) return;
+        if (!file || !token || !loggedInUser) return;
 
         setIsUploading(true);
         setUploadError('');
@@ -320,8 +308,7 @@ const ChatWindow = ({ token, onLogout }) => {
             const formData = new FormData();
             formData.append('media', processedFile);
 
-            // --- USE INCIDENT CHAT MEDIA ENDPOINT ---
-            const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}/media`, {
+            const response = await fetch(`${API_BASE_URL}/api/gchat/media`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData,
@@ -341,11 +328,10 @@ const ChatWindow = ({ token, onLogout }) => {
             };
             setMessages(prev => [...prev, optimisticMessage]);
 
-            // --- USE INCIDENT CHAT SEND ENDPOINT ---
             sendMessage({
                 text: textToSend || null, clientMessageId, parentMessageId: replyingTo ? replyingTo.id : null,
                 mediaUrl: result.mediaUrl, mediaType: result.mediaType,
-            }, `/app/chat/${chatId}/send`);
+            }, `/app/gchat/send`);
 
             setNewMessage(''); setReplyingTo(null);
             if(textareaRef.current) textareaRef.current.style.height = 'auto';
@@ -360,7 +346,6 @@ const ChatWindow = ({ token, onLogout }) => {
             if(imageInputRef.current) imageInputRef.current.value = null;
         }
     };
-    // --- End Media Upload ---
 
     const handleFileSelected = (event) => {
         const file = event.target.files?.[0];
@@ -368,7 +353,6 @@ const ChatWindow = ({ token, onLogout }) => {
         event.target.value = null;
     };
 
-    // --- Audio Recording Handlers (unchanged) ---
     const startRecording = async () => {
         if (isUploading || isRecording) return;
         try {
@@ -410,14 +394,16 @@ const ChatWindow = ({ token, onLogout }) => {
             setIsRecording(false);
         }
     };
-    // --- End Audio Recording ---
 
-    // --- Send Message (Text Only) ---
     const handleSendMessage = (event) => {
         event?.preventDefault();
         const textToSend = newMessage.trim();
-        if ((textToSend === '' && !isUploading) || !loggedInUser || isRecording) return;
-        if (isUploading) { return; }
+        if ((textToSend === '' && !isUploading) || !loggedInUser || isRecording) {
+            return;
+        }
+        if (isUploading) {
+            return;
+        }
 
         const clientMessageId = `temp-${Date.now()}`;
         const optimisticMessage = {
@@ -427,14 +413,12 @@ const ChatWindow = ({ token, onLogout }) => {
         };
         setMessages(prev => [...prev, optimisticMessage]);
 
-        // --- USE INCIDENT CHAT SEND ENDPOINT ---
-        sendMessage({ text: textToSend, clientMessageId, parentMessageId: replyingTo ? replyingTo.id : null }, `/app/chat/${chatId}/send`);
+        sendMessage({ text: textToSend, clientMessageId, parentMessageId: replyingTo ? replyingTo.id : null }, `/app/gchat/send`);
 
         setNewMessage(''); setReplyingTo(null);
         if(textareaRef.current) textareaRef.current.style.height = 'auto';
         setTimeout(() => scrollToBottom('smooth'), 50);
     };
-    // --- End Send Message ---
 
     const handleTextareaInput = (e) => {
         setNewMessage(e.target.value);
@@ -451,8 +435,7 @@ const ChatWindow = ({ token, onLogout }) => {
 
     const handleReact = (reaction) => {
         if (loggedInUser && activeEmojiPicker) {
-            // --- USE INCIDENT CHAT REACT ENDPOINT ---
-            sendMessage({ messageId: activeEmojiPicker, reaction }, `/app/chat/${chatId}/react`);
+            sendMessage({ messageId: activeEmojiPicker, reaction }, `/app/gchat/react`);
         }
         setActiveEmojiPicker(null);
     };
@@ -460,20 +443,19 @@ const ChatWindow = ({ token, onLogout }) => {
     const handleDoubleClick = (message) => {
         if (!loggedInUser || !message?.id || message?.clientMessageId) return;
         const reactionType = '❤️';
-        // --- USE INCIDENT CHAT REACT ENDPOINT ---
-        sendMessage({ messageId: message.id, reaction: reactionType }, `/app/chat/${chatId}/react`);
+        sendMessage({ messageId: message.id, reaction: reactionType }, `/app/gchat/react`);
         setAnimatedHeart(message.id);
         setTimeout(() => setAnimatedHeart(null), 500);
     };
-    // --- Interaction Handlers for Long Press & Swipe ---
+
     const handleInteractionStart = (e, message) => {
-        if (message?.clientMessageId) return; // Don't interact with optimistic messages
+        if (message?.clientMessageId) return;
         clearTimeout(pressTimer.current);
         pressTimer.current = setTimeout(() => {
-            if (dragStartXRef.current === null) { // Only open if not dragging
+            if (dragStartXRef.current === null) {
                 setActiveEmojiPicker(message.id);
             }
-        }, 350); // Shorter delay for long press
+        }, 350);
         dragStartXRef.current = e.clientX || e.touches?.[0]?.clientX;
     };
 
@@ -490,7 +472,6 @@ const ChatWindow = ({ token, onLogout }) => {
             }
             dragStartXRef.current = null;
         };
-        // Delay slightly to allow potential double-click to register
         setTimeout(interactionEnded, 50);
     };
 
@@ -502,9 +483,7 @@ const ChatWindow = ({ token, onLogout }) => {
             }
         }
     };
-    // --- End Interaction Handlers ---
 
-    // Scroll to replied message
     const handleScrollToMessage = (messageId) => {
         const messageElement = messageRefs.current[messageId];
         if (messageElement) {
@@ -516,14 +495,14 @@ const ChatWindow = ({ token, onLogout }) => {
         }
     };
 
-    if (loading || !loggedInUser || !chatGroup) {
-        return <div className={styles.centeredMessage}>Loading...</div>;
+    if (loading || !loggedInUser) {
+        return <div className={styles.centeredMessage}>Loading global chat...</div>;
     }
     if (error) {
         return (
             <div className={styles.chatWindow}>
                 <header className={styles.chatHeader}>
-                    <button onClick={() => navigate('/chat')} className={styles.backButton}><FaArrowLeft /></button>
+                    <Link to="/chat" className={styles.backButton}><FaArrowLeft /></Link>
                     <div className={styles.headerTitleContainer}><h2>Error</h2></div>
                     <div className={styles.headerActions}></div>
                 </header>
@@ -532,28 +511,32 @@ const ChatWindow = ({ token, onLogout }) => {
         );
     }
 
-    // --- Render Media Function ---
+    // --- UPDATED Render Media Function ---
     const renderMedia = (msg) => {
         if (!msg.mediaUrl || !msg.mediaType) return null;
         const mediaFullUrl = `${API_BASE_URL}${msg.mediaUrl}`;
+
         switch (msg.mediaType) {
-            case 'IMAGE': return <img src={mediaFullUrl} alt="Chat media" className={styles.chatMediaImage} loading="lazy" />;
-            case 'VIDEO': return <video src={mediaFullUrl} controls className={styles.chatMediaVideo} />;
-            case 'AUDIO': return <AudioPlayer src={mediaFullUrl} />;
-            default: return <a href={mediaFullUrl} target="_blank" rel="noopener noreferrer" className={styles.chatMediaLink}> <FaFileAlt/> Download File</a>;
+            case 'IMAGE':
+                return <img src={mediaFullUrl} alt="Chat media" className={styles.chatMediaImage} loading="lazy" />;
+            case 'VIDEO':
+                return <video src={mediaFullUrl} controls className={styles.chatMediaVideo} />;
+            case 'AUDIO':
+                // Use the new custom audio player
+                return <AudioPlayer src={mediaFullUrl} />;
+            default:
+                return <a href={mediaFullUrl} target="_blank" rel="noopener noreferrer" className={styles.chatMediaLink}> <FaFileAlt/> Download File</a>;
         }
     };
-    // --- End Render Media ---
+    // --- END UPDATE ---
 
     return (
         <div className={styles.chatWindow}>
             <header className={styles.chatHeader}>
-                <button onClick={() => navigate('/chat')} className={styles.backButton} title="Back to Chat List"> <FaArrowLeft /> </button>
-                {/* This header is clickable to show incident details */}
-                <button onClick={() => setIsIncidentModalOpen(true)} className={styles.headerTitleContainer}>
-                    <h2>{chatGroup.name}</h2>
-                    <FaInfoCircle className={styles.headerIcon} />
-                </button>
+                <Link to="/chat" className={styles.backButton} title="Go to Incident Chats"> <FaArrowLeft /> </Link>
+                <div className={styles.headerTitleContainer} title="Global Chat for all members">
+                    <h2><FaUsers /> Global Chat</h2>
+                </div>
                 <div className={styles.headerActions}> </div>
             </header>
 
@@ -591,7 +574,9 @@ const ChatWindow = ({ token, onLogout }) => {
                                     </div>
                                 )}
                                 <div className={styles.messageContent}>
-                                    {/* No sender name needed for 1-on-1 or if logic prefers */}
+                                    {!isSentByCurrentUser && isFirstInGroup && msg.sender && (
+                                        <span className={styles.senderName}>{msg.sender.firstName}</span>
+                                    )}
                                     <div className={styles.bubbleContainer}>
                                         {parentMessage && (
                                             <div className={styles.repliedMessageSnippet} onClick={() => handleScrollToMessage(parentMessage.id)}>
@@ -600,6 +585,8 @@ const ChatWindow = ({ token, onLogout }) => {
                                             </div>
                                         )}
                                         {activeEmojiPicker === msg.id && <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />}
+
+                                        {/* --- UPDATED Message Bubble Div --- */}
                                         <div
                                             className={`${styles.messageBubble} ${msg.mediaUrl ? styles.mediaBubble : ''} ${msg.mediaType === 'AUDIO' ? styles.audioBubble : ''}`}
                                             onMouseDown={(e) => handleInteractionStart(e, msg)}
@@ -612,10 +599,15 @@ const ChatWindow = ({ token, onLogout }) => {
                                             onDoubleClick={() => handleDoubleClick(msg)}
                                         >
                                             {renderMedia(msg)}
+                                            {/* Only render text if it's NOT an audio message (or if it has text AND is not audio) */}
                                             {msg.text && msg.mediaType !== 'AUDIO' && <p className={styles.messageText}>{msg.text}</p>}
+                                            {/* Text *with* media (but not audio) */}
                                             {msg.text && msg.mediaUrl && msg.mediaType !== 'AUDIO' && <p className={styles.messageText}>{msg.text}</p>}
+
                                             {msg.clientMessageId && (isUploading || !msg.id) && <FaSpinner className={styles.optimisticSpinner} />}
                                         </div>
+                                        {/* --- END UPDATE --- */}
+
                                         {reactionsCount > 0 && (
                                             <div className={styles.reactionsContainer} onClick={() => setReactionsModalData(msg.reactions)}>
                                                 {Object.entries(msg.reactions).slice(0, 3).map(([emoji]) => (<span className={styles.reactionEmoji} key={emoji}>{emoji}</span>))}
@@ -688,17 +680,9 @@ const ChatWindow = ({ token, onLogout }) => {
                 </button>
             </footer>
 
-            {/* This modal is specific to ChatWindow */}
-            {isIncidentModalOpen && chatGroup?.purposeId && (
-                <ChatIncidentDetailModal
-                    incidentId={chatGroup.purposeId}
-                    token={token}
-                    onClose={() => setIsIncidentModalOpen(false)}
-                />
-            )}
             <ReactionsModal reactions={reactionsModalData} onClose={() => setReactionsModalData(null)} />
         </div>
     );
 };
 
-export default ChatWindow;
+export default GlobalChatWindow;

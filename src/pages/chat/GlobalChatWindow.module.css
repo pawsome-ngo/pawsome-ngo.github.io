@@ -69,7 +69,6 @@
     border-radius: 8px;
     transition: background-color 0.2s ease;
     height: 40px;
-    /* This container is also the button */
     background: none;
     border: none;
     color: #050505;
@@ -79,13 +78,6 @@
 }
 .headerTitleContainer:hover {
     background-color: #f0f2f5;
-}
-
-/* This class is now REDUNDANT if .headerTitleContainer is the button */
-.headerButton {
-    /* Styles are in .headerTitleContainer */
-    padding: 0;
-    margin: 0;
 }
 
 .headerTitleContainer h2 {
@@ -142,7 +134,6 @@
 .sent.followedByGrouped .messageBubble { border-bottom-right-radius: 4px; }
 .received.followedByGrouped .messageBubble { border-bottom-left-radius: 4px; }
 
-/* Sender name for received messages (if needed, e.g. for group chats) */
 .senderName {
     font-size: 0.7rem;
     color: #65676b;
@@ -254,22 +245,28 @@
 .received .mediaBubble { margin-right: auto; }
 .chatMediaImage, .chatMediaVideo { display: block; max-width: 100%; max-height: 250px; border-radius: 14px; object-fit: cover; background-color: #f0f2f5; }
 .chatMediaVideo { background-color: #000; }
+/* This is the new bubble style just for audio */
 .audioBubble {
-    background-color: #e4e6eb !important;
-    padding: 8px 12px !important;
-    width: 250px;
-    max-width: 250px;
+    background-color: #e4e6eb !important; /* Force bubble color */
+    padding: 8px 12px !important; /* Restore padding */
+    width: 250px; /* Force a consistent width */
+    max-width: 250px; /* Ensure it doesn't exceed */
 }
 .sent .audioBubble {
-    background-color: #0084ff !important;
+    background-color: #0084ff !important; /* Force bubble color for sent */
 }
 
+/* This is the OLD audio style - we replace it */
 .chatMediaAudio {
+    /* display: block; */ /* This is replaced by .audioPlayerContainer */
     width: 100%;
     max-width: 250px;
-    height: 45px;
+    height: 45px; /* Set explicit height */
     min-width: 220px;
 }
+.sent .chatMediaAudio {}
+.received .chatMediaAudio {}
+/* --- End old style --- */
 
 /* Text *under* media */
 .mediaBubble .messageText { padding: 6px 10px; margin-top: 4px; font-size: 0.9375rem; color: #050505; background-color: #e4e6eb; border-radius: 18px; }
@@ -285,7 +282,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 40px;
+    height: 40px; /* Fixed height for the player */
     width: 100%;
 }
 
@@ -313,39 +310,36 @@
     background-color: rgba(255, 255, 255, 0.2);
 }
 
+
 .waveformContainer {
     display: flex;
     align-items: center;
-    height: 24px;
-    width: 100%;
+    height: 24px; /* Height of the waveform area */
+    width: 100%; /* Fill remaining space */
     gap: 1px;
     overflow: hidden;
 }
 
 .waveformBar {
-    width: 2.5px;
-    background-color: #050505;
+    width: 2.5px; /* Width of each bar */
+    background-color: #050505; /* Bar color for received */
     opacity: 0.6;
     border-radius: 1px;
 }
 .sent .waveformBar {
-    background-color: white;
+    background-color: white; /* Bar color for sent */
 }
 
 .audioTimestamp {
     font-size: 0.8rem;
     font-weight: 500;
-    color: #333;
+    color: #333; /* Timestamp color for received */
     flex-shrink: 0;
     margin-left: 4px;
 }
 .sent .audioTimestamp {
-    color: white;
+    color: white; /* Timestamp color for sent */
 }
-/* ================================== */
-/* End Custom Audio Player Styles     */
-/* ================================== */
-
 
 /* ================================== */
 /* Other Styles                       */

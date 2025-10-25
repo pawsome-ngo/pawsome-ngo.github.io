@@ -1,12 +1,13 @@
 // File: pawsome-client-react/src/pages/incident/IncidentDetailPage.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react'; // Added useCallback
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './IncidentDetailPage.module.css';
 import {
     FaArrowLeft, FaSpinner, FaCopy, FaHeart, FaRegHeart,
     FaUser, FaPhone, FaPaw, FaClock, FaMapMarkerAlt, FaInfoCircle, FaImages,
-    FaUsers, FaHistory, FaTrash, FaUndo, FaClipboard, FaBriefcaseMedical
+    FaUsers, FaHistory, FaTrash, FaUndo, FaClipboard, FaBriefcaseMedical,
+    FaCog // <-- Import the Gear icon
 } from 'react-icons/fa';
 import { jwtDecode } from 'jwt-decode';
 import CloseIncidentModal from "../../components/common/CloseIncidentModal.jsx";
@@ -14,22 +15,20 @@ import TeamDetailsModal from "./components/TeamDetailsModal.jsx";
 import IncidentHistoryModal from "./components/IncidentHistoryModal.jsx";
 import ArchiveConfirmationModal from "../../components/common/ArchiveConfirmationModal.jsx";
 import TeamItemsListModal from "./components/TeamItemsListModal.jsx";
-// ✨ Using the existing UnauthorizedModal as requested
 import UnauthorizedModal from '../../components/common/UnauthorizedModal.jsx';
+import UpdateIncidentModal from "./components/UpdateIncidentModal.jsx"; // <-- Import the new modal
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// A helper function for robust copying to clipboard
+// A helper function for robust copying to clipboard (keep as is)
 const copyToClipboard = (text) => {
-    // Modern way: Clipboard API
+    // ... (copyToClipboard function remains the same)
     if (navigator.clipboard && window.isSecureContext) {
         return navigator.clipboard.writeText(text);
-    }
-    // Fallback for older browsers
-    else {
+    } else {
         const textArea = document.createElement('textarea');
         textArea.value = text;
-        textArea.style.position = 'fixed'; // Avoid scrolling to bottom
+        textArea.style.position = 'fixed';
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
@@ -58,17 +57,20 @@ const IncidentDetailPage = ({ token }) => {
     const [incidentHistory, setIncidentHistory] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isTeamItemsModalOpen, setIsTeamItemsModalOpen] = useState(false);
-
-    // ✨ State for the UnauthorizedModal
     const [isUnauthorizedModalOpen, setIsUnauthorizedModalOpen] = useState(false);
     const [unauthorizedMessage, setUnauthorizedMessage] = useState('');
-
     const [isInterested, setIsInterested] = useState(false);
     const [interestLoading, setInterestLoading] = useState(false);
     const [loggedInUser, setLoggedInUser] = useState(null);
-    const [userRoles, setUserRoles] = useState([]); // ✨ State for user roles
+    const [userRoles, setUserRoles] = useState([]);
 
+    // --- State for the new Update Incident Modal ---
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    // --- End State ---
+
+    // Decode token and set user roles (keep as is)
     useEffect(() => {
+        // ... (useEffect for decoding token remains the same)
         if (token) {
             try {
                 const decodedToken = jwtDecode(token);
@@ -76,7 +78,6 @@ const IncidentDetailPage = ({ token }) => {
                     id: decodedToken.id,
                     firstName: decodedToken.firstName
                 });
-                // ✨ Extract roles from the token
                 setUserRoles(decodedToken.roles || []);
             } catch (e) {
                 console.error("Failed to decode token", e);
@@ -87,9 +88,10 @@ const IncidentDetailPage = ({ token }) => {
         }
     }, [token]);
 
-    const fetchIncident = async () => {
+    // Use useCallback for fetchIncident to prevent re-creation
+    const fetchIncident = useCallback(async () => {
         // Ensure loggedInUser is set before fetching
-        if (!token || !incidentId) return; // Removed loggedInUser dependency here for initial load
+        if (!token || !incidentId) return;
 
         setLoading(true);
         setError(null); // Clear previous errors
@@ -101,14 +103,11 @@ const IncidentDetailPage = ({ token }) => {
             if (response.ok) {
                 const data = await response.json();
                 setIncident(data);
-
                 // Check interest status using the fetched incident data and loggedInUser state
-                // Need to ensure loggedInUser is available before checking interest
                 if (data.interestedUsers && loggedInUser) {
                     const userIsInterested = data.interestedUsers.some(user => user.id === loggedInUser.id);
                     setIsInterested(userIsInterested);
                 }
-
             } else {
                 const errorText = await response.text();
                 console.error("Failed to fetch incident. Server responded with:", response.status, errorText);
@@ -120,18 +119,19 @@ const IncidentDetailPage = ({ token }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [incidentId, token, loggedInUser]); // Add loggedInUser dependency
 
-    // Separate useEffect to check interest once loggedInUser is set
+    // Separate useEffect to check interest once loggedInUser is set (keep as is)
     useEffect(() => {
+        // ... (useEffect for checking interest remains the same)
         if (incident && loggedInUser && incident.interestedUsers) {
             const userIsInterested = incident.interestedUsers.some(user => user.id === loggedInUser.id);
             setIsInterested(userIsInterested);
         }
-    }, [loggedInUser, incident]); // Rerun when loggedInUser or incident data updates
+    }, [loggedInUser, incident]);
 
 
-    const fetchTeamDetails = async () => {
+    const fetchTeamDetails = useCallback(async () => { // Make this useCallback too
         if (teamDetails) return teamDetails; // Return cached details if available
         try {
             const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}/assignment/team`, {
@@ -149,31 +149,42 @@ const IncidentDetailPage = ({ token }) => {
             alert(err.message);
             return null;
         }
-    };
+    }, [incidentId, token, teamDetails]); // Add dependencies
 
 
-    // Fetch incident initially
+    // Fetch incident initially (keep as is)
     useEffect(() => {
         fetchIncident();
-    }, [token, incidentId]); // Fetch on mount and if token/id changes
+    }, [fetchIncident]); // fetchIncident is now stable
 
 
-    // --- ✨ Helper function to check roles ---
-    const hasCaptainOrHigherRole = () => {
+    // --- Role check helper (keep as is) ---
+    const hasCaptainOrHigherRole = useCallback(() => {
         return userRoles.includes('ROLE_RESCUE_CAPTAIN') ||
             userRoles.includes('ROLE_ADMIN') ||
             userRoles.includes('ROLE_SUPER_ADMIN');
-    };
+    }, [userRoles]);
 
-    // --- Other handlers ---
+
+    // --- Other handlers (handleCopyDetails, handleInterestToggle, etc.) remain the same ---
+    // ... handleCopyDetails ...
+    // ... handleInterestToggle ...
+    // ... handleCopyContact ...
+    // ... handleUpdateLocation ...
+    // ... handleResolveClick & handleMarkAsResolved ...
+    // ... handleCloseClick & handleCloseIncident ...
+    // ... handleViewTeam ...
+    // ... handleViewKits ...
+    // ... handleViewHistory ...
+    // ... handleReactivateClick & handleReactivate ...
+    // ... handleDeleteClick & handleDelete ...
+    // ... formatDateTime ...
     const handleCopyDetails = async () => {
         const currentTeamDetails = await fetchTeamDetails();
         if (!incident || !currentTeamDetails) return;
-
         const teamMembers = currentTeamDetails.teamMembers
             .map(member => `- @${member.fullName}`)
             .join('\n');
-
         const formattedDetails = `
 🚨 RESCUE ALERT 🚨
 
@@ -198,7 +209,6 @@ ${teamMembers}
 
 Please coordinate and proceed to the location. Thank you! 🙏
         `.trim();
-
         copyToClipboard(formattedDetails).then(() => {
             setIsDetailsCopied(true);
             setTimeout(() => setIsDetailsCopied(false), 2000);
@@ -207,9 +217,8 @@ Please coordinate and proceed to the location. Thank you! 🙏
             alert('Failed to copy details. Please try again.');
         });
     };
-
     const handleInterestToggle = async () => {
-        if (!loggedInUser) return; // Guard against missing user info
+        if (!loggedInUser) return;
         setInterestLoading(true);
         const method = isInterested ? 'DELETE' : 'POST';
         try {
@@ -217,16 +226,14 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 method: method,
                 headers: { 'Authorization': `Bearer ${token}` },
             });
-
             if (response.ok) {
                 setIsInterested(!isInterested);
-                // Optimistically update the interested users array in the local state
                 if (loggedInUser) {
                     setIncident(prev => {
                         let updatedInterestedUsers = prev.interestedUsers || [];
-                        if (!isInterested) { // If adding interest
+                        if (!isInterested) {
                             updatedInterestedUsers = [...updatedInterestedUsers, { id: loggedInUser.id, firstName: loggedInUser.firstName }];
-                        } else { // If removing interest
+                        } else {
                             updatedInterestedUsers = updatedInterestedUsers.filter(user => user.id !== loggedInUser.id);
                         }
                         return { ...prev, interestedUsers: updatedInterestedUsers };
@@ -243,7 +250,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setInterestLoading(false);
         }
     };
-
     const handleCopyContact = () => {
         if (incident?.contactNumber) {
             copyToClipboard(incident.contactNumber).then(() => {
@@ -255,20 +261,16 @@ Please coordinate and proceed to the location. Thank you! 🙏
             });
         }
     };
-
     const handleUpdateLocation = () => {
         if (!navigator.geolocation) {
             setUpdateMessage('Geolocation is not supported by your browser.');
             return;
         }
-
         setIsUpdating(true);
         setUpdateMessage('Getting your location...');
-
         navigator.geolocation.getCurrentPosition(async (position) => {
             const { latitude, longitude } = position.coords;
             setUpdateMessage('Location found. Updating incident...');
-
             try {
                 const response = await fetch(`${API_BASE_URL}/api/incidents/${incident.id}/location`, {
                     method: 'PUT',
@@ -278,7 +280,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     },
                     body: JSON.stringify({ latitude, longitude }),
                 });
-
                 if (response.ok) {
                     const updatedIncident = await response.json();
                     setIncident(updatedIncident);
@@ -300,20 +301,16 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setTimeout(() => setUpdateMessage(''), 3000);
         });
     };
-
-    // Actual API call for resolving
     const handleMarkAsResolved = async () => {
         setIsUpdating(true);
         setUpdateMessage('Updating status to Resolved...');
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/incidents/${incident.id}/resolve`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}` },
             });
-
             if (response.ok) {
-                await fetchIncident(); // Re-fetch data
+                await fetchIncident();
                 setUpdateMessage('Incident has been marked as Resolved!');
             } else {
                 const errorData = await response.text();
@@ -327,8 +324,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setTimeout(() => setUpdateMessage(''), 3000);
         }
     };
-
-    // Wrapper function to check permission for resolving
     const handleResolveClick = () => {
         if (hasCaptainOrHigherRole()) {
             handleMarkAsResolved();
@@ -337,13 +332,10 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setIsUnauthorizedModalOpen(true);
         }
     };
-
-    // Actual API call for closing
     const handleCloseIncident = async (reason) => {
         setIsUpdating(true);
         setUpdateMessage('Closing incident...');
         setIsCloseModalOpen(false);
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/incidents/${incident.id}/close`, {
                 method: 'PUT',
@@ -353,9 +345,8 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 },
                 body: JSON.stringify({ reason }),
             });
-
             if (response.ok) {
-                await fetchIncident(); // Re-fetch data
+                await fetchIncident();
                 setUpdateMessage('Incident closed successfully.');
             } else {
                 const errorData = await response.text();
@@ -369,8 +360,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setTimeout(() => setUpdateMessage(''), 3000);
         }
     };
-
-    // Wrapper function to check permission for closing
     const handleCloseClick = () => {
         if (hasCaptainOrHigherRole()) {
             setIsCloseModalOpen(true);
@@ -379,25 +368,20 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setIsUnauthorizedModalOpen(true);
         }
     };
-
     const handleViewTeam = async () => {
         const details = await fetchTeamDetails();
         if (details) {
             setIsTeamModalOpen(true);
         }
     };
-
-    // Handler for the "View Team Kit" button
     const handleViewKits = async () => {
         setIsTeamItemsModalOpen(true);
     };
-
     const handleViewHistory = async () => {
         try {
             const response = await fetch(`${API_BASE_URL}/api/incidents/${incident.id}/history`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
-
             if (response.ok) {
                 const data = await response.json();
                 setIncidentHistory(data);
@@ -410,8 +394,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
             alert(err.message);
         }
     };
-
-    // Actual API call for reactivating
     const handleReactivate = async () => {
         setIsUpdating(true);
         setUpdateMessage('Reactivating incident...');
@@ -421,7 +403,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             if (response.ok) {
-                await fetchIncident(); // Re-fetch data
+                await fetchIncident();
                 setUpdateMessage('Incident has been reactivated to ONGOING.');
             } else {
                 const errorData = await response.text();
@@ -435,8 +417,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setTimeout(() => setUpdateMessage(''), 3000);
         }
     };
-
-    // ✨ WRAPPER FUNCTION TO CHECK PERMISSION FOR REACTIVATE
     const handleReactivateClick = () => {
         if (hasCaptainOrHigherRole()) {
             handleReactivate();
@@ -445,40 +425,33 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setIsUnauthorizedModalOpen(true);
         }
     };
-
-    // Actual API call for deleting
-    const handleDelete = async (shouldArchive) => { // Takes boolean from modal
+    const handleDelete = async (shouldArchive) => {
         setIsDeleteModalOpen(false);
-        setIsUpdating(true); // Use isUpdating for loading state
+        setIsUpdating(true);
         setUpdateMessage('Deleting incident...');
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/incidents/${incident.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json' // Add Content-Type
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ archive: shouldArchive }) // Send the archive flag
+                body: JSON.stringify({ archive: shouldArchive })
             });
-
             const resultData = await response.json().catch(() => ({}));
-
             if (response.ok) {
                 setUpdateMessage(resultData.message || 'Incident deleted successfully. Redirecting...');
-                setTimeout(() => navigate('/live'), 2000); // Redirect after message
+                setTimeout(() => navigate('/live'), 2000);
             } else {
                 throw new Error(resultData.message || 'Failed to delete incident.');
             }
         } catch (err) {
             console.error(err);
             setUpdateMessage(`Error: ${err.message}`);
-            setIsUpdating(false); // Stop loading on error
-            setTimeout(() => setUpdateMessage(''), 3000); // Clear error message after a while
+            setIsUpdating(false);
+            setTimeout(() => setUpdateMessage(''), 3000);
         }
     };
-
-    // Wrapper function to check permission for deleting
     const handleDeleteClick = () => {
         if (hasCaptainOrHigherRole()) {
             setIsDeleteModalOpen(true);
@@ -487,22 +460,36 @@ Please coordinate and proceed to the location. Thank you! 🙏
             setIsUnauthorizedModalOpen(true);
         }
     };
-
     const formatDateTime = (dateTimeString) => {
         if (!dateTimeString) return 'N/A';
         const date = new Date(dateTimeString);
         return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
+            month: 'short', day: 'numeric', year: 'numeric'
         }) + ', ' + date.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
+            hour: 'numeric', minute: '2-digit', hour12: true
         });
     };
+    // --- End Handlers ---
 
+    // --- Handlers for the new Update Modal ---
+    const handleOpenUpdateModal = () => {
+        // Optional: Add permission check here if needed later
+        // if (!canEditIncident()) { ... return; }
+        setIsUpdateModalOpen(true);
+    };
+
+    const handleIncidentUpdateSuccess = (updatedData) => {
+        // Optionally update local state immediately with updatedData
+        // Or simply refetch from the server for consistency
+        fetchIncident(); // Refetch the incident data after successful save
+        setUpdateMessage('Incident details updated successfully!');
+        setTimeout(() => setUpdateMessage(''), 3000);
+    };
+    // --- End Update Modal Handlers ---
+
+    // Loading/Error/No Incident states (keep as is)
     if (loading) {
+        // ... (loading spinner code remains the same)
         return (
             <div className={styles.loadingContainer}>
                 <div className={styles.pawSpinner}>
@@ -512,7 +499,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
             </div>
         );
     }
-
     if (error) return <div className={styles.pageContainer} style={{ color: 'red' }}>{error}</div>;
     if (!incident) return <div className={styles.pageContainer}>Incident not found.</div>;
 
@@ -533,19 +519,34 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         </span>
                     </div>
                 </div>
-                {/* Conditionally render history button */}
-                {incident.caseCount > 0 ? (
-                    <button onClick={handleViewHistory} className={styles.historyButton} title="View Case History">
-                        <FaHistory />
-                        <span>History</span>
+
+                {/* --- Container for Right-Side Header Buttons --- */}
+                <div className={styles.headerActions}> {/* Add this wrapper */}
+                    {/* Gear Button to Open Update Modal */}
+                    <button onClick={handleOpenUpdateModal} className={styles.settingsButton} title="Edit Incident Details">
+                        <FaCog />
+                        {/* Optionally add text like <span>Edit</span> */}
                     </button>
-                ) : (
-                    // Render a placeholder div to maintain layout balance
-                    <div className={styles.historyButtonPlaceholder} />
-                )}
+
+                    {/* Conditionally render history button */}
+                    {incident.caseCount > 0 ? (
+                        <button onClick={handleViewHistory} className={styles.historyButton} title="View Case History">
+                            <FaHistory />
+                            <span>History</span>
+                        </button>
+                    ) : (
+                        // Render a placeholder div to maintain layout balance if needed, or adjust CSS
+                        // <div className={styles.historyButtonPlaceholder} /> // Kept placeholder for layout consistency
+                        // OR adjust CSS directly if placeholder is not desired
+                        null // Or remove placeholder if layout adjusts well
+                    )}
+                </div>
+                {/* --- End Right-Side Header Buttons Container --- */}
             </div>
 
+            {/* Detail Grid (keep as is) */}
             <div className={styles.detailGrid}>
+                {/* ... (Detail Cards remain the same) ... */}
                 {/* Informer Card */}
                 <div className={styles.detailCard}>
                     <div className={styles.iconWrapper}>
@@ -556,7 +557,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         <p>{incident.informerName}</p>
                     </div>
                 </div>
-
                 {/* Contact Card */}
                 <div className={styles.detailCard}>
                     <div className={styles.iconWrapper}>
@@ -572,7 +572,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         </div>
                     </div>
                 </div>
-
                 {/* Location Card */}
                 <div className={`${styles.detailCard} ${styles.fullWidth}`}>
                     <div className={styles.iconWrapper}>
@@ -583,7 +582,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         <p>{incident.location || 'Not yet updated.'}</p>
                     </div>
                 </div>
-
                 {/* Reported At Card */}
                 <div className={`${styles.detailCard} ${styles.fullWidth}`}>
                     <div className={styles.iconWrapper}>
@@ -594,7 +592,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         <p>{formatDateTime(incident.reportedAt)}</p>
                     </div>
                 </div>
-
                 {/* Description Card */}
                 <div className={`${styles.detailCard} ${styles.fullWidth}`}>
                     <div className={styles.iconWrapper}>
@@ -607,15 +604,12 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 </div>
             </div>
 
-            {/* Status update message */}
+            {/* Status update message (keep as is) */}
             {updateMessage && <p className={styles.updateMessage}>{updateMessage}</p>}
 
-
-            {/* ====================================================== */}
-            {/* ✨ ACTION BUTTONS - RESTORED ORIGINAL LOGIC ✨ */}
-            {/* ====================================================== */}
+            {/* Action Buttons Container (keep as is) */}
             <div className={styles.actionsContainer}>
-                {/* --- Always Visible (if applicable) --- */}
+                {/* ... (All existing action buttons remain the same) ... */}
                 {incident.mediaFileCount > 0 && (
                     <Link
                         to={`/incident/${incident.id}/media`}
@@ -631,8 +625,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         <span>View on Map</span>
                     </a>
                 )}
-
-                {/* --- Update Location (Conditional based on location & status) --- */}
                 {!incident.latitude && !incident.longitude &&
                     (incident.status === 'REPORTED' || incident.status === 'ASSIGNED' || incident.status === 'IN_PROGRESS' || incident.status === 'ONGOING') && (
                         <button onClick={handleUpdateLocation} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
@@ -640,8 +632,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                             <span>Update Location</span>
                         </button>
                     )}
-
-                {/* --- STATUS: REPORTED --- */}
                 {incident.status === 'REPORTED' && (
                     <>
                         <button onClick={handleInterestToggle} disabled={interestLoading} className={`${styles.actionButton} ${styles.interestButton} ${isInterested ? styles.interested : ''}`}>
@@ -655,14 +645,11 @@ Please coordinate and proceed to the location. Thank you! 🙏
                             <FaUsers />
                             <span>Assign Team</span>
                         </Link>
-                        {/* Use permission check for close */}
                         <button onClick={handleCloseClick} className={`${styles.actionButton} ${styles.closeButton}`}>
                             Close Incident
                         </button>
                     </>
                 )}
-
-                {/* --- STATUS: ASSIGNED --- */}
                 {incident.status === 'ASSIGNED' && (
                     <>
                         <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
@@ -686,8 +673,6 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         </Link>
                     </>
                 )}
-
-                {/* --- STATUS: IN_PROGRESS --- */}
                 {(incident.status === 'IN_PROGRESS') && (
                     <>
                         <button onClick={handleViewTeam} className={`${styles.actionButton} ${styles.viewTeamButton}`}>
@@ -700,16 +685,12 @@ Please coordinate and proceed to the location. Thank you! 🙏
                         </button>
                     </>
                 )}
-
-                {/* --- STATUS: ONGOING --- */}
-                {/* ✨ Restored original buttons for ONGOING (No team buttons) */}
                 {incident.status === 'ONGOING' && (
                     <>
                         <button onClick={handleInterestToggle} disabled={interestLoading} className={`${styles.actionButton} ${styles.interestButton} ${isInterested ? styles.interested : ''}`}>
                             {interestLoading ? <FaSpinner className={styles.spinner}/> : (isInterested ? <FaHeart /> : <FaRegHeart />)}
                             <span>{isInterested ? "Remove Interest" : "I'm Interested"}</span>
                         </button>
-                        {/* This Assign Team button was in the original code for ONGOING */}
                         <Link
                             to={`/incident/${incident.id}/assign`}
                             className={`${styles.actionButton} ${styles.assignButton}`}
@@ -717,33 +698,25 @@ Please coordinate and proceed to the location. Thank you! 🙏
                             <FaUsers />
                             <span>Assign Team</span>
                         </Link>
-                        {/* Use permission check for resolve */}
                         <button onClick={handleResolveClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.resolveButton}`}>
                             {isUpdating && updateMessage.includes('Resolved') ? <FaSpinner className={styles.spinner} /> : 'Mark as Resolved'}
                         </button>
                     </>
                 )}
-
-                {/* --- STATUS: RESOLVED --- */}
                 {incident.status === 'RESOLVED' && (
                     <>
-                        {/* Use permission check for reactivate */}
                         <button onClick={handleReactivateClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.updateButton}`}>
                             {isUpdating && updateMessage.includes('Reactivating') ? <FaSpinner className={styles.spinner} /> : <FaUndo />}
                             <span>Reactivate</span>
                         </button>
-                        {/* Use permission check for delete */}
                         <button onClick={handleDeleteClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
                             <FaTrash />
                             <span>Delete Incident</span>
                         </button>
                     </>
                 )}
-
-                {/* --- STATUS: CLOSED --- */}
                 {incident.status === 'CLOSED' && (
                     <>
-                        {/* Use permission check for delete */}
                         <button onClick={handleDeleteClick} disabled={isUpdating} className={`${styles.actionButton} ${styles.deleteButton}`}>
                             <FaTrash />
                             <span>Delete Incident</span>
@@ -751,16 +724,13 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     </>
                 )}
             </div>
-            {/* ====================================================== */}
-            {/* ✨ END ACTION BUTTONS SECTION ✨ */}
-            {/* ====================================================== */}
-
 
             {/* --- Modals --- */}
+            {/* ... (Existing modals remain the same) ... */}
             <CloseIncidentModal
                 isOpen={isCloseModalOpen}
                 onClose={() => setIsCloseModalOpen(false)}
-                onSubmit={handleCloseIncident} // Calls the actual close handler
+                onSubmit={handleCloseIncident}
             />
             {teamDetails && (
                 <TeamDetailsModal
@@ -769,14 +739,12 @@ Please coordinate and proceed to the location. Thank you! 🙏
                     teamDetails={teamDetails}
                 />
             )}
-
             <TeamItemsListModal
                 isOpen={isTeamItemsModalOpen}
                 onClose={() => setIsTeamItemsModalOpen(false)}
                 incidentId={incidentId}
                 token={token}
             />
-
             {incidentHistory && (
                 <IncidentHistoryModal
                     isOpen={isHistoryModalOpen}
@@ -787,20 +755,28 @@ Please coordinate and proceed to the location. Thank you! 🙏
             {isDeleteModalOpen && (
                 <ArchiveConfirmationModal
                     message="Deleting an incident (RESOLVED or CLOSED) is permanent. This will remove all associated cases, chats, and media."
-                    onConfirm={handleDelete} // Calls the actual delete handler
+                    onConfirm={handleDelete}
                     onCancel={() => setIsDeleteModalOpen(false)}
                     confirmText="Yes, Delete"
                     cancelText="No, Keep It"
                     isProcessing={isUpdating}
                 />
             )}
-
-            {/* ✨ RENDER THE UNAUTHORIZED MODAL ✨ */}
             <UnauthorizedModal
                 isOpen={isUnauthorizedModalOpen}
                 onClose={() => setIsUnauthorizedModalOpen(false)}
                 message={unauthorizedMessage}
             />
+
+            {/* --- Render the new Update Incident Modal --- */}
+            <UpdateIncidentModal
+                isOpen={isUpdateModalOpen}
+                onClose={() => setIsUpdateModalOpen(false)}
+                incidentData={incident} // Pass current incident data
+                token={token}
+                onSaveSuccess={handleIncidentUpdateSuccess} // Pass the success handler
+            />
+            {/* --- End Modal Rendering --- */}
         </div>
     );
 };

@@ -251,5 +251,37 @@
     z-index: 1; /* Below the green bar's text */
     /* --- ✨ FIX: No change needed here, logic is handled in JSX --- */
 }
+.fileList li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #333;
+    overflow: hidden; /* Add this */
+}
+
+/* This is the new rule that fixes the problem */
+.fileList span {
+    white-space: nowrap;     /* Don't let text wrap */
+    overflow: hidden;          /* Hide the overflow */
+    text-overflow: ellipsis;   /* Add the ... */
+    flex-grow: 1;            /* Allow the span to take available space */
+    min-width: 0;              /* Required for flex-shrink to work with ellipsis */
+}
+
+.deleteButton {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #95a5a6;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    flex-shrink: 0; /* Add this to prevent the button from shrinking */
+}
+/* ... rest of your styles ... */
 
 /* Remove text color override for .progressBar + .progressText */

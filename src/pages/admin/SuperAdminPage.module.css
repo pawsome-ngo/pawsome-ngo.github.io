@@ -353,3 +353,41 @@
     50% { transform: scale(1.15); opacity: 1; }
     100% { transform: scale(1); opacity: 0.8; }
 }
+
+.resetPasswordButton {
+    background: none;
+    border: none;
+    color: #f39c12; /* Warning/Reset color */
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* Push to the far right */
+    flex-shrink: 0;
+    transition: background-color 0.2s, color 0.2s;
+}
+.resetPasswordButton:hover:not(:disabled) {
+    background-color: #fdf3e6;
+    color: #d35400;
+}
+.resetPasswordButton:disabled {
+    color: #bdc3c7; /* Greyed out when disabled */
+    cursor: not-allowed;
+}
+/* --- END ADD --- */
+
+/* Make .userListItem a flex container to push button to the end */
+.userListItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    user-select: none;
+    border-left: 4px solid transparent;
+}

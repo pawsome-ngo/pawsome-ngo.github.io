@@ -1,18 +1,6 @@
 /* =============================================== */
 /* Base Window & Message List Styles             */
 /* =============================================== */
-
-/*
-* FIX FOR iOS KEYBOARD DISTORTION:
-* This is the most critical part for your specific bug.
-* 1. We set the height to 100vh to fill the *entire* screen,
-* ignoring the keyboard. -webkit-fill-available is a
-* fallback for some older iOS PWA behaviors.
-* 2. overflow: hidden; prevents the *entire window* from
-* moving or scrolling.
-* 3. The flex-direction: column; layout pushes the input
-* bar to the bottom.
-*/
 .chatWindow {
     display: flex;
     flex-direction: column;
@@ -31,14 +19,6 @@
     position: relative;
 }
 
-/*
-* This is the *only* element that should scroll.
-* 1. flex-grow: 1; tells it to take up all available
-* vertical space between the header and the input.
-* 2. overflow-y: auto; creates the scrollbar.
-* When the keyboard appears, this element's effective
-* height shrinks, but the .chatWindow itself does not.
-*/
 .messageList {
     flex-grow: 1;
     padding: 8px 12px 12px;
@@ -189,7 +169,7 @@
 .messageInput { /* Textarea */
     flex-grow: 1;
 
-    /* FIX: This is the key fix for the overflow bug.
+    /* FIX 1: This is the key fix for the overflow bug.
        - flex-basis: 0 allows the item to grow from a 0px base.
        - min-width: 0 allows the textarea to shrink below its
          implicit minimum width, preventing it from pushing
@@ -203,7 +183,14 @@
     border-radius: 18px;
     background-color: #f0f2f5;
     color: #050505;
-    font-size: 0.95rem;
+
+    /* * FIX 2: THE FIX FOR iOS AUTO-ZOOM (Your "squeezing" problem)
+    * font-size was 0.95rem (15.2px).
+    * iOS Safari auto-zooms on inputs with < 16px font-size.
+    * Setting it to 1rem (16px) disables this behavior.
+    */
+    font-size: 1rem; /* Was 0.95rem */
+
     outline: none;
     resize: none;
     max-height: 100px;

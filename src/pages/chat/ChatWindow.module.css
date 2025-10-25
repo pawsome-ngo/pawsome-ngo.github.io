@@ -6,8 +6,15 @@
     flex-direction: column;
     /* --- PWA LAYOUT FIX --- */
     height: 100%; /* Fills the .contentArea parent */
-    /* Fix for mobile browsers resizing viewport on keyboard open */
-    height: -webkit-fill-available;
+
+    /* Use 100vh. On mobile Safari, this maps to the "large" viewport
+      (without the keyboard). This PREVENTS the entire window from
+      shrinking when the keyboard appears, which was causing the distortion.
+      The flexbox layout will then correctly shrink the .messageList
+      while the .messageInputForm is pushed up.
+    */
+    height: 100vh;
+
     /* --- END FIX --- */
     background-color: #FFFFFF;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, '.SFNSText-Regular', sans-serif;

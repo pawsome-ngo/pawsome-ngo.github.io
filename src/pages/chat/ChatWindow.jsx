@@ -5,7 +5,7 @@ import useWebSocket from '../../hooks/useWebSocket.js';
 import ReactionsModal from './components/ReactionsModal.jsx';
 import ReactionPicker from './components/ReactionPicker.jsx';
 import ChatIncidentDetailModal from './components/ChatIncidentDetailModal.jsx';
-import styles from './ChatWindow.module.css';
+import styles from './ChatWindow.module.css'; // Use your existing CSS module
 import {
     FaPaperPlane, FaInfoCircle, FaCheck, FaCheckDouble, FaArrowLeft, FaChevronDown,
     FaPlus, FaCamera, FaImage, FaMicrophone, FaStop, FaSpinner, FaFileAudio, FaFileVideo, FaFileImage, FaFileAlt, FaClock, FaUsers,
@@ -16,71 +16,22 @@ import imageCompression from 'browser-image-compression';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// --- Helper Functions (Unchanged) ---
-const getUserInfoFromToken = (token) => {
-    try {
-        const decodedToken = jwtDecode(token);
-        return { id: Number(decodedToken.id), username: decodedToken.sub };
-    } catch (error) {
-        console.error('Failed to decode token:', error);
-        return { id: null, username: null };
-    }
-};
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-};
-const isSameDay = (d1, d2) => {
-    if (!d1 || !d2) return false;
-    const date1 = new Date(d1);
-    const date2 = new Date(d2);
-    return date1.getFullYear() === date2.getFullYear() &&
-        date1.getMonth() === date2.getMonth() &&
-        date1.getDate() === date2.getDate();
-};
-const formatDateSeparator = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (isSameDay(date, today)) return 'Today';
-    if (isSameDay(date, yesterday)) return 'Yesterday';
-    return date.toLocaleDateString([], { month: 'long', day: 'numeric' });
-};
+// --- Helper Functions (Keep your existing helpers) ---
+const getUserInfoFromToken = (token) => { try { const decodedToken = jwtDecode(token); return { id: Number(decodedToken.id), username: decodedToken.sub }; } catch (error) { console.error('Failed to decode token:', error); return { id: null, username: null }; } };
+const formatDate = (dateString) => { if (!dateString) return ''; const date = new Date(dateString); return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
+const isSameDay = (d1, d2) => { if (!d1 || !d2) return false; const date1 = new Date(d1); const date2 = new Date(d2); return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate(); };
+const formatDateSeparator = (dateString) => { if (!dateString) return ''; const date = new Date(dateString); const today = new Date(); const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1); if (isSameDay(date, today)) return 'Today'; if (isSameDay(date, yesterday)) return 'Yesterday'; return date.toLocaleDateString([], { month: 'long', day: 'numeric' }); };
 // --- End Helper Functions ---
 
-// --- Audio Player Component (Unchanged) ---
+// --- Audio Player Component (Keep your existing component) ---
 const AudioPlayer = ({ src }) => {
-    const audioRef = useRef(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [duration, setDuration] = useState(0);
-    const [currentTime, setCurrentTime] = useState(0);
-    const waveformBars = useMemo(() => Array.from({ length: 30 }, () => Math.random() * 80 + 20), []);
-    const handleLoadedMetadata = () => { if (audioRef.current) setDuration(audioRef.current.duration); };
-    const handleTimeUpdate = () => { if (audioRef.current) setCurrentTime(audioRef.current.currentTime); };
-    const togglePlayPause = (e) => { e.stopPropagation(); if (isPlaying) { audioRef.current.pause(); } else { audioRef.current.play(); } setIsPlaying(!isPlaying); };
-    const formatTime = (timeInSeconds) => {
-        if (isNaN(timeInSeconds) || !isFinite(timeInSeconds) || timeInSeconds === 0) {
-            return '0:00';
-        }
-        const minutes = Math.floor(timeInSeconds / 60);
-        const seconds = Math.floor(timeInSeconds % 60);
-        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-    };
-    return (
-        <div className={styles.audioPlayerContainer}>
-            <audio ref={audioRef} src={src} onLoadedMetadata={handleLoadedMetadata} onTimeUpdate={handleTimeUpdate} onEnded={() => setIsPlaying(false)} preload="metadata" />
-            <button onClick={togglePlayPause} className={styles.audioPlayButton}> {isPlaying ? <FaPause /> : <FaPlay />} </button>
-            <div className={styles.waveformContainer}> {waveformBars.map((height, i) => (<div key={i} className={styles.waveformBar} style={{ height: `${height}%` }} />))} </div>
-            <span className={styles.audioTimestamp}> {formatTime(duration)} </span>
-        </div>
-    );
+    const audioRef = useRef(null); const [isPlaying, setIsPlaying] = useState(false); const [duration, setDuration] = useState(0); const [currentTime, setCurrentTime] = useState(0); const waveformBars = useMemo(() => Array.from({ length: 30 }, () => Math.random() * 80 + 20), []); const handleLoadedMetadata = () => { if (audioRef.current) setDuration(audioRef.current.duration); }; const handleTimeUpdate = () => { if (audioRef.current) setCurrentTime(audioRef.current.currentTime); }; const togglePlayPause = (e) => { e.stopPropagation(); if (isPlaying) { audioRef.current.pause(); } else { audioRef.current.play(); } setIsPlaying(!isPlaying); }; const formatTime = (timeInSeconds) => { if (isNaN(timeInSeconds) || !isFinite(timeInSeconds) || timeInSeconds === 0) { return '0:00'; } const minutes = Math.floor(timeInSeconds / 60); const seconds = Math.floor(timeInSeconds % 60); return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`; };
+    return ( <div className={styles.audioPlayerContainer}> <audio ref={audioRef} src={src} onLoadedMetadata={handleLoadedMetadata} onTimeUpdate={handleTimeUpdate} onEnded={() => setIsPlaying(false)} preload="metadata" /> <button onClick={togglePlayPause} className={styles.audioPlayButton}> {isPlaying ? <FaPause /> : <FaPlay />} </button> <div className={styles.waveformContainer}> {waveformBars.map((height, i) => (<div key={i} className={styles.waveformBar} style={{ height: `${height}%` }} />))} </div> <span className={styles.audioTimestamp}> {formatTime(duration)} </span> </div> );
 };
 // --- End Audio Player Component ---
 
 const ChatWindow = ({ token, onLogout }) => {
+    // --- State and Refs (Keep your existing ones + lastTapTimeRef) ---
     const { chatId } = useParams();
     const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
@@ -100,15 +51,12 @@ const ChatWindow = ({ token, onLogout }) => {
     const readObserver = useRef(null);
     const messageListRef = useRef(null);
     const messageRefs = useRef({});
-
-    // --- Interaction Refs ---
     const pressTimer = useRef(null);
     const dragStartXRef = useRef(null);
-    const lastTapTimeRef = useRef(0); // <-- ADDED FOR DOUBLE-TAP
+    const lastTapTimeRef = useRef(0); // For double-tap
+    const isDraggingRef = useRef(false); // Track dragging state
     const DRAG_THRESHOLD = 50;
     const userIsAtBottomRef = useRef(true);
-
-    // --- Media State (Unchanged) ---
     const imageInputRef = useRef(null);
     const [isRecording, setIsRecording] = useState(false);
     const mediaRecorder = useRef(null);
@@ -116,203 +64,126 @@ const ChatWindow = ({ token, onLogout }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
 
-    // --- All Hooks (Unchanged) ---
-    useEffect(() => {
-        if (token) setLoggedInUser(getUserInfoFromToken(token));
-    }, [token]);
-
-    const scrollToBottom = (behavior = 'smooth') => {
-        if (messageListRef.current) {
-            requestAnimationFrame(() => {
-                if (messageListRef.current) {
-                    messageListRef.current.scrollTo({ top: messageListRef.current.scrollHeight, behavior });
-                }
-            });
-        }
-    };
-
-    const onMessageReceived = useCallback((message) => {
-        const isAtBottom = userIsAtBottomRef.current;
-        setMessages(prevMessages => {
-            const optimisticIndex = prevMessages.findIndex(m => m.clientMessageId && m.clientMessageId === message.clientMessageId);
-            if (optimisticIndex !== -1) { const updated = [...prevMessages]; updated[optimisticIndex] = message; return updated; }
-            const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
-            if (existingMessageIndex !== -1) { const updated = [...prevMessages]; updated[existingMessageIndex] = message; return updated; }
-            if (prevMessages.some(m => m.id === message.id)) { return prevMessages; }
-            return [...prevMessages, message];
-        });
-        if (!isAtBottom && !messages.some(m => m.id === message.id || m.clientMessageId === message.clientMessageId)) {
-            setHasUnreadMessages(true);
-        }
-    }, [messages]);
-
+    // --- Hooks (Keep your existing hooks) ---
+    useEffect(() => { if (token) setLoggedInUser(getUserInfoFromToken(token)); }, [token]);
+    const scrollToBottom = useCallback((behavior = 'smooth') => { if (messageListRef.current) { requestAnimationFrame(() => { if (messageListRef.current) { messageListRef.current.scrollTo({ top: messageListRef.current.scrollHeight, behavior }); } }); } }, []);
+    const onMessageReceived = useCallback((message) => { const isAtBottom = userIsAtBottomRef.current; setMessages(prevMessages => { const optimisticIndex = prevMessages.findIndex(m => m.clientMessageId && m.clientMessageId === message.clientMessageId); if (optimisticIndex !== -1) { const updated = [...prevMessages]; updated[optimisticIndex] = message; return updated; } const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id); if (existingMessageIndex !== -1) { const updated = [...prevMessages]; updated[existingMessageIndex] = message; return updated; } if (prevMessages.some(m => m.id === message.id)) { return prevMessages; } return [...prevMessages, message]; }); if (!isAtBottom && !messages.some(m => m.id === message.id || m.clientMessageId === message.clientMessageId)) { setHasUnreadMessages(true); } }, [messages]);
     useEffect(() => { if (userIsAtBottomRef.current) { scrollToBottom('smooth'); } }, [messages]);
-
     const { sendMessage } = useWebSocket({ onMessageReceived, token, chatId });
-
-    useEffect(() => {
-        const fetchChatData = async () => {
-            setLoading(true); setError(null);
-            try {
-                const [msgRes, grpRes] = await Promise.all([
-                    fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } })
-                ]);
-                if (!msgRes.ok) throw new Error(`Fetch messages failed (Status: ${msgRes.status})`);
-                if (!grpRes.ok) throw new Error(`Fetch groups failed (Status: ${grpRes.status})`);
-                const messagesData = await msgRes.json();
-                const groupsData = await grpRes.json();
-                const currentGroupParticipant = groupsData.find(p => p.chatGroup.id === chatId);
-                if (currentGroupParticipant) {
-                    setChatGroup(currentGroupParticipant.chatGroup);
-                    setMessages(messagesData);
-                    setTimeout(() => scrollToBottom('auto'), 0);
-                } else { throw new Error('Chat group not found or you are not a participant.'); }
-            } catch (err) { console.error("Error fetching chat data:", err); setError(err.message); }
-            finally { setLoading(false); }
-        };
-        if (chatId && token) { fetchChatData(); }
-        else if (!token) { setError("Authentication token not found."); setLoading(false); }
-    }, [chatId, token, navigate]);
-
-    const handleMarkAsRead = useCallback((messageId) => {
-        if (!messageId || !loggedInUser) return;
-        const message = messages.find(m => m.id === messageId);
-        if (!message || message.sender?.id === loggedInUser.id || message.seenBy?.some(user => user.id === loggedInUser.id)) { return; }
-        sendMessage({ messageId }, `/app/chat/${chatId}/read`);
-    }, [sendMessage, chatId, messages, loggedInUser]);
-
-    useEffect(() => {
-        if (readObserver.current) readObserver.current.disconnect();
-        const observerCallback = (entries) => { entries.forEach(entry => { if (entry.isIntersecting && entry.intersectionRatio >= 0.7) { const messageId = entry.target.dataset.messageId; handleMarkAsRead(messageId); readObserver.current.unobserve(entry.target); } }); };
-        readObserver.current = new IntersectionObserver(observerCallback, { root: messageListRef.current, threshold: 0.7 });
-        messages.forEach(msg => { const element = messageRefs.current[msg.id]; const isReadByMe = msg.seenBy?.some(user => user.id === loggedInUser?.id); if (element && msg.id && !msg.clientMessageId && msg.sender?.id !== loggedInUser?.id && !isReadByMe) { try { readObserver.current.observe(element); } catch (e) { console.warn("Observer error:", e); } } });
-        return () => { if (readObserver.current) readObserver.current.disconnect(); };
-    }, [messages, loggedInUser, handleMarkAsRead]);
-
+    useEffect(() => { const fetchChatData = async () => { setLoading(true); setError(null); try { const [msgRes, grpRes] = await Promise.all([ fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } }), fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } }) ]); if (!msgRes.ok) throw new Error(`Fetch messages failed (Status: ${msgRes.status})`); if (!grpRes.ok) throw new Error(`Fetch groups failed (Status: ${grpRes.status})`); const messagesData = await msgRes.json(); const groupsData = await grpRes.json(); const currentGroupParticipant = groupsData.find(p => p.chatGroup.id === chatId); if (currentGroupParticipant) { setChatGroup(currentGroupParticipant.chatGroup); setMessages(messagesData); setTimeout(() => scrollToBottom('auto'), 0); } else { throw new Error('Chat group not found or you are not a participant.'); } } catch (err) { console.error("Error fetching chat data:", err); setError(err.message); } finally { setLoading(false); } }; if (chatId && token) { fetchChatData(); } else if (!token) { setError("Authentication token not found."); setLoading(false); } }, [chatId, token, navigate]);
+    const handleMarkAsRead = useCallback((messageId) => { if (!messageId || !loggedInUser) return; const message = messages.find(m => m.id === messageId); if (!message || message.sender?.id === loggedInUser.id || message.seenBy?.some(user => user.id === loggedInUser.id)) { return; } sendMessage({ messageId }, `/app/chat/${chatId}/read`); }, [sendMessage, chatId, messages, loggedInUser]);
+    useEffect(() => { if (readObserver.current) readObserver.current.disconnect(); const observerCallback = (entries) => { entries.forEach(entry => { if (entry.isIntersecting && entry.intersectionRatio >= 0.7) { const messageId = entry.target.dataset.messageId; handleMarkAsRead(messageId); readObserver.current.unobserve(entry.target); } }); }; readObserver.current = new IntersectionObserver(observerCallback, { root: messageListRef.current, threshold: 0.7 }); messages.forEach(msg => { const element = messageRefs.current[msg.id]; const isReadByMe = msg.seenBy?.some(user => user.id === loggedInUser?.id); if (element && msg.id && !msg.clientMessageId && msg.sender?.id !== loggedInUser?.id && !isReadByMe) { try { readObserver.current.observe(element); } catch (e) { console.warn("Observer error:", e); } } }); return () => { if (readObserver.current) readObserver.current.disconnect(); }; }, [messages, loggedInUser, handleMarkAsRead]);
     const handleScroll = () => { if (messageListRef.current) { const { scrollHeight, scrollTop, clientHeight } = messageListRef.current; const isNearBottom = scrollHeight - scrollTop - clientHeight < 50; userIsAtBottomRef.current = isNearBottom; if (isNearBottom) { setHasUnreadMessages(false); } } };
 
-    // --- All Business Logic Functions (Unchanged) ---
-    const handleMediaUpload = async (file) => {
-        if (!file || !chatId || !token || !loggedInUser) return;
-        setIsUploading(true); setUploadError(''); let processedFile = file; let mediaTypeString = 'UNKNOWN';
-        try {
-            if (file.type.startsWith('image/')) {
-                mediaTypeString = 'IMAGE';
-                const compOptions = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true, fileType: 'image/jpeg', quality: 0.7 };
-                try { const compBlob = await imageCompression(file, compOptions); const fName = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg'; processedFile = new File([compBlob], fName, { type: 'image/jpeg', lastModified: file.lastModified }); } catch (compErr) { console.warn("Img compression failed", compErr); processedFile = file; }
-            } else if (file.type.startsWith('video/')) { mediaTypeString = 'VIDEO'; } else if (file.type.startsWith('audio/')) { mediaTypeString = 'AUDIO'; } else { throw new Error("Unsupported file type."); }
-            const formData = new FormData(); formData.append('media', processedFile);
-            const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}/media`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
-            const result = await response.json(); if (!response.ok) throw new Error(result.message || `Upload failed`);
-            const clientMsgId = `temp-${Date.now()}`; const txtToSend = newMessage.trim();
-            const optimisticMsg = { id: clientMsgId, clientMessageId: clientMsgId, text: txtToSend || null, sender: { id: loggedInUser.id, firstName: 'You', lastName: '' }, timestamp: new Date().toISOString(), reactions: {}, seenBy: [], parentMessageId: replyingTo ? replyingTo.id : null, mediaUrl: result.mediaUrl, mediaType: result.mediaType };
-            setMessages(prev => [...prev, optimisticMsg]);
-            sendMessage({ text: txtToSend || null, clientMessageId: clientMsgId, parentMessageId: replyingTo ? replyingTo.id : null, mediaUrl: result.mediaUrl, mediaType: result.mediaType }, `/app/chat/${chatId}/send`);
-            setNewMessage(''); setReplyingTo(null); if(textareaRef.current) textareaRef.current.style.height = 'auto'; setTimeout(() => scrollToBottom('smooth'), 50);
-        } catch (err) { console.error("Media error:", err); setUploadError(err.message); setTimeout(() => setUploadError(''), 5000); }
-        finally { setIsUploading(false); if(imageInputRef.current) imageInputRef.current.value = null; }
-    };
-
+    // --- Message Sending & Media Handling (Keep your existing functions) ---
+    const handleMediaUpload = async (file) => { if (!file || !chatId || !token || !loggedInUser) return; setIsUploading(true); setUploadError(''); let processedFile = file; let mediaTypeString = 'UNKNOWN'; try { if (file.type.startsWith('image/')) { mediaTypeString = 'IMAGE'; const compOptions = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true, fileType: 'image/jpeg', quality: 0.7 }; try { const compBlob = await imageCompression(file, compOptions); const fName = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg'; processedFile = new File([compBlob], fName, { type: 'image/jpeg', lastModified: file.lastModified }); } catch (compErr) { console.warn("Img compression failed", compErr); processedFile = file; } } else if (file.type.startsWith('video/')) { mediaTypeString = 'VIDEO'; } else if (file.type.startsWith('audio/')) { mediaTypeString = 'AUDIO'; } else { throw new Error("Unsupported file type."); } const formData = new FormData(); formData.append('media', processedFile); const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}/media`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData }); const result = await response.json(); if (!response.ok) throw new Error(result.message || `Upload failed`); const clientMsgId = `temp-${Date.now()}`; const txtToSend = newMessage.trim(); const optimisticMsg = { id: clientMsgId, clientMessageId: clientMsgId, text: txtToSend || null, sender: { id: loggedInUser.id, firstName: 'You', lastName: '' }, timestamp: new Date().toISOString(), reactions: {}, seenBy: [], parentMessageId: replyingTo ? replyingTo.id : null, mediaUrl: result.mediaUrl, mediaType: result.mediaType }; setMessages(prev => [...prev, optimisticMsg]); sendMessage({ text: txtToSend || null, clientMessageId: clientMsgId, parentMessageId: replyingTo ? replyingTo.id : null, mediaUrl: result.mediaUrl, mediaType: result.mediaType }, `/app/chat/${chatId}/send`); setNewMessage(''); setReplyingTo(null); if(textareaRef.current) textareaRef.current.style.height = 'auto'; setTimeout(() => scrollToBottom('smooth'), 50); } catch (err) { console.error("Media error:", err); setUploadError(err.message); setTimeout(() => setUploadError(''), 5000); } finally { setIsUploading(false); if(imageInputRef.current) imageInputRef.current.value = null; } };
     const handleFileSelected = (event) => { const file = event.target.files?.[0]; if (file) { handleMediaUpload(file); } event.target.value = null; };
-
-    const startRecording = async () => {
-        if (isUploading || isRecording) return;
-        try {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setUploadError("Audio recording not supported."); setTimeout(() => setUploadError(''), 5000); return; }
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const options = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? { mimeType: 'audio/webm;codecs=opus' } : MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm'} : {}; mediaRecorder.current = new MediaRecorder(stream, options); const mimeType = mediaRecorder.current.mimeType || 'audio/webm'; const fExt = mimeType.includes('opus') ? 'opus' : (mimeType.split('/')[1]?.split(';')[0] || 'webm'); audioChunks.current = []; mediaRecorder.current.ondataavailable = event => { if (event.data.size > 0) audioChunks.current.push(event.data); }; mediaRecorder.current.onstop = () => { const audioBlob = new Blob(audioChunks.current, { type: mimeType }); const audioFile = new File([audioBlob], `voice-msg-${Date.now()}.${fExt}`, { type: mimeType }); handleMediaUpload(audioFile); stream.getTracks().forEach(track => track.stop()); }; mediaRecorder.current.start(); setIsRecording(true);
-        } catch (err) { console.error("Mic error:", err); if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') { setUploadError("Mic permission denied."); } else { setUploadError("Could not access mic."); } setTimeout(() => setUploadError(''), 5000); }
-    };
-
+    const startRecording = async () => { if (isUploading || isRecording) return; try { if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setUploadError("Audio recording not supported."); setTimeout(() => setUploadError(''), 5000); return; } const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const options = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? { mimeType: 'audio/webm;codecs=opus' } : MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm'} : {}; mediaRecorder.current = new MediaRecorder(stream, options); const mimeType = mediaRecorder.current.mimeType || 'audio/webm'; const fExt = mimeType.includes('opus') ? 'opus' : (mimeType.split('/')[1]?.split(';')[0] || 'webm'); audioChunks.current = []; mediaRecorder.current.ondataavailable = event => { if (event.data.size > 0) audioChunks.current.push(event.data); }; mediaRecorder.current.onstop = () => { const audioBlob = new Blob(audioChunks.current, { type: mimeType }); const audioFile = new File([audioBlob], `voice-msg-${Date.now()}.${fExt}`, { type: mimeType }); handleMediaUpload(audioFile); stream.getTracks().forEach(track => track.stop()); }; mediaRecorder.current.start(); setIsRecording(true); } catch (err) { console.error("Mic error:", err); if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') { setUploadError("Mic permission denied."); } else { setUploadError("Could not access mic."); } setTimeout(() => setUploadError(''), 5000); } };
     const stopRecording = () => { if (mediaRecorder.current && mediaRecorder.current.state === "recording") { mediaRecorder.current.stop(); setIsRecording(false); } };
-
-    const handleSendMessage = (event) => {
-        event?.preventDefault(); const txtToSend = newMessage.trim(); if ((txtToSend === '' && !isUploading) || !loggedInUser || isRecording) { return; } if (isUploading) { return; }
-        const clientMsgId = `temp-${Date.now()}`; const optimisticMsg = { id: clientMsgId, clientMessageId: clientMsgId, text: txtToSend, sender: { id: loggedInUser.id, firstName: 'You', lastName: '' }, timestamp: new Date().toISOString(), reactions: {}, seenBy: [], parentMessageId: replyingTo ? replyingTo.id : null }; setMessages(prev => [...prev, optimisticMsg]);
-        sendMessage({ text: txtToSend, clientMessageId: clientMsgId, parentMessageId: replyingTo ? replyingTo.id : null }, `/app/chat/${chatId}/send`);
-        setNewMessage(''); setReplyingTo(null); if(textareaRef.current) textareaRef.current.style.height = 'auto'; setTimeout(() => scrollToBottom('smooth'), 50);
-    };
-
+    const handleSendMessage = (event) => { event?.preventDefault(); const txtToSend = newMessage.trim(); if ((txtToSend === '' && !isUploading) || !loggedInUser || isRecording) { return; } if (isUploading) { return; } const clientMsgId = `temp-${Date.now()}`; const optimisticMsg = { id: clientMsgId, clientMessageId: clientMsgId, text: txtToSend, sender: { id: loggedInUser.id, firstName: 'You', lastName: '' }, timestamp: new Date().toISOString(), reactions: {}, seenBy: [], parentMessageId: replyingTo ? replyingTo.id : null }; setMessages(prev => [...prev, optimisticMsg]); sendMessage({ text: txtToSend, clientMessageId: clientMsgId, parentMessageId: replyingTo ? replyingTo.id : null }, `/app/chat/${chatId}/send`); setNewMessage(''); setReplyingTo(null); if(textareaRef.current) textareaRef.current.style.height = 'auto'; setTimeout(() => scrollToBottom('smooth'), 50); };
     const handleTextareaInput = (e) => { setNewMessage(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; };
     const handleKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } };
     const handleReact = (reaction) => { if (loggedInUser && activeEmojiPicker) { sendMessage({ messageId: activeEmojiPicker, reaction }, `/app/chat/${chatId}/react`); } setActiveEmojiPicker(null); };
     const handleScrollToMessage = (messageId) => { const element = messageRefs.current[messageId]; if (element) { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); element.classList.add(styles.highlight); setTimeout(() => { element.classList.remove(styles.highlight); }, 1500); } };
 
-    // --- Double Click Handler (Unchanged, but now called correctly) ---
+    // --- Double Click Handler (Called by handleInteractionStart) ---
     const handleDoubleClick = (message) => {
         if (!loggedInUser || !message?.id || message?.clientMessageId) return;
         const reactionType = '❤️';
         sendMessage({ messageId: message.id, reaction: reactionType }, `/app/chat/${chatId}/react`);
         setAnimatedHeart(message.id);
-        setTimeout(() => setAnimatedHeart(null), 600); // Match animation duration
+        setTimeout(() => setAnimatedHeart(null), 600);
     };
 
-    // --- Interaction Handlers (REPLACED with logic from reference) ---
+    // --- Interaction Handlers (REVISED based on reference) ---
 
     const handleInteractionStart = (e, message) => {
         if (message?.clientMessageId) return;
 
-        const currentTime = new Date().getTime();
+        const isTouchEvent = e.type.startsWith('touch');
+        const currentX = isTouchEvent ? e.touches[0].clientX : e.clientX;
+        const currentTime = Date.now();
         const timeSinceLastTap = currentTime - lastTapTimeRef.current;
-        lastTapTimeRef.current = currentTime;
 
-        // Check for Double-Tap FIRST
-        if (timeSinceLastTap < 300) { // 300ms threshold
-            e.preventDefault(); // Prevent zoom/selection on mobile
+        // --- Double Tap Detection ---
+        if (timeSinceLastTap < 300) {
+            e.preventDefault(); // *** CRUCIAL: Prevent default action like zoom/selection on double tap ***
             handleDoubleClick(message);
-            clearTimeout(pressTimer.current); // Cancel pending long-press
+            clearTimeout(pressTimer.current); // Cancel pending long press
             dragStartXRef.current = null; // Cancel swipe
-            lastTapTimeRef.current = 0; // Reset tap time
-            return; // Stop processing further actions
+            isDraggingRef.current = false;
+            lastTapTimeRef.current = 0; // Reset tap time to prevent triple tap issue
+            return; // Action handled, exit
         }
 
-        // If not double-tap, proceed with long-press/swipe logic
+        // --- Single Tap / Start of Long Press or Swipe ---
+        lastTapTimeRef.current = currentTime; // Record tap time for potential double tap
+        dragStartXRef.current = currentX; // Record start X for potential swipe
+        isDraggingRef.current = false; // Reset dragging flag
+
+        // Clear previous timer just in case
         clearTimeout(pressTimer.current);
-        dragStartXRef.current = e.clientX || e.touches?.[0]?.clientX; // Record start X for swipe
 
         // Set timer for long press
         pressTimer.current = setTimeout(() => {
-            // Only trigger long-press if NO drag has started
-            if (dragStartXRef.current !== null) {
+            // If timer fires, and we haven't started dragging, it's a long press
+            if (!isDraggingRef.current) {
                 setActiveEmojiPicker(message.id);
-                dragStartXRef.current = null; // Prevent swipe if long-press triggers
+                dragStartXRef.current = null; // Cancel swipe if long press triggers
             }
-        }, 350); // Long press delay
+        }, 350); // Long press delay (adjust if needed)
     };
 
     const handleInteractionMove = (e) => {
-        // If user moves significantly horizontally, cancel the long-press timer
-        if (pressTimer.current && dragStartXRef.current !== null) {
-            const currentX = e.clientX || e.touches?.[0]?.clientX;
-            if (currentX && Math.abs(currentX - dragStartXRef.current) > 10) { // Small threshold to allow minor movement
-                clearTimeout(pressTimer.current);
-            }
+        if (dragStartXRef.current === null) return; // No interaction started
+
+        const isTouchEvent = e.type.startsWith('touch');
+        const currentX = isTouchEvent ? e.touches[0].clientX : e.clientX;
+        const deltaX = currentX - dragStartXRef.current;
+
+        // If moved beyond a small threshold horizontally, consider it dragging
+        if (Math.abs(deltaX) > 10) {
+            isDraggingRef.current = true; // Mark as dragging
+            clearTimeout(pressTimer.current); // Cancel long press if dragging starts
         }
+        // No e.preventDefault() here - allow vertical scrolling
     };
 
     const handleInteractionEnd = (e, message) => {
-        clearTimeout(pressTimer.current); // Always clear timer on end
+        clearTimeout(pressTimer.current); // Always clear timer on interaction end
 
-        // Check for swipe only if long-press didn't activate and drag was initiated
-        if (!activeEmojiPicker && dragStartXRef.current !== null) {
-            const dragEndX = e.clientX || e.changedTouches?.[0]?.clientX;
-            if (dragEndX && dragEndX - dragStartXRef.current > DRAG_THRESHOLD) {
+        const isTouchEvent = e.type.startsWith('touch');
+
+        // Check for swipe only if a drag was initiated and wasn't cancelled by long press
+        if (dragStartXRef.current !== null && isDraggingRef.current) {
+            const dragEndX = isTouchEvent ? e.changedTouches[0].clientX : e.clientX;
+            const deltaX = dragEndX - dragStartXRef.current;
+
+            if (deltaX > DRAG_THRESHOLD) {
                 // Successful swipe right
                 setReplyingTo(message);
             }
         }
 
-        // Reset drag state for next interaction
+        // Reset states for the next interaction
         dragStartXRef.current = null;
+        isDraggingRef.current = false;
+        // Do not reset lastTapTimeRef here, it's handled in handleInteractionStart
     };
 
     const handleLeave = () => {
-        // Clear timer if mouse/touch leaves the element
+        // If mouse/touch leaves the element boundary, cancel potential actions
         clearTimeout(pressTimer.current);
-        // Don't reset dragStartXRef, as the mouse button might still be down
-    }
-    // --- End Interaction Handlers ---
+        // Important: Reset drag start if user leaves WHILE holding down,
+        // otherwise a mouseUp outside the element could trigger a swipe incorrectly.
+        // However, on touch devices, 'touchleave' is less common/reliable.
+        // A simple timeout clear might be enough, but resetting dragStartX is safer for mouse.
+        // Let's reset dragStartXRef for robustness, especially for mouse users.
+        dragStartXRef.current = null;
+        isDraggingRef.current = false;
+    };
 
+    // --- End Interaction Handlers ---
 
     // --- Render Logic (Unchanged) ---
     if (loading || !loggedInUser || !chatGroup) { return <div className={styles.centeredMessage}>Loading...</div>; }
@@ -375,7 +246,7 @@ const ChatWindow = ({ token, onLogout }) => {
                                         {activeEmojiPicker === msg.id && <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />}
                                         <div
                                             className={`${styles.messageBubble} ${msg.mediaUrl ? styles.mediaBubble : ''} ${msg.mediaType === 'AUDIO' ? styles.audioBubble : ''}`}
-                                            // --- UPDATED EVENT HANDLERS ---
+                                            // --- USE UPDATED EVENT HANDLERS ---
                                             onMouseDown={(e) => handleInteractionStart(e, msg)}
                                             onMouseUp={(e) => handleInteractionEnd(e, msg)}
                                             onMouseMove={handleInteractionMove}
@@ -383,16 +254,13 @@ const ChatWindow = ({ token, onLogout }) => {
                                             onTouchStart={(e) => handleInteractionStart(e, msg)}
                                             onTouchMove={handleInteractionMove}
                                             onTouchEnd={(e) => handleInteractionEnd(e, msg)}
-                                            onDragStart={(e) => e.preventDefault()} // Prevent native drag
-                                            // onDoubleClick is removed
+                                            // Prevent native context menu on long press
+                                            onContextMenu={(e) => e.preventDefault()}
                                             // --- END UPDATE ---
                                         >
                                             {renderMedia(msg)}
-                                            {/* Render text unless it's ONLY audio */}
                                             {(msg.text && msg.mediaType !== 'AUDIO') && <p className={styles.messageText}>{msg.text}</p>}
-                                            {/* Render text if it exists alongside other media */}
                                             {(msg.text && msg.mediaUrl && msg.mediaType !== 'AUDIO') && <p className={styles.messageText}>{msg.text}</p>}
-
                                             {msg.clientMessageId && (isUploading || !msg.id) && <FaSpinner className={styles.optimisticSpinner} />}
                                         </div>
                                         {reactionsCount > 0 && (
@@ -425,7 +293,6 @@ const ChatWindow = ({ token, onLogout }) => {
                     <FaChevronDown /> New Messages
                 </button>
             }
-
             {replyingTo && (
                 <div className={styles.replyingToContext}>
                     <div className={styles.replyContextContent}>
@@ -435,9 +302,7 @@ const ChatWindow = ({ token, onLogout }) => {
                     <button onClick={() => setReplyingTo(null)} className={styles.cancelReplyButton}>&times;</button>
                 </div>
             )}
-
             {uploadError && <div className={styles.uploadErrorBar}>{uploadError}</div>}
-
             <footer className={`${styles.messageInputForm} ${newMessage.trim() ? styles.typingActive : ''}`}>
                 <input type="file" accept="image/*,video/*" ref={imageInputRef} onChange={handleFileSelected} style={{ display: 'none' }} />
                 <div className={styles.actionButtonsContainer}>
@@ -467,7 +332,6 @@ const ChatWindow = ({ token, onLogout }) => {
                     {isUploading ? <FaSpinner className={styles.spinner} /> : <FaPaperPlane />}
                 </button>
             </footer>
-
             {isIncidentModalOpen && chatGroup?.purposeId && (
                 <ChatIncidentDetailModal
                     incidentId={chatGroup.purposeId}

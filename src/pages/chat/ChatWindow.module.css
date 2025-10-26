@@ -143,6 +143,10 @@
     min-width: 50px;
     position: relative;
     touch-action: pan-y; /* <-- ADDED TO FIX SWIPE-SCROLL CONFLICT */
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard syntax */
 }
 
 .messageText {
@@ -568,8 +572,7 @@
     flex-shrink: 0;
 }
 
-/* --- ADDED FOR HEART ANIMATION --- */
-
+/* Should already be at the end of the file */
 .animatedHeart {
     position: absolute;
     top: 50%;

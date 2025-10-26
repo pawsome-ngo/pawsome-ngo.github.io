@@ -42,7 +42,7 @@ const ChatWindow = ({ token, onLogout }) => {
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
     const [loggedInUser, setLoggedInUser] = useState(null);
-    const [chatGroup, setChatGroup] = useState(null);
+    const [chatGroup, setChatGroup] = useState(null); // This holds participants
     const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
     const [reactionsModalData, setReactionsModalData] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null);
@@ -60,8 +60,6 @@ const ChatWindow = ({ token, onLogout }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
     const userIsAtBottomRef = useRef(true);
-
-    // --- NEW STATE FOR @MENTIONS ---
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [filteredMembers, setFilteredMembers] = useState([]);
 
@@ -71,7 +69,8 @@ const ChatWindow = ({ token, onLogout }) => {
     const onMessageReceived = useCallback((message) => { const isAtBottom = userIsAtBottomRef.current; setMessages(prevMessages => { const optimisticIndex = prevMessages.findIndex(m => m.clientMessageId && m.clientMessageId === message.clientMessageId); if (optimisticIndex !== -1) { const updated = [...prevMessages]; updated[optimisticIndex] = message; return updated; } const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id); if (existingMessageIndex !== -1) { const updated = [...prevMessages]; updated[existingMessageIndex] = message; return updated; } if (prevMessages.some(m => m.id === message.id)) { return prevMessages; } return [...prevMessages, message]; }); if (!isAtBottom && !messages.some(m => m.id === message.id || m.clientMessageId === message.clientMessageId)) { setHasUnreadMessages(true); } }, [messages]);
     useEffect(() => { if (userIsAtBottomRef.current) { scrollToBottom('smooth'); } }, [messages]);
     const { sendMessage } = useWebSocket({ onMessageReceived, token, chatId });
-    useEffect(() => { const fetchChatData = async () => { setLoading(true); setError(null); try { const [msgRes, grpRes] = await Promise.all([ fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } }), fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } }) ]); if (!msgRes.ok) throw new Error(`Fetch messages failed (Status: ${msgRes.status})`); if (!grpRes.ok) throw new Error(`Fetch groups failed (Status: ${grpRes.status})`); const messagesData = await msgRes.json(); const groupsData = await grpRes.json(); const currentGroupParticipant = groupsData.find(p => p.chatGroup.id === chatId); if (currentGroupParticipant) { setChatGroup(currentGroupParticipant.chatGroup); setMessages(messagesData); setTimeout(() => scrollToBottom('auto'), 0); } else { throw new Error('Chat group not found or you are not a participant.'); } } catch (err) { console.error("Error fetching chat data:", err); setError(err.message); } finally { setLoading(false); } }; if (chatId && token) { fetchChatData(); } else if (!token) { setError("Authentication token not found."); setLoading(false); } }, [chatId, token, navigate]);
+    useEffect(() => { const fetchChatData = async () => { setLoading(true); setError(null); try { const [msgRes, grpRes] = await Promise.all([ fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } }), fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } }) ]); if (!msgRes.ok) throw new Error(`Fetch messages failed (Status: ${msgRes.status})`); if (!grpRes.ok) throw new Error(`Fetch groups failed (Status: ${grpRes.status})`); const messagesData = await msgRes.json(); const groupsData = await grpRes.json(); const currentGroupParticipant = groupsData.find(p => p.chatGroup.id === chatId); if (currentGroupParticipant) { setChatGroup(currentGroupParticipant.chatGroup); // *** Set chatGroup here ***
+        setMessages(messagesData); setTimeout(() => scrollToBottom('auto'), 0); } else { throw new Error('Chat group not found or you are not a participant.'); } } catch (err) { console.error("Error fetching chat data:", err); setError(err.message); } finally { setLoading(false); } }; if (chatId && token) { fetchChatData(); } else if (!token) { setError("Authentication token not found."); setLoading(false); } }, [chatId, token, navigate]); // Added navigate dependency
     const handleMarkAsRead = useCallback((messageId) => { if (!messageId || !loggedInUser) return; const message = messages.find(m => m.id === messageId); if (!message || message.sender?.id === loggedInUser.id || message.seenBy?.some(user => user.id === loggedInUser.id)) { return; } sendMessage({ messageId }, `/app/chat/${chatId}/read`); }, [sendMessage, chatId, messages, loggedInUser]);
     useEffect(() => { if (readObserver.current) readObserver.current.disconnect(); const observerCallback = (entries) => { entries.forEach(entry => { if (entry.isIntersecting && entry.intersectionRatio >= 0.7) { const messageId = entry.target.dataset.messageId; handleMarkAsRead(messageId); readObserver.current.unobserve(entry.target); } }); }; readObserver.current = new IntersectionObserver(observerCallback, { root: messageListRef.current, threshold: 0.7 }); messages.forEach(msg => { const element = messageRefs.current[msg.id]; const isReadByMe = msg.seenBy?.some(user => user.id === loggedInUser?.id); if (element && msg.id && !msg.clientMessageId && msg.sender?.id !== loggedInUser?.id && !isReadByMe) { try { readObserver.current.observe(element); } catch (e) { console.warn("Observer error:", e); } } }); return () => { if (readObserver.current) readObserver.current.disconnect(); }; }, [messages, loggedInUser, handleMarkAsRead]);
     const handleScroll = () => { if (messageListRef.current) { const { scrollHeight, scrollTop, clientHeight } = messageListRef.current; const isNearBottom = scrollHeight - scrollTop - clientHeight < 50; userIsAtBottomRef.current = isNearBottom; if (isNearBottom) { setHasUnreadMessages(false); } } };
@@ -92,17 +91,18 @@ const ChatWindow = ({ token, onLogout }) => {
 
         // --- @Mention Logic ---
         const lastAtIndex = text.lastIndexOf('@');
-        // Check if '@' exists and there is no space after it
-        if (lastAtIndex !== -1 && !text.substring(lastAtIndex).includes(' ')) {
+
+        // *** ADDED CHECK: Ensure chatGroup and participants are loaded ***
+        if (chatGroup && chatGroup.participants && lastAtIndex !== -1 && !text.substring(lastAtIndex).includes(' ')) {
             const query = text.substring(lastAtIndex + 1).toLowerCase();
 
-            const members = chatGroup?.participants
+            const members = chatGroup.participants
                 .map(p => p.user)
-                .filter(user => user.id !== loggedInUser.id) // Don't suggest yourself
+                .filter(user => user && user.id !== loggedInUser.id) // Filter out null users and self
                 .filter(user =>
-                    user.firstName.toLowerCase().startsWith(query) ||
-                    user.lastName.toLowerCase().startsWith(query) ||
-                    user.username.toLowerCase().startsWith(query)
+                    user.firstName?.toLowerCase().startsWith(query) ||
+                    user.lastName?.toLowerCase().startsWith(query) ||
+                    user.username?.toLowerCase().startsWith(query)
                 );
 
             setFilteredMembers(members || []);
@@ -113,20 +113,28 @@ const ChatWindow = ({ token, onLogout }) => {
         // --- End @Mention Logic ---
     };
 
-    // --- NEW FUNCTION: handleMentionSelect ---
+    // --- handleMentionSelect (Unchanged) ---
     const handleMentionSelect = (user) => {
         const text = newMessage;
         const lastAtIndex = text.lastIndexOf('@');
-
-        // Get text before the @query
         const before = text.substring(0, lastAtIndex);
-        // Create the new text with the selected name (using firstName, but username is also a good option)
-        const newText = `${before}@${user.firstName} `; // Add space after
+        const newText = `${before}@${user.firstName} `; // Use firstName
 
         setNewMessage(newText);
         setShowSuggestions(false);
         setFilteredMembers([]);
-        textareaRef.current.focus();
+
+        // Restore focus and resize textarea
+        if (textareaRef.current) {
+            textareaRef.current.focus();
+            // Need a slight delay for the value update to reflect
+            setTimeout(() => {
+                if (textareaRef.current) {
+                    textareaRef.current.style.height = 'auto';
+                    textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+                }
+            }, 0);
+        }
     };
 
     const handleKeyDown = (e) => {
@@ -138,14 +146,13 @@ const ChatWindow = ({ token, onLogout }) => {
     const handleReact = (reaction) => { if (loggedInUser && activeEmojiPicker) { sendMessage({ messageId: activeEmojiPicker, reaction }, `/app/chat/${chatId}/react`); } setActiveEmojiPicker(null); };
     const handleScrollToMessage = (messageId) => { const element = messageRefs.current[messageId]; if (element) { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); element.classList.add(styles.highlight); setTimeout(() => { element.classList.remove(styles.highlight); }, 1500); } };
 
-    // --- Simplified Interaction Handlers (from our last attempt) ---
+    // --- Simplified Interaction Handlers (Unchanged) ---
     const handleSingleClick = (e, message) => {
         e.stopPropagation();
         if (message.messageType === 'IMAGE') {
             setLightboxSrc(`${API_BASE_URL}${message.mediaUrl}`);
         }
     };
-
     const handleDoubleClick = (e, message) => {
         e.stopPropagation();
         if (!loggedInUser || !message?.id || message?.clientMessageId) return;
@@ -154,7 +161,6 @@ const ChatWindow = ({ token, onLogout }) => {
         setAnimatedHeart(message.id);
         setTimeout(() => setAnimatedHeart(null), 600);
     };
-
     const handleLongPress = (e, message) => {
         e.preventDefault();
         e.stopPropagation();
@@ -163,8 +169,25 @@ const ChatWindow = ({ token, onLogout }) => {
     };
     // --- End Simplified Handlers ---
 
+    // --- NEW: Function to render mentions with bold style ---
+    const renderMessageWithMentions = (text) => {
+        if (!text) return null;
+        // Regex to find @ followed by one or more non-whitespace characters
+        const mentionRegex = /@(\S+)/g;
 
-    // --- Render Logic (Unchanged) ---
+        const parts = text.split(mentionRegex);
+
+        return parts.map((part, index) => {
+            // Even indices are regular text, odd indices are the captured mention names
+            if (index % 2 === 1) {
+                return <span key={index} className={styles.mentionHighlight}>@{part}</span>;
+            } else {
+                return part;
+            }
+        });
+    };
+
+    // --- Render Logic ---
     if (loading || !loggedInUser || !chatGroup) { return <div className={styles.centeredMessage}>Loading...</div>; }
     if (error) { return (<div className={styles.chatWindow}> <header className={styles.chatHeader}> <button onClick={() => navigate('/chat')} className={styles.backButton}><FaArrowLeft /></button> <div className={styles.headerTitleContainer}><h2>Error</h2></div> <div className={styles.headerActions}></div> </header> <div className={styles.centeredMessage}>{error}</div> </div>); }
 
@@ -196,6 +219,7 @@ const ChatWindow = ({ token, onLogout }) => {
 
             <main ref={messageListRef} className={styles.messageList} onScroll={handleScroll}>
                 {messages.map((msg, index) => {
+                    // ... (keep existing map logic setup) ...
                     const prevMsg = messages[index - 1];
                     const nextMsg = messages[index + 1];
                     const isSentByCurrentUser = Number(msg.sender?.id) === loggedInUser?.id;
@@ -220,6 +244,7 @@ const ChatWindow = ({ token, onLogout }) => {
                                 data-message-id={msg.id}
                                 className={`${styles.messageWrapper} ${isSentByCurrentUser ? styles.sent : styles.received} ${isFirstInGroup ? '' : styles.grouped} ${isFollowedByGrouped ? styles.followedByGrouped : ''}`}
                             >
+                                {/* ... (keep avatar container) ... */}
                                 {!isSentByCurrentUser && (
                                     <div className={styles.avatarContainer}>
                                         {isFirstInGroup && msg.sender && (
@@ -229,6 +254,7 @@ const ChatWindow = ({ token, onLogout }) => {
                                 )}
                                 <div className={styles.messageContent}>
                                     <div className={styles.bubbleContainer}>
+                                        {/* ... (keep replied message snippet, reaction picker) ... */}
                                         {parentMessage && (
                                             <div className={styles.repliedMessageSnippet} onClick={() => handleScrollToMessage(parentMessage.id)}>
                                                 <p className={styles.replyHeader}>Replied to {parentMessage.sender?.firstName || '...'}</p>
@@ -252,10 +278,12 @@ const ChatWindow = ({ token, onLogout }) => {
                                             onContextMenu={(e) => handleLongPress(e, msg)}
                                         >
                                             {renderMedia(msg)}
-                                            {(msg.text && msg.mediaType !== 'AUDIO') && <p className={styles.messageText}>{msg.text}</p>}
-                                            {(msg.text && msg.mediaUrl && msg.mediaType !== 'AUDIO') && <p className={styles.messageText}>{msg.text}</p>}
+                                            {/* *** UPDATED: Use renderMessageWithMentions *** */}
+                                            {(msg.text && msg.mediaType !== 'AUDIO') && <p className={styles.messageText}>{renderMessageWithMentions(msg.text)}</p>}
+                                            {(msg.text && msg.mediaUrl && msg.mediaType !== 'AUDIO') && <p className={styles.messageText}>{renderMessageWithMentions(msg.text)}</p>}
                                             {msg.clientMessageId && (isUploading || !msg.id) && <FaSpinner className={styles.optimisticSpinner} />}
                                         </div>
+                                        {/* ... (keep reactions container) ... */}
                                         {reactionsCount > 0 && (
                                             <div className={styles.reactionsContainer} onClick={() => setReactionsModalData(msg.reactions)}>
                                                 {Object.entries(msg.reactions).slice(0, 3).map(([emoji]) => (<span className={styles.reactionEmoji} key={emoji}>{emoji}</span>))}
@@ -263,6 +291,7 @@ const ChatWindow = ({ token, onLogout }) => {
                                             </div>
                                         )}
                                     </div>
+                                    {/* ... (keep timestamp container) ... */}
                                     {showTimestamp && msg.timestamp && (
                                         <div className={styles.timestampContainer}>
                                             <span className={styles.timestamp}>{formatDate(msg.timestamp)}</span>
@@ -297,15 +326,13 @@ const ChatWindow = ({ token, onLogout }) => {
             )}
             {uploadError && <div className={styles.uploadErrorBar}>{uploadError}</div>}
 
-            {/* --- NEW: @MENTION SUGGESTION BOX --- */}
-            {/* This is placed *before* the footer so it can be positioned above it */}
+            {/* --- @MENTION SUGGESTION BOX (Unchanged) --- */}
             {showSuggestions && filteredMembers.length > 0 && (
                 <div className={styles.mentionSuggestions}>
                     {filteredMembers.map(user => (
                         <button
                             key={user.id}
                             className={styles.mentionItem}
-                            // Use onMouseDown to prevent the textarea from losing focus (onBlur)
                             onMouseDown={(e) => {
                                 e.preventDefault();
                                 handleMentionSelect(user);
@@ -334,8 +361,7 @@ const ChatWindow = ({ token, onLogout }) => {
                     value={newMessage}
                     onChange={handleTextareaInput}
                     onKeyDown={handleKeyDown}
-                    // Hide suggestions if the textarea loses focus
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} // Added slightly longer delay
                     placeholder={isRecording ? "Recording audio..." : (isUploading ? "Attaching media..." : "Message...")}
                     rows="1"
                     className={styles.messageInput}

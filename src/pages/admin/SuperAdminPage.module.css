@@ -1,393 +1,440 @@
-/* File: src/pages/admin/SuperAdminPage.module.css */
-
-.container {
+/* Base Page Styling */
+.superAdminPage {
     padding: 1.5rem;
-    max-width: 1200px; /* Wider for dashboard */
-    margin: 0 auto;
+    background-color: #f4f7f6; /* Light background */
+    min-height: calc(100vh - 60px); /* Adjust based on navbar height */
 }
 
 .header {
-    text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #eee;
-}
-.header h1 {
-    font-size: 2.5rem; /* Larger title */
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-    background: linear-gradient(45deg, #e74c3c, #9b59b6, #3498db);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    display: inline-block;
-}
-.header p {
-    color: #7f8c8d;
-    font-size: 1.1rem;
+    border-bottom: 1px solid #dee2e6;
 }
 
-/* --- Feedback Box --- */
-.feedbackBox {
-    padding: 1rem 1.5rem;
-    margin-bottom: 2rem;
+.header h1 {
+    font-size: 1.8rem;
+    color: #343a40;
+    margin-bottom: 0.3rem;
+}
+
+.header p {
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+/* Loading Placeholder */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 100px); /* Adjust as needed */
+    color: #6c757d;
+}
+
+.pawSpinner {
+    font-size: 3rem;
+    color: #007bff;
+    animation: spin 1.5s linear infinite, pawPulse 1.5s ease-in-out infinite alternate;
+    margin-bottom: 1rem;
+}
+
+.pawIcon {
+    /* Additional styling for the paw icon if needed */
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pawPulse {
+    from { opacity: 0.6; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1.1); }
+}
+
+
+/* Card Grid Layout */
+.cardGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+/* Individual Card Styling */
+.card {
+    background-color: #ffffff;
+    padding: 1.5rem;
     border-radius: 8px;
-    font-weight: 500;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    border-left: 5px solid #007bff; /* Default accent color */
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+.card h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    gap: 0.6rem; /* Space between icon and text */
+    color: #343a40;
 }
+
+.actionIcon {
+    color: #007bff; /* Match accent color */
+    font-size: 1.2em; /* Slightly larger icon */
+}
+
+
+.card p {
+    color: #495057;
+    font-size: 0.95rem;
+    flex-grow: 1; /* Push button to bottom */
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+/* Action Button Styling (Used in Cards and potentially Modals) */
+.actionButton {
+    padding: 0.7rem 1.1rem;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    align-self: flex-start; /* Align button to start in cards */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.actionButton:hover:not(:disabled) {
+    background-color: #0056b3;
+    transform: translateY(-1px); /* Subtle lift effect */
+}
+.actionButton:disabled {
+    background-color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+
+/* Danger Zone and Button Styling */
+.dangerZone {
+    border-left-color: #dc3545; /* Red accent for danger */
+}
+.dangerZone .actionIcon {
+    color: #dc3545; /* Red icon */
+}
+
+/* Applies to Clear Chat and Reset buttons */
+.deleteButton, .dangerButton {
+    background-color: #dc3545; /* Red color for destructive actions */
+}
+
+.deleteButton:hover:not(:disabled), .dangerButton:hover:not(:disabled) {
+    background-color: #c82333;
+}
+
+
+/* Input Group Styles (for cards) */
+.clearChatInputGroup, .purgeInputGroupCard {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.clearChatInputGroup label, .purgeInputGroupCard label {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.keepInput, .purgeInput {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    width: 80px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.keepInput:focus, .purgeInput:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.purgeInputGroupCard span {
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+/* Feedback Message Styles (General and Specific) */
+.feedbackBox { /* General container for feedback (used on page and potentially modals) */
+    padding: 0.8rem 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
 .feedbackBox.success {
     background-color: #d4edda;
     color: #155724;
     border: 1px solid #c3e6cb;
 }
+
 .feedbackBox.error {
     background-color: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
-.feedbackBox svg {
-    font-size: 1.2em;
-}
 
 
-/* --- Action Grid --- */
-.actionGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
-    gap: 1.5rem;
-}
-
-.actionCard {
-    background-color: #fff;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    border-top: 4px solid #3498db; /* Default border color */
-}
-
-.actionIcon {
-    font-size: 3rem;
-    color: #3498db; /* Default icon color */
-    margin-bottom: 1rem;
-}
-
-.actionCard h2 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.3rem;
-    color: #34495e;
-}
-
-.actionCard p {
-    color: #7f8c8d;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    margin-bottom: 1.5rem;
-    flex-grow: 1; /* Pushes button down */
-}
-
-.actionButton {
-    padding: 0.8rem 1.5rem;
-    background: linear-gradient(45deg, #3498db, #2980b9); /* Theme gradient */
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    display: inline-flex; /* Align icon if needed */
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    width: auto; /* Don't force full width */
-    margin-top: auto; /* Aligns button to bottom */
-}
-.actionButton:hover:not(:disabled) {
-    opacity: 0.9;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-}
-.actionButton:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.buttonGroup {
-    display: flex;
-    flex-direction: column; /* Stack buttons */
-    gap: 0.75rem;
-    width: 100%; /* Make group take width */
-    margin-top: auto;
-}
-.buttonGroup .actionButton {
-    width: 100%; /* Make buttons inside group full width */
-}
-
-
-/* Danger Zone Styling */
-.dangerZone {
-    border-top-color: #e74c3c;
-}
-.dangerZone .actionIcon {
-    color: #e74c3c;
-}
-.dangerButton {
-    background: linear-gradient(45deg, #e74c3c, #c0392b);
-}
-/* Ensure Danger Icon Colors are Correct */
-.dangerZone .fa-bell-slash,
-.dangerZone .fa-redo { /* Use FaRedo for reset */
-    color: #e74c3c;
-}
-
-/* --- Styles for Purge Input on Card --- */
-.purgeInputGroupCard {
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Center items */
-    gap: 0.75rem;
-    margin-bottom: 1rem; /* Space before the button */
-    padding: 0.5rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    width: 90%; /* Don't take full width */
-    margin-left: auto;
-    margin-right: auto;
-}
-.purgeInputGroupCard label {
-    font-weight: 600;
-    color: #34495e;
-    font-size: 0.9rem;
-}
-.purgeInput { /* Reusable style for number input */
-    width: 60px; /* Smaller width */
-    padding: 0.5rem;
-    font-size: 1rem;
-    text-align: center;
-    border: 1px solid #bdc3c7;
-    border-radius: 6px;
-}
-.purgeInputGroupCard span {
-    font-size: 0.9rem;
-    color: #555;
+.successMessage { /* Style specifically for chat clear feedback within its card */
+    color: #155724; /* Green */
     font-weight: 500;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
 }
-/* --- End Purge Card Input Styles --- */
+
+.errorMessage { /* Style specifically for chat clear feedback within its card */
+    color: #721c24; /* Red */
+    font-weight: 500;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Spinner for buttons */
+.spinner {
+    animation: spin 1s linear infinite;
+    /* margin-right: 0.3rem; Removed, included via gap in button */
+}
+
+/* Re-add the keyframes if they were missing */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Loading/Unauthorized Styles */
+.loading, .unauthorized {
+    padding: 2rem;
+    text-align: center;
+    color: #555;
+    font-size: 1.1rem;
+}
 
 
-/* --- Modal Styles (Used by ManageUsersModal and ConfirmationModal) --- */
+/* --- Styles potentially used by ManageUsersModal --- */
+
+/* Basic Modal Overlay and Content Box */
 .modalOverlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center;
-    z-index: 7000; padding: 1rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 1rem;
 }
 
 .modalContent {
-    background: white; padding: 1.5rem; border-radius: 12px;
-    max-width: 600px; width: 100%;
-    max-height: 90vh; /* Allow scrolling */
-    display: flex; flex-direction: column;
-    position: relative; /* For close button */
-    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
-}
-.purgeModalContent { /* Specific adjustments for Purge modal */
-    max-width: 450px; /* Purge modal can be narrower */
-}
-
-
-.manageUsersModal { /* Specific adjustments for this modal */
-    padding-bottom: 0; /* Footer handles bottom padding */
-}
-
-
-.closeButton {
-    position: absolute; top: 10px; right: 10px;
-    background: #e0e0e0; border: none; border-radius: 50%;
-    width: 30px; height: 30px; cursor: pointer; color: #555;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem; line-height: 1; z-index: 10;
-}
-.closeButton:hover {
-    background-color: #cfcfcf;
-}
-
-
-.modalContent h2, .modalContent h3 { margin-top: 0; margin-bottom: 0.5rem; color: #2c3e50; text-align: center; }
-.modalContent h3 { font-size: 1.5rem; } /* Title for Purge modal */
-.modalContent p { margin-bottom: 1rem; color: #555; text-align: center; font-size: 0.95rem; }
-.instructionText { font-style: italic; font-size: 0.9rem !important; margin-bottom: 1rem !important; }
-
-.userSelectionList {
-    margin: 1rem 0; max-height: 50vh; overflow-y: auto;
-    border: 1px solid #eee; border-radius: 8px; padding: 0.5rem;
-}
-.userListItem {
-    display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
-    border-radius: 6px; cursor: pointer; transition: background-color 0.2s; user-select: none;
-    border-left: 4px solid transparent;
-}
-.userListItem:hover { background-color: #f8f9fa; }
-.userListItem.selected { background-color: #eaf4ff; border-left-color: #3498db; }
-
-/* Style for Super Admin rows in user list */
-.superAdminRow {
-    opacity: 0.7;
-    background-color: #f8f9fa;
-    cursor: default;
-}
-.superAdminRow:hover {
-    background-color: #f8f9fa;
-}
-.superAdminText {
-    margin-left: auto;
-    font-size: 0.8rem;
-    font-style: italic;
-    color: #95a5a6;
-    flex-shrink: 0;
-}
-
-
-.userListItem input[type="checkbox"] { width: 18px; height: 18px; accent-color: #3498db; flex-shrink: 0; }
-.userInfoSmall { display: flex; flex-direction: column; flex-grow: 1; font-size: 0.9rem; overflow: hidden; }
-.userInfoSmall span:first-child { font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.userIdSmall { font-size: 0.8rem; color: #7f8c8d; display: inline-flex; align-items: center; gap: 0.3rem;} /* Icon gap */
-.userIdSmall svg { font-size: 0.9em; } /* Icon size */
-
-
-.modalFooter, .modalActions { /* .modalActions for Purge modal & Confirmation Modal */
-    margin-top: auto; padding: 1rem 1.5rem; border-top: 1px solid #eee; background-color: #f8f9fa;
-    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
-    border-radius: 0 0 12px 12px; margin-left: -1.5rem; margin-right: -1.5rem; margin-bottom: -1.5rem;
-}
-.modalActions { /* Specific override for modals without footer parent */
-    margin: 1.5rem -1.5rem -1.5rem;
-}
-
-.modalFooter button, .modalActions button {
-    padding: 0.8rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.95rem;
-    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-}
-.cancelButton { background-color: #ecf0f1; color: #555; }
-.modalFooter .actionButton { background-color: #3498db; color: white; flex-grow: 1;}
-.confirmDeleteButton { background-color: #e74c3c; color: white; flex-grow: 1; }
-.modalFooter button:disabled, .modalActions button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-
-.notifyCheckboxLabel { /* Checkbox inside footer/modal */
-    display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #333; cursor: pointer; margin-right: auto;
-}
-.notifyCheckboxLabel input { width: 16px; height: 16px; accent-color: #3498db; }
-
-.message { /* Message box for results/errors */
-    display: flex; flex-direction: column; /* Allow list stacking */ gap: 0.5rem; margin: 1rem 0; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 500; font-size: 0.9rem;
-    align-items: flex-start; /* Align icon/text top-left */
-}
-.message div { /* Ensure inner divs are block */
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-.message.error { background-color: #f8d7da; border: 1px solid #e74c3c; color: #721c24; }
-.message.success { background-color: #d4edda; border: 1px solid #2ecc71; color: #155724;}
-.message.warning { background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;}
-
-.skippedList { list-style: disc; margin: 0.5rem 0 0 1.5rem; padding: 0; font-size: 0.85rem; }
-.skippedList li { margin-bottom: 0.25rem; }
-
-.clearResultButton {
-    margin-top: 1rem; padding: 0.4rem 0.8rem; font-size: 0.8rem; background-color: #e9ecef; border: 1px solid #dee2e6; color: #495057; border-radius: 4px; cursor: pointer;
-}
-
-
-.spinner { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-.modalError { /* Error specifically within modal confirmation step */
-    color: #e74c3c; text-align: center; padding: 0.75rem; background-color: #fbeae5;
-    border-radius: 8px; margin: 1rem 0 0.5rem; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-    border: 1px solid #f5c6cb;
-}
-
-/* Styles for Purge Modal Input Group */
-.purgeInputGroup {
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Center items */
-    gap: 0.75rem;
-    margin: 1.5rem 0;
-    padding: 1rem;
-    background-color: #f8f9fa;
+    background-color: #fff;
+    padding: 1.5rem 2rem;
     border-radius: 8px;
-}
-.purgeInputGroup label {
-    font-weight: 600;
-    color: #34495e;
-    font-size: 0.95rem;
-}
-/* Reusing .purgeInput from card */
-.purgeInputGroup span {
-    font-size: 0.95rem;
-    color: #555;
-    font-weight: 500;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 700px; /* Adjust max-width as needed */
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Loading Styles */
-.loadingContainer { /* Center content */
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    min-height: calc(100vh - 200px); padding: 2rem; color: #7f8c8d;
-}
-.loadingContainerModal { /* Centered spinner inside modal */
-    padding: 2rem; text-align: center; color: #7f8c8d;
-}
-.pawSpinner { margin-bottom: 1.5rem; }
-.pawIcon { font-size: 4rem; color: #fc5c7d; animation: pulse 1.5s infinite ease-in-out; }
-@keyframes pulse { /* Pulse animation */
-    0% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.15); opacity: 1; }
-    100% { transform: scale(1); opacity: 0.8; }
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
 }
 
-.resetPasswordButton {
+.modalHeader h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #343a40;
+}
+
+.modalCloseButton {
     background: none;
     border: none;
-    color: #f39c12; /* Warning/Reset color */
-    font-size: 1.1rem;
+    font-size: 1.8rem;
+    line-height: 1;
+    color: #6c757d;
     cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: auto; /* Push to the far right */
-    flex-shrink: 0;
-    transition: background-color 0.2s, color 0.2s;
+    padding: 0.2rem;
 }
-.resetPasswordButton:hover:not(:disabled) {
-    background-color: #fdf3e6;
-    color: #d35400;
+.modalCloseButton:hover {
+    color: #343a40;
 }
-.resetPasswordButton:disabled {
-    color: #bdc3c7; /* Greyed out when disabled */
-    cursor: not-allowed;
-}
-/* --- END ADD --- */
 
-/* Make .userListItem a flex container to push button to the end */
-.userListItem {
+.modalBody {
+    margin-bottom: 1.5rem;
+    /* Add specific styles for modal content here if needed */
+}
+
+.modalFooter {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    user-select: none;
-    border-left: 4px solid transparent;
+    justify-content: flex-end;
+    gap: 0.8rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Table Styles (if ManageUsersModal uses a table) */
+.userTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.userTable th,
+.userTable td {
+    border: 1px solid #dee2e6;
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.userTable th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.userTable tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+.userTable tbody tr:hover {
+    background-color: #e9ecef;
+}
+
+/* Form elements possibly used in modals */
+.formGroup {
+    margin-bottom: 1rem;
+}
+.formGroup label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.9rem;
+}
+.formControl, .selectControl {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.formControl:focus, .selectControl:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.selectControl {
+    appearance: none; /* For custom arrow */
+    background-color: #fff; /* Needed for custom arrow */
+    /* Add background image for arrow if needed */
+}
+
+
+/* Button variants potentially used in modals */
+.secondaryButton {
+    background-color: #6c757d;
+    color: white;
+}
+.secondaryButton:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
+.warningButton {
+    background-color: #ffc107;
+    color: #212529;
+}
+.warningButton:hover:not(:disabled) {
+    background-color: #e0a800;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .superAdminPage {
+        padding: 1rem;
+    }
+    .cardGrid {
+        grid-template-columns: 1fr; /* Stack cards on smaller screens */
+        gap: 1rem;
+    }
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    .card {
+        padding: 1rem;
+    }
+    /* Make buttons full width inside cards on small screens */
+    .card .actionButton {
+        width: 100%;
+        justify-content: center;
+    }
+    .clearChatInputGroup, .purgeInputGroupCard {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .keepInput, .purgeInput {
+        width: 100%;
+    }
+    /* Modal adjustments */
+    .modalContent {
+        padding: 1rem 1.2rem;
+    }
+    .modalHeader h2 {
+        font-size: 1.2rem;
+    }
+    .modalFooter {
+        flex-direction: column;
+    }
+    .modalFooter button {
+        width: 100%; /* Stack modal buttons */
+    }
+
 }

@@ -391,3 +391,114 @@
     user-select: none;
     border-left: 4px solid transparent;
 }
+
+/* ... existing styles ... */
+
+.cardGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive grid */
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.card {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem; /* Space elements inside card */
+}
+
+.card h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Space between icon and text */
+    color: #333;
+}
+
+.card p {
+    color: #555;
+    font-size: 0.9rem;
+    flex-grow: 1; /* Push button to bottom if needed */
+    margin-bottom: 1rem;
+}
+
+.actionButton {
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    align-self: flex-start; /* Align button to start */
+    display: inline-flex; /* For icon alignment */
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.actionButton:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+.actionButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+
+/* --- Styles for New Clear Chat Card --- */
+.clearChatInputGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.clearChatInputGroup label {
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.keepInput {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 80px; /* Adjust width as needed */
+    font-size: 0.9rem;
+}
+
+.deleteButton {
+    background-color: #dc3545; /* Red color for destructive actions */
+}
+
+.deleteButton:hover:not(:disabled) {
+    background-color: #c82333;
+}
+
+.successMessage {
+    color: green;
+    font-weight: 500;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.errorMessage {
+    color: red;
+    font-weight: 500;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+/* --- End New Styles --- */
+
+/* Add styles for loading/unauthorized if needed */
+.loading, .unauthorized {
+    padding: 2rem;
+    text-align: center;
+    color: #555;
+}

@@ -104,6 +104,7 @@ const ChatWindow = ({ token, onLogout }) => {
     // --- Interaction Refs ---
     const pressTimer = useRef(null);
     const dragStartXRef = useRef(null);
+    const lastTapTimeRef = useRef(0); // <-- ADDED FOR DOUBLE-TAP
     const DRAG_THRESHOLD = 50;
     const userIsAtBottomRef = useRef(true);
 
@@ -249,6 +250,22 @@ const ChatWindow = ({ token, onLogout }) => {
     // --- UPDATED FUNCTION ---
     const handleInteractionStart = (e, message) => {
         if (message?.clientMessageId) return; // Don't interact with optimistic/unsaved messages
+
+        const currentTime = new Date().getTime();
+        const timeSinceLastTap = currentTime - lastTapTimeRef.current;
+        lastTapTimeRef.current = currentTime;
+
+        // Check for Double-Tap
+        if (timeSinceLastTap < 300) { // 300ms threshold for double-tap
+            e.preventDefault(); // Prevent zoom or other native actions
+            handleDoubleClick(message);
+            clearTimeout(pressTimer.current); // Cancel any pending long-press
+            dragStartXRef.current = null; // Cancel swipe
+            lastTapTimeRef.current = 0; // Reset tap time to prevent triple-tap
+            return;
+        }
+
+        // If not a double-tap, proceed with long-press and swipe logic
         clearTimeout(pressTimer.current);
 
         // Record start position for swipe detection
@@ -263,15 +280,17 @@ const ChatWindow = ({ token, onLogout }) => {
     };
     // --- END UPDATE ---
 
-    // --- UPDATED FUNCTION ---
     const handleInteractionEnd = (e, message) => {
         clearTimeout(pressTimer.current); // Clear long press timer
+
         // Delay slightly to allow potential double-click to register before checking swipe
         const interactionEnded = () => {
             // If picker opened OR it's an optimistic message, do nothing else
             if (activeEmojiPicker || message?.clientMessageId) { dragStartXRef.current = null; return; }
+
             // Check for swipe only if picker didn't open
             const dragEndX = e.clientX || e.changedTouches?.[0]?.clientX;
+
             // Check if drag started, end position exists, and moved sufficiently to the right
             if (dragStartXRef.current !== null && dragEndX && dragEndX - dragStartXRef.current > DRAG_THRESHOLD) {
                 setReplyingTo(message); // Trigger reply on successful swipe right
@@ -280,7 +299,6 @@ const ChatWindow = ({ token, onLogout }) => {
         };
         setTimeout(interactionEnded, 50); // Short delay (50ms)
     };
-    // --- END UPDATE ---
 
     const handleInteractionMove = (e) => {
         // Cancel long press if user starts dragging horizontally significantly
@@ -291,7 +309,6 @@ const ChatWindow = ({ token, onLogout }) => {
             }
         }
     };
-    // --- END UPDATES ---
 
     const handleScrollToMessage = (messageId) => { const element = messageRefs.current[messageId]; if (element) { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); element.classList.add(styles.highlight); setTimeout(() => { element.classList.remove(styles.highlight); }, 1500); } };
 
@@ -359,11 +376,11 @@ const ChatWindow = ({ token, onLogout }) => {
                                             onMouseDown={(e) => handleInteractionStart(e, msg)}
                                             onMouseUp={(e) => handleInteractionEnd(e, msg)}
                                             onMouseMove={handleInteractionMove}
-                                            onMouseLeave={() => { clearTimeout(pressTimer.current); }} // Fix: Don't reset drag ref
+                                            onMouseLeave={() => { clearTimeout(pressTimer.current); }} // Keep this to cancel long-press if mouse leaves
                                             onTouchStart={(e) => handleInteractionStart(e, msg)}
                                             onTouchMove={handleInteractionMove}
                                             onTouchEnd={(e) => handleInteractionEnd(e, msg)}
-                                            onDoubleClick={() => handleDoubleClick(msg)}
+                                            // onDoubleClick is REMOVED
                                             // --- END UPDATE ---
                                         >
                                             {renderMedia(msg)}

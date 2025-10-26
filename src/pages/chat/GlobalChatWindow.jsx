@@ -5,33 +5,52 @@ import useWebSocket from '../../hooks/useWebSocket.js'; // Adjust path if needed
 import styles from './GlobalChatWindow.module.css'; // Use Global Chat CSS
 import {
     FaPaperPlane, FaArrowLeft, FaChevronDown,
-    FaImage, FaMicrophone, FaStop, FaSpinner, FaClock, // Keep relevant icons
-    FaPlay, FaPause // Keep if audio is planned
+    FaClock
 } from 'react-icons/fa';
 import Avatar from '../../components/common/Avatar.jsx';
-// Removed imageCompression if not uploading images here
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// --- Hardcoded Names List (Updated with your list) ---
-const ALL_USER_FIRST_NAMES = [
-    "Debayan", "Indranil", "Rimjhim", "Samarpita", "Jayasree", "Nilotpal",
-    "Shibojyoti", "Nunfeli", "Iman", "Paramita", "Amit", "Sampriti",
-    "Rimi", "Liza", "Sandipan", "Tushar", "Udit", "Sagnik",
-    "Anirudh", "Mrinal", "Avik", "Pikachu"
-];
-// --- End Hardcoded Names ---
+// --- Helper Functions ---
+const getUserInfoFromToken = (token) => {
+    try {
+        const decodedToken = jwtDecode(token);
+        return {
+            id: Number(decodedToken.id),
+            username: decodedToken.sub,
+            firstName: decodedToken.firstName, // Assuming these are in the token
+            lastName: decodedToken.lastName
+        };
+    } catch (error) {
+        console.error('Failed to decode token:', error);
+        return { id: null, username: null, firstName: null, lastName: null };
+    }
+};
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+};
+const isSameDay = (d1, d2) => {
+    if (!d1 || !d2) return false;
+    const date1 = new Date(d1);
+    const date2 = new Date(d2);
+    return date1.getFullYear() === date2.getFullYear() &&
+        date1.getMonth() === date2.getMonth() &&
+        date1.getDate() === date2.getDate();
+};
+const formatDateSeparator = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
 
-// --- Helper Functions (Keep relevant ones) ---
-const getUserInfoFromToken = (token) => { try { const decodedToken = jwtDecode(token); return { id: Number(decodedToken.id), username: decodedToken.sub, firstName: decodedToken.firstName, lastName: decodedToken.lastName }; } catch (error) { console.error('Failed to decode token:', error); return { id: null, username: null, firstName: null, lastName: null }; } };
-const formatDate = (dateString) => { if (!dateString) return ''; const date = new Date(dateString); return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
-const isSameDay = (d1, d2) => { if (!d1 || !d2) return false; const date1 = new Date(d1); const date2 = new Date(d2); return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate(); };
-const formatDateSeparator = (dateString) => { if (!dateString) return ''; const date = new Date(dateString); const today = new Date(); const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1); if (isSameDay(date, today)) return 'Today'; if (isSameDay(date, yesterday)) return 'Yesterday'; return date.toLocaleDateString([], { month: 'long', day: 'numeric' }); };
+    if (isSameDay(date, today)) return 'Today';
+    if (isSameDay(date, yesterday)) return 'Yesterday';
+    return date.toLocaleDateString([], { month: 'long', day: 'numeric' });
+};
 // --- End Helper Functions ---
-
-// --- Audio Player Component (Optional: Keep if audio messages are planned) ---
-// const AudioPlayer = ({ src }) => { ... };
-// ---
 
 const GlobalChatWindow = ({ token, onLogout }) => {
     // --- State and Refs ---
@@ -45,12 +64,25 @@ const GlobalChatWindow = ({ token, onLogout }) => {
     const [loggedInUser, setLoggedInUser] = useState(null);
     const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
     const messageListRef = useRef(null);
-    const messageRefs = useRef({}); // Keep if using scroll-to or read receipts
+    const messageRefs = useRef({});
     const userIsAtBottomRef = useRef(true);
 
     // --- Hooks ---
-    useEffect(() => { if (token) setLoggedInUser(getUserInfoFromToken(token)); }, [token]);
-    const scrollToBottom = useCallback((behavior = 'smooth') => { if (messageListRef.current) { requestAnimationFrame(() => { if (messageListRef.current) { messageListRef.current.scrollTo({ top: messageListRef.current.scrollHeight, behavior }); } }); } }, []);
+    useEffect(() => {
+        if (token) {
+            setLoggedInUser(getUserInfoFromToken(token));
+        }
+    }, [token]);
+
+    const scrollToBottom = useCallback((behavior = 'smooth') => {
+        if (messageListRef.current) {
+            requestAnimationFrame(() => {
+                if (messageListRef.current) {
+                    messageListRef.current.scrollTo({ top: messageListRef.current.scrollHeight, behavior });
+                }
+            });
+        }
+    }, []);
 
     const onMessageReceived = useCallback((message) => {
         const isAtBottom = userIsAtBottomRef.current;
@@ -62,22 +94,27 @@ const GlobalChatWindow = ({ token, onLogout }) => {
                 return updated;
             }
             if (prevMessages.some(m => m.id === message.id)) {
-                return prevMessages;
+                return prevMessages; // Avoid duplicates
             }
             return [...prevMessages, message];
         });
-        if (!isAtBottom && !messages.some(m => m.id === message.id || m.clientMessageId === message.clientMessageId)) {
+        // Check for unread only if the message is new (not replacing optimistic)
+        if (!isAtBottom && !messages.some(m => m.id === message.id || m.clientMessageId === message.clientMessageId) ) {
             setHasUnreadMessages(true);
         }
-    }, [messages]);
+    }, [messages]); // Added dependency
 
-    useEffect(() => { if (userIsAtBottomRef.current) { scrollToBottom('smooth'); } }, [messages, scrollToBottom]);
+    useEffect(() => {
+        if (userIsAtBottomRef.current) {
+            scrollToBottom('smooth');
+        }
+    }, [messages, scrollToBottom]); // Added scrollToBottom dependency
 
     const { sendMessage } = useWebSocket({
         onMessageReceived,
         token,
         chatId: 'global', // Identifier for global topic
-        isGlobal: true   // Flag if hook needs it
+        isGlobal: true   // Flag if your hook needs it
     });
 
     useEffect(() => {
@@ -85,9 +122,12 @@ const GlobalChatWindow = ({ token, onLogout }) => {
             setLoading(true);
             setError(null);
             try {
-                const response = await fetch(`${API_BASE_URL}/api/global-chat/messages`, {
+                const response = await fetch(`${API_BASE_URL}/api/global-chat/messages`, { // Corrected endpoint potentially
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                if (response.status === 403) {
+                    throw new Error('Forbidden: You might not be authorized for Global Chat yet.');
+                }
                 if (!response.ok) {
                     throw new Error(`Failed to fetch global messages (Status: ${response.status})`);
                 }
@@ -108,45 +148,26 @@ const GlobalChatWindow = ({ token, onLogout }) => {
             setError("Authentication token not found.");
             setLoading(false);
         }
-    }, [token, scrollToBottom]);
+    }, [token, scrollToBottom]); // Added scrollToBottom dependency
 
-    const handleScroll = () => { if (messageListRef.current) { const { scrollHeight, scrollTop, clientHeight } = messageListRef.current; const isNearBottom = scrollHeight - scrollTop - clientHeight < 50; userIsAtBottomRef.current = isNearBottom; if (isNearBottom) { setHasUnreadMessages(false); } } };
+    const handleScroll = () => {
+        if (messageListRef.current) {
+            const { scrollHeight, scrollTop, clientHeight } = messageListRef.current;
+            const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+            userIsAtBottomRef.current = isNearBottom;
+            if (isNearBottom) {
+                setHasUnreadMessages(false);
+            }
+        }
+    };
 
-    // --- Message Sending ---
+    // --- Message Sending (Original Simple Version) ---
     const handleSendMessage = (event) => {
         event?.preventDefault();
-        let txtToSend = newMessage.trim(); // Start with the original trimmed message
+        const txtToSend = newMessage.trim();
         if (txtToSend === '' || !loggedInUser) {
             return;
         }
-
-        // --- Autocomplete @mention Logic (REFINED for @Everyone Punctuation) ---
-        // 1. Handle @Everyone equivalent first, preserving punctuation
-        txtToSend = txtToSend.replace(/@([?!.]*)(?=\s|$)/g, (match, punctuation) => {
-            return `@Everyone${punctuation}`;
-        });
-
-        // 2. Handle specific user mentions, capturing trailing punctuation
-        const mentionRegex = /@([a-zA-Z][a-zA-Z0-9]{2,})([^\w\s]*)(?=\s|$)/g;
-
-        txtToSend = txtToSend.replace(mentionRegex, (match, typedPrefix, punctuation) => {
-            if (typedPrefix.toLowerCase() === 'everyone') {
-                return match; // Already handled
-            }
-
-            const prefixLower = typedPrefix.toLowerCase();
-            const potentialMatches = ALL_USER_FIRST_NAMES.filter(name =>
-                name.toLowerCase().startsWith(prefixLower)
-            );
-
-            if (potentialMatches.length === 1) {
-                const correctName = potentialMatches[0];
-                return `@${correctName}${punctuation}`;
-            } else {
-                return match;
-            }
-        });
-        // --- End Autocomplete Logic ---
 
         const clientMsgId = `temp-${Date.now()}`;
         const optimisticMsg = {
@@ -160,7 +181,7 @@ const GlobalChatWindow = ({ token, onLogout }) => {
         };
         setMessages(prev => [...prev, optimisticMsg]);
 
-        sendMessage({ text: txtToSend, clientMessageId: clientMsgId });
+        sendMessage({ text: txtToSend, clientMessageId: clientMsgId }); // Original send format
 
         setNewMessage('');
         if(textareaRef.current) textareaRef.current.style.height = 'auto';
@@ -180,45 +201,6 @@ const GlobalChatWindow = ({ token, onLogout }) => {
             handleSendMessage();
         }
     };
-
-    // --- Function to render mentions with bold style (Handles Punctuation) ---
-    const renderMessageWithMentions = (text) => {
-        if (!text) return null;
-        // Regex: Find @, capture name part (word chars or "everyone" case-insensitive), capture trailing punctuation
-        const mentionRegex = /@((?:everyone|[\w]+))([^\w\s]*?(?=\s|$))/gi;
-
-        const parts = [];
-        let lastIndex = 0;
-        let match;
-
-        while ((match = mentionRegex.exec(text)) !== null) {
-            if (match.index > lastIndex) {
-                parts.push(text.substring(lastIndex, match.index));
-            }
-            const mentionName = match[1];
-            const punctuation = match[2] || "";
-            const nameLower = mentionName.toLowerCase();
-            const isKnownMention = ALL_USER_FIRST_NAMES.some(name => name.toLowerCase() === nameLower);
-            const isEveryone = nameLower === 'everyone';
-
-            if (isKnownMention || isEveryone) {
-                const displayName = isEveryone ? "Everyone" : mentionName; // Use correct case for Everyone
-                parts.push(
-                    <span key={match.index} className={styles.mentionHighlight}>
-                        @{displayName}{punctuation}
-                    </span>
-                );
-            } else {
-                parts.push(`@${mentionName}${punctuation}`); // Render unknown as plain text
-            }
-            lastIndex = match.index + match[0].length;
-        }
-        if (lastIndex < text.length) {
-            parts.push(text.substring(lastIndex));
-        }
-        return parts;
-    };
-
 
     // --- Render Logic ---
     if (loading || !loggedInUser) { return <div className={styles.centeredMessage}>Loading...</div>; }
@@ -268,7 +250,8 @@ const GlobalChatWindow = ({ token, onLogout }) => {
                                     )}
                                     <div className={styles.bubbleContainer}>
                                         <div className={styles.messageBubble} >
-                                            {msg.text && <p className={styles.messageText}>{renderMessageWithMentions(msg.text)}</p>}
+                                            {/* Original text rendering */}
+                                            {msg.text && <p className={styles.messageText}>{msg.text}</p>}
                                             {msg.clientMessageId && !msg.id && (<FaClock className={styles.optimisticIcon} />)}
                                         </div>
                                     </div>

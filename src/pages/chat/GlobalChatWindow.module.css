@@ -59,7 +59,7 @@
 /* ============================================ */
 .messageWrapper { display: flex; max-width: 70%; margin-bottom: 2px; position: relative; }
 .messageWrapper.grouped { margin-bottom: 2px; }
-.messageBubble { padding: 8px 12px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; max-width: 100%; box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13); width: fit-content; user-select: text; -webkit-user-select: text; touch-action: pan-y; } /* Allow text selection, keep pan-y */
+.messageBubble { padding: 8px 12px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; max-width: 100%; box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13); width: fit-content; user-select: text; -webkit-user-select: text; touch-action: pan-y; }
 .messageText { margin: 0; font-size: 0.9375rem; white-space: pre-wrap; }
 .sent { align-self: flex-end; margin-left: auto; }
 .sent .messageBubble { background-color: #0084ff; color: white; }
@@ -137,12 +137,4 @@
 .dateSeparator { text-align: center; margin: 1rem 0; color: #65676b; font-size: 0.75rem; font-weight: 500; }
 .dateSeparator span { background-color: #e4e6eb; padding: 4px 10px; border-radius: 12px; }
 
-/* === UPDATED Mention Highlight Styles === */
-.mentionHighlight {
-    font-weight: 600; /* Make it bold */
-    color: #000000;   /* Black color */
-}
-/* Style for mentions in sent (blue) bubbles */
-.sent .mentionHighlight {
-    color: #FFFFFF; /* White on blue background */
-}
+/* REMOVED .mentionHighlight styles */

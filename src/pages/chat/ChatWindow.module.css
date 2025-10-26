@@ -331,7 +331,7 @@
     border: 1px solid var(--header-border);
     border-radius: 20px;
     padding: 10px 15px;
-    font-size: 15px; /* You can set this back to 16px if you remove the viewport meta tag change */
+    font-size: 15px; /* You can set this to 16px if iOS zoom is an issue */
     resize: none;
     max-height: 100px;
     overflow-y: auto;
@@ -567,6 +567,8 @@
     text-align: center;
     flex-shrink: 0;
 }
+
+/* --- ADDED FOR HEART ANIMATION --- */
 
 .animatedHeart {
     position: absolute;

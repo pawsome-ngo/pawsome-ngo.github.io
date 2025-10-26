@@ -304,15 +304,17 @@
 
 /* ... (keep all existing styles, including the .mentionSuggestions section) ... */
 
-/* === ADD THIS NEW CLASS FOR HIGHLIGHTING MENTIONS IN BUBBLES === */
+/* === UPDATE THIS CLASS === */
 .mentionHighlight {
     font-weight: 600; /* Make it bold */
-    color: #005ce6;   /* Slightly different blue, adjust as needed */
-    /* background-color: rgba(0, 132, 255, 0.1); /* Optional: subtle background */
+    color: #000000;   /* Black color */
+    /* Remove background/padding if you don't want them */
+    /* background-color: rgba(0, 0, 0, 0.05); */
     /* border-radius: 3px; */
     /* padding: 0 2px; */
 }
-/* Style for mentions in sent bubbles */
+/* Style for mentions in sent bubbles (make it lighter than pure white if needed) */
 .sent .mentionHighlight {
-    color: #e6f2ff; /* Lighter color for dark background */
+    color: #FFFFFF; /* White on blue background */
+    /* You could use slightly off-white like #f0f0f0 if pure white is too stark */
 }

@@ -17,11 +17,14 @@ import imageCompression from 'browser-image-compression';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// --- Hardcoded Names List (Replace with your actual team members' first names) ---
+// --- Hardcoded Names List (Updated with your list) ---
 const TEAM_MEMBER_FIRST_NAMES = [
-    "Indranil", "Debayan", "Charlie", "David", "Demson", "Eve", "Frank", "Grace", "Daniel" // Added Daniel for testing conflicts
+    "Debayan", "Indranil", "Rimjhim", "Samarpita", "Jayasree", "Nilotpal",
+    "Shibojyoti", "Nunfeli", "Iman", "Paramita", "Amit", "Sampriti",
+    "Rimi", "Liza", "Sandipan", "Tushar", "Udit", "Sagnik",
+    "Anirudh", "Mrinal", "Avik", "Pikachu"
 ];
-// --- End Hardcoded Names --
+// --- End Hardcoded Names ---
 
 
 // --- Helper Functions (Unchanged) ---
@@ -87,8 +90,7 @@ const ChatWindow = ({ token, onLogout }) => {
     const startRecording = async () => { /* ... Unchanged ... */ };
     const stopRecording = () => { /* ... Unchanged ... */ };
 
-    // --- Message Sending ---
-    // --- UPDATED handleSendMessage with refined autocomplete logic for MULTIPLE mentions and @Everyone ---
+    // --- UPDATED handleSendMessage with punctuation handling ---
     const handleSendMessage = (event) => {
         event?.preventDefault();
         let txtToSend = newMessage.trim(); // Start with the original trimmed message
@@ -96,37 +98,35 @@ const ChatWindow = ({ token, onLogout }) => {
             return;
         }
         if (isUploading) {
-            return; // Or handle differently if you want to send text with pending upload
+            return;
         }
 
-        // --- Autocomplete @mention Logic (REFINED for Multiple & @Everyone) ---
+        // --- Autocomplete @mention Logic (REFINED for Punctuation) ---
 
         // 1. Handle @Everyone first: Replace "@ " or "@" at the end of the string
         txtToSend = txtToSend.replace(/@(?=\s|$)/g, '@Everyone');
 
-        // 2. Handle specific user mentions
-        // Regex: Find @ followed by 3 or more letters (case-insensitive flag removed here, handled in code)
-        // Ensure it's followed by a space or the end of the string to avoid partial matches within words
-        const mentionRegex = /@([a-zA-Z]{3,})(?=\s|$)/g;
+        // 2. Handle specific user mentions, now capturing trailing punctuation
+        // Regex: Find @, capture 3+ letters, capture 0+ trailing non-letter/non-space chars,
+        // followed by space or end of string.
+        const mentionRegex = /@([a-zA-Z]{3,})([^\w\s]*)(?=\s|$)/g;
 
-        // Use replace with a function to process each match individually
-        txtToSend = txtToSend.replace(mentionRegex, (match, typedPrefix) => {
-            // match is the full mention typed (e.g., "@Dem", "@dem")
-            // typedPrefix is the name part (e.g., "Dem", "dem")
+        txtToSend = txtToSend.replace(mentionRegex, (match, typedPrefix, punctuation) => {
+            // match: "@Dem??" | typedPrefix: "Dem" | punctuation: "??"
+            // match: "@Ali!!!" | typedPrefix: "Ali" | punctuation: "!!!"
+            // match: "@frank" | typedPrefix: "frank" | punctuation: ""
 
-            const prefixLower = typedPrefix.toLowerCase(); // For case-insensitive comparison
-
-            // Find names in the list that start with the prefix (case-insensitive)
+            const prefixLower = typedPrefix.toLowerCase();
             const potentialMatches = TEAM_MEMBER_FIRST_NAMES.filter(name =>
                 name.toLowerCase().startsWith(prefixLower)
             );
 
-            // If exactly one match found, return the full correct mention
+            // If exactly one match found, return the full correct mention + punctuation
             if (potentialMatches.length === 1) {
                 const correctName = potentialMatches[0]; // Get the correctly capitalized name
-                return `@${correctName}`;
+                return `@${correctName}${punctuation}`; // Re-append punctuation
             } else {
-                // If 0 or multiple matches, return the original typed mention
+                // If 0 or multiple matches, return the original typed mention (including punctuation)
                 return match;
             }
         });
@@ -154,6 +154,56 @@ const ChatWindow = ({ token, onLogout }) => {
         setTimeout(() => scrollToBottom('smooth'), 50);
     };
 
+    // --- UPDATED renderMessageWithMentions with punctuation handling ---
+    const renderMessageWithMentions = (text) => {
+        if (!text) return null;
+        // Regex: Find @, capture the name part (non-space), capture trailing punctuation
+        const mentionRegex = /@(\S+?)([^\w\s]*?(?=\s|$))/g;
+        // Split by the pattern, keeping delimiters. This is tricky, easier to process sequentially.
+
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+
+        while ((match = mentionRegex.exec(text)) !== null) {
+            // Add text before the mention
+            if (match.index > lastIndex) {
+                parts.push(text.substring(lastIndex, match.index));
+            }
+
+            const mentionName = match[1]; // Name part (e.g., "Demson", "Everyone")
+            const punctuation = match[2] || ""; // Punctuation part (e.g., "??", "")
+
+            // Check if the name part is a known mention or "Everyone"
+            const nameLower = mentionName.toLowerCase();
+            const isKnownMention = TEAM_MEMBER_FIRST_NAMES.some(
+                name => name.toLowerCase() === nameLower
+            );
+            const isEveryone = nameLower === 'everyone';
+
+            if (isKnownMention || isEveryone) {
+                // Add the highlighted mention + punctuation
+                parts.push(
+                    <span key={match.index} className={styles.mentionHighlight}>
+                        @{mentionName}{punctuation}
+                    </span>
+                );
+            } else {
+                // Add the non-recognized mention as plain text
+                parts.push(`@${mentionName}${punctuation}`);
+            }
+
+            lastIndex = match.index + match[0].length;
+        }
+
+        // Add any remaining text after the last mention
+        if (lastIndex < text.length) {
+            parts.push(text.substring(lastIndex));
+        }
+
+        // Return the array of parts (React can render arrays of strings/elements)
+        return parts;
+    };
     // --- handleTextareaInput (Unchanged from previous simplified version) ---
     const handleTextareaInput = (e) => {
         const text = e.target.value;
@@ -193,20 +243,6 @@ const ChatWindow = ({ token, onLogout }) => {
         setActiveEmojiPicker(message.id);
     };
     // --- End Simplified Handlers ---
-
-    // --- renderMessageWithMentions (Unchanged) ---
-    const renderMessageWithMentions = (text) => {
-        if (!text) return null;
-        const mentionRegex = /@(\S+)/g;
-        const parts = text.split(mentionRegex);
-        return parts.map((part, index) => {
-            if (index % 2 === 1) {
-                return <span key={index} className={styles.mentionHighlight}>@{part}</span>;
-            } else {
-                return part;
-            }
-        });
-    };
 
     // --- Render Logic ---
     if (loading || !loggedInUser || !chatGroup) { return <div className={styles.centeredMessage}>Loading...</div>; }

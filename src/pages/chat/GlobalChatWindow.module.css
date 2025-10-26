@@ -13,9 +13,14 @@
     display: flex;
     flex-direction: column;
 
-    /* --- PWA LAYOUT FIX --- */
-    height: 100vh; /* Use 100% of the viewport height */
-    height: -webkit-fill-available; /* iOS-specific fallback */
+    /* --- PWA LAYOUT FIX (MODIFIED) --- */
+    /*
+     * This is the fix. We change height from 100vh (viewport) to 100% (parent).
+     * This makes the chat window fill the ".contentArea" from App.jsx
+     * instead of overflowing it, which keeps the footer fixed at the bottom.
+     */
+    height: 100%; /* <-- CHANGED FROM 100vh */
+    /* height: -webkit-fill-available; */ /* <-- REMOVED THIS LINE */
     width: 100%;
     /* --- END FIX --- */
 
@@ -227,11 +232,8 @@
     gap: 4px;
     padding-bottom: 5px;
     transition: max-width 0.2s ease, opacity 0.2s ease, visibility 0.2s ease;
-
-    /* FIX 3: Responsive width and shrink prevention */
     max-width: 80px;
     flex-shrink: 0;
-
     opacity: 1;
     overflow: hidden;
     visibility: visible;
@@ -248,24 +250,14 @@
 
 .messageInput { /* Textarea */
     flex-grow: 1;
-
-    /* FIX 2: Flexbox overflow fix */
     flex-basis: 0;
     min-width: 0;
-
     padding: 8px 12px;
     border: none;
     border-radius: 18px;
     background-color: #f0f2f5;
     color: #050505;
-
-    /* * FIX 1: THE FIX FOR iOS AUTO-ZOOM ("squeezing" problem)
-    * font-size was 0.95rem (15.2px).
-    * iOS Safari auto-zooms on inputs with < 16px font-size.
-    * Setting it to 1rem (16px) disables this behavior.
-    */
-    font-size: 1rem; /* Was 0.95rem */
-
+    font-size: 1rem; /* 16px to prevent iOS zoom */
     outline: none;
     resize: none;
     max-height: 100px;
@@ -290,7 +282,7 @@
 .messageInputForm.typingActive .actionButtonsContainer {
     max-width: 0;
     opacity: 0;
-    margin-right: 0; /* This rule is now redundant but harmless */
+    margin-right: 0;
     visibility: hidden;
 }
 
@@ -309,33 +301,25 @@
 .received .mediaBubble { margin-right: auto; }
 .chatMediaImage, .chatMediaVideo { display: block; max-width: 100%; max-height: 250px; border-radius: 14px; object-fit: cover; background-color: #f0f2f5; }
 .chatMediaVideo { background-color: #000; }
-/* This is the new bubble style just for audio */
 .audioBubble {
-    background-color: #e4e6eb !important; /* Force bubble color */
-    padding: 8px 12px !important; /* Restore padding */
-    width: 250px; /* Force a consistent width */
-    max-width: 250px; /* Ensure it doesn't exceed */
+    background-color: #e4e6eb !important;
+    padding: 8px 12px !important;
+    width: 250px;
+    max-width: 250px;
 }
 .sent .audioBubble {
-    background-color: #0084ff !important; /* Force bubble color for sent */
+    background-color: #0084ff !important;
 }
-
-/* This is the OLD audio style - we replace it */
 .chatMediaAudio {
-    /* display: block; */ /* This is replaced by .audioPlayerContainer */
     width: 100%;
     max-width: 250px;
-    height: 45px; /* Set explicit height */
+    height: 45px;
     min-width: 220px;
 }
 .sent .chatMediaAudio {}
 .received .chatMediaAudio {}
-/* --- End old style --- */
-
-/* Text *under* media */
 .mediaBubble .messageText { padding: 6px 10px; margin-top: 4px; font-size: 0.9375rem; color: #050505; background-color: #e4e6eb; border-radius: 18px; }
 .sent .mediaBubble .messageText { color: white; background-color: #0084ff; }
-/* Link for non-renderable media */
 .chatMediaLink { display: flex; align-items: center; gap: 8px; padding: 10px; background-color: #f0f2f5; border-radius: 14px; color: #0084ff; text-decoration: none; font-size: 0.9rem; }
 .chatMediaLink:hover { background-color: #e4e6eb; }
 
@@ -346,14 +330,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 40px; /* Fixed height for the player */
+    height: 40px;
     width: 100%;
 }
 
 .audioPlayButton {
     background: none;
     border: none;
-    color: #050505; /* Dark icon color for received */
+    color: #050505;
     font-size: 1.2rem;
     padding: 4px;
     border-radius: 50%;
@@ -365,7 +349,7 @@
     transition: background-color 0.2s;
 }
 .sent .audioPlayButton {
-    color: white; /* White icon for sent */
+    color: white;
 }
 .audioPlayButton:hover {
     background-color: rgba(0, 0, 0, 0.1);
@@ -378,31 +362,31 @@
 .waveformContainer {
     display: flex;
     align-items: center;
-    height: 24px; /* Height of the waveform area */
-    width: 100%; /* Fill remaining space */
+    height: 24px;
+    width: 100%;
     gap: 1px;
     overflow: hidden;
 }
 
 .waveformBar {
-    width: 2.5px; /* Width of each bar */
-    background-color: #050505; /* Bar color for received */
+    width: 2.5px;
+    background-color: #050505;
     opacity: 0.6;
     border-radius: 1px;
 }
 .sent .waveformBar {
-    background-color: white; /* Bar color for sent */
+    background-color: white;
 }
 
 .audioTimestamp {
     font-size: 0.8rem;
     font-weight: 500;
-    color: #333; /* Timestamp color for received */
+    color: #333;
     flex-shrink: 0;
     margin-left: 4px;
 }
 .sent .audioTimestamp {
-    color: white; /* Timestamp color for sent */
+    color: white;
 }
 
 /* ================================== */

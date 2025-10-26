@@ -4,7 +4,6 @@
   background-color: #fdfdfd;
 }
 
-/* This is the new flexbox layout for protected pages */
 .protectedLayout {
   display: flex;
   flex-direction: column;
@@ -15,7 +14,6 @@
   flex-grow: 1; /* Allows this area to fill the remaining space */
   overflow-y: auto; /* Makes only the content area scrollable */
 }
-
 /* --- Shared Reusable Button Styles --- */
 .btn {
   padding: 0.85rem 1.5rem;

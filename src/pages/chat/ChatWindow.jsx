@@ -32,7 +32,7 @@ const AudioPlayer = ({ src }) => {
 // --- End Audio Player Component ---
 
 const ChatWindow = ({ token, onLogout }) => {
-    // --- State and Refs (REVISED) ---
+    // --- State and Refs (Simplified) ---
     const { chatId } = useParams();
     const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
@@ -52,7 +52,7 @@ const ChatWindow = ({ token, onLogout }) => {
     const readObserver = useRef(null);
     const messageListRef = useRef(null);
     const messageRefs = useRef({});
-    const [lightboxSrc, setLightboxSrc] = useState(null); // For image lightbox
+    const [lightboxSrc, setLightboxSrc] = useState(null);
     const imageInputRef = useRef(null);
     const [isRecording, setIsRecording] = useState(false);
     const mediaRecorder = useRef(null);
@@ -61,15 +61,7 @@ const ChatWindow = ({ token, onLogout }) => {
     const [uploadError, setUploadError] = useState('');
     const userIsAtBottomRef = useRef(true);
 
-    // --- Refs for Robust Gesture Handling (REVISED) ---
-    const pressTimer = useRef(null);
-    const lastTapTimeRef = useRef(0);
-    const dragStartXRef = useRef(null);
-    const dragStartYRef = useRef(null);
-    const isDragStartedRef = useRef(false);
-    const isLongPressRef = useRef(false);
-    const isVerticalDragRef = useRef(false);
-    const DRAG_THRESHOLD = 35; // Made more sensitive
+    // --- All complex gesture refs (like pressTimer, dragStartXRef) are no longer needed. ---
 
     // --- Hooks (Unchanged) ---
     useEffect(() => { if (token) setLoggedInUser(getUserInfoFromToken(token)); }, [token]);
@@ -93,152 +85,39 @@ const ChatWindow = ({ token, onLogout }) => {
     const handleReact = (reaction) => { if (loggedInUser && activeEmojiPicker) { sendMessage({ messageId: activeEmojiPicker, reaction }, `/app/chat/${chatId}/react`); } setActiveEmojiPicker(null); };
     const handleScrollToMessage = (messageId) => { const element = messageRefs.current[messageId]; if (element) { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); element.classList.add(styles.highlight); setTimeout(() => { element.classList.remove(styles.highlight); }, 1500); } };
 
-    // --- Double Click Handler (Called by handleInteractionStart) ---
-    const handleDoubleClick = (message) => {
+    // --- NEW, SIMPLIFIED INTERACTION HANDLERS ---
+
+    // 1. Single Click: Open images
+    const handleSingleClick = (e, message) => {
+        e.stopPropagation();
+        if (message.messageType === 'IMAGE') {
+            setLightboxSrc(`${API_BASE_URL}${message.mediaUrl}`);
+        }
+    };
+
+    // 2. Double Click: Send '❤️'
+    const handleDoubleClick = (e, message) => {
+        e.stopPropagation(); // Stop click from firing
         if (!loggedInUser || !message?.id || message?.clientMessageId) return;
+
         const reactionType = '❤️';
         sendMessage({ messageId: message.id, reaction: reactionType }, `/app/chat/${chatId}/react`);
         setAnimatedHeart(message.id);
         setTimeout(() => setAnimatedHeart(null), 600);
     };
 
-    // --- Interaction Handlers (FULLY REVISED) ---
-
-    const handleInteractionStart = (e, message) => {
-        if (message?.clientMessageId) return; // Don't interact with optimistic messages
-
-        const isTouchEvent = e.type.startsWith('touch');
-        const event = isTouchEvent ? e.touches[0] : e;
-        const currentTime = Date.now();
-        const timeSinceLastTap = currentTime - lastTapTimeRef.current;
-
-        // --- 1. Double Tap Detection ---
-        if (timeSinceLastTap < 300) {
-            e.preventDefault(); // *** CRUCIAL: Prevent default action like zoom/selection on double tap ***
-            handleDoubleClick(message);
-            clearTimeout(pressTimer.current); // Cancel pending long press
-            lastTapTimeRef.current = 0; // Reset tap time to prevent triple tap issue
-
-            // Reset all gesture flags
-            dragStartXRef.current = null;
-            dragStartYRef.current = null;
-            isDragStartedRef.current = false;
-            isLongPressRef.current = false;
-            isVerticalDragRef.current = false;
-            return; // Action handled, exit
-        }
-
-        // --- 2. Start of Single Tap / Long Press / Drag ---
-        lastTapTimeRef.current = currentTime; // Record tap time for potential double tap
-        dragStartXRef.current = event.clientX; // Record start X
-        dragStartYRef.current = event.clientY; // Record start Y
-
-        // Reset flags for this new interaction
-        isDragStartedRef.current = false;
-        isLongPressRef.current = false;
-        isVerticalDragRef.current = false;
-
-        // Clear any previous timer
-        clearTimeout(pressTimer.current);
-
-        // --- 3. Set timer for Long Press ---
-        pressTimer.current = setTimeout(() => {
-            // If timer fires, and we haven't started dragging, it's a long press
-            if (!isDragStartedRef.current) {
-                isLongPressRef.current = true;
-                setActiveEmojiPicker(message.id);
-                // Cancel swipe if long press triggers
-                dragStartXRef.current = null;
-                dragStartYRef.current = null;
-            }
-        }, 350); // Long press delay
+    // 3. Long Press (Context Menu): Open Reaction/Reply picker
+    const handleLongPress = (e, message) => {
+        e.preventDefault(); // *** CRITICAL: Stops the browser's right-click menu ***
+        e.stopPropagation();
+        if (message?.clientMessageId) return;
+        setActiveEmojiPicker(message.id);
     };
 
-    const handleInteractionMove = (e) => {
-        // Exit if no interaction has started
-        if (dragStartXRef.current === null || dragStartYRef.current === null) return;
+    // --- End Simplified Handlers ---
 
-        // Don't do anything if a long press has already fired
-        if (isLongPressRef.current) return;
 
-        const isTouchEvent = e.type.startsWith('touch');
-        const event = isTouchEvent ? e.touches[0] : e;
-        const deltaX = event.clientX - dragStartXRef.current;
-        const deltaY = event.clientY - dragStartYRef.current;
-
-        // --- 1. First Move Event: Decide Drag Direction ---
-        if (!isDragStartedRef.current) {
-            // Check if movement is significant enough to be a drag
-            if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
-                isDragStartedRef.current = true; // Mark as dragging
-                clearTimeout(pressTimer.current); // Cancel long press timer
-
-                // Decide if this is a vertical or horizontal drag
-                if (Math.abs(deltaY) > Math.abs(deltaX)) {
-                    isVerticalDragRef.current = true;
-                    // This is a vertical scroll, let the browser handle it.
-                } else {
-                    // This is a horizontal drag, take control.
-                    isVerticalDragRef.current = false;
-                }
-            }
-        }
-
-        // --- 2. Subsequent Move Events ---
-        if (isDragStartedRef.current && !isVerticalDragRef.current) {
-            // If we are dragging horizontally, PREVENT the browser's vertical scroll.
-            // This is the key fix.
-            e.preventDefault();
-        }
-    };
-
-    const handleInteractionEnd = (e, message) => {
-        // Always clear the long press timer
-        clearTimeout(pressTimer.current);
-
-        // --- 1. Check for Drag-to-Reply ---
-        if (isDragStartedRef.current && !isVerticalDragRef.current) {
-            // This was a confirmed horizontal drag
-            const isTouchEvent = e.type.startsWith('touch');
-            const event = isTouchEvent ? e.changedTouches[0] : e;
-            const deltaX = event.clientX - dragStartXRef.current;
-
-            if (deltaX > DRAG_THRESHOLD) {
-                // Successful swipe right
-                setReplyingTo(message);
-            }
-        }
-        // --- 2. Check for Single Tap ---
-        else if (!isDragStartedRef.current && !isLongPressRef.current) {
-            // This was not a drag and not a long press.
-            // It must be a single tap (double-tap is handled in 'Start').
-            if (message.messageType === 'IMAGE') {
-                setLightboxSrc(`${API_BASE_URL}${message.mediaUrl}`);
-            }
-        }
-
-        // --- 3. Reset all gesture states for the next interaction ---
-        dragStartXRef.current = null;
-        dragStartYRef.current = null;
-        isDragStartedRef.current = false;
-        isLongPressRef.current = false;
-        isVerticalDragRef.current = false;
-        // Do not reset lastTapTimeRef here, it's needed for the *next* double tap check
-    };
-
-    const handleLeave = (e) => {
-        // If mouse/touch leaves the element, cancel everything
-        clearTimeout(pressTimer.current);
-        dragStartXRef.current = null;
-        dragStartYRef.current = null;
-        isDragStartedRef.current = false;
-        isLongPressRef.current = false;
-        isVerticalDragRef.current = false;
-    };
-
-    // --- End Interaction Handlers ---
-
-    // --- Render Logic ---
+    // --- Render Logic (Unchanged) ---
     if (loading || !loggedInUser || !chatGroup) { return <div className={styles.centeredMessage}>Loading...</div>; }
     if (error) { return (<div className={styles.chatWindow}> <header className={styles.chatHeader}> <button onClick={() => navigate('/chat')} className={styles.backButton}><FaArrowLeft /></button> <div className={styles.headerTitleContainer}><h2>Error</h2></div> <div className={styles.headerActions}></div> </header> <div className={styles.centeredMessage}>{error}</div> </div>); }
 
@@ -247,12 +126,7 @@ const ChatWindow = ({ token, onLogout }) => {
         const mediaFullUrl = `${API_BASE_URL}${msg.mediaUrl}`;
         switch (msg.mediaType) {
             case 'IMAGE':
-                return <img
-                    src={mediaFullUrl}
-                    alt="Chat media"
-                    className={styles.chatMediaImage}
-                    loading="lazy"
-                />;
+                return <img src={mediaFullUrl} alt="Chat media" className={styles.chatMediaImage} loading="lazy" />;
             case 'VIDEO':
                 return <video src={mediaFullUrl} controls className={styles.chatMediaVideo} />;
             case 'AUDIO':
@@ -314,19 +188,23 @@ const ChatWindow = ({ token, onLogout }) => {
                                                 <p className={styles.replyText}>{parentMessage.text || (parentMessage.mediaType ? `[${parentMessage.mediaType.toLowerCase()}]` : '...')}</p>
                                             </div>
                                         )}
-                                        {activeEmojiPicker === msg.id && <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />}
+                                        {activeEmojiPicker === msg.id && (
+                                            <ReactionPicker
+                                                onReact={handleReact}
+                                                onClose={() => setActiveEmojiPicker(null)}
+                                                // 4. Pass the onReply prop
+                                                onReply={() => {
+                                                    setReplyingTo(msg);
+                                                    setActiveEmojiPicker(null);
+                                                }}
+                                            />
+                                        )}
                                         <div
                                             className={`${styles.messageBubble} ${msg.mediaUrl ? styles.mediaBubble : ''} ${msg.mediaType === 'AUDIO' ? styles.audioBubble : ''}`}
-                                            // --- USE UPDATED EVENT HANDLERS ---
-                                            onMouseDown={(e) => handleInteractionStart(e, msg)}
-                                            onMouseUp={(e) => handleInteractionEnd(e, msg)}
-                                            onMouseMove={handleInteractionMove}
-                                            onMouseLeave={handleLeave}
-                                            onTouchStart={(e) => handleInteractionStart(e, msg)}
-                                            onTouchMove={handleInteractionMove}
-                                            onTouchEnd={(e) => handleInteractionEnd(e, msg)}
-                                            // Prevent native context menu on long press
-                                            onContextMenu={(e) => e.preventDefault()}
+                                            // --- 5. USE NEW, SIMPLE EVENT HANDLERS ---
+                                            onClick={(e) => handleSingleClick(e, msg)}
+                                            onDoubleClick={(e) => handleDoubleClick(e, msg)}
+                                            onContextMenu={(e) => handleLongPress(e, msg)}
                                             // --- END UPDATE ---
                                         >
                                             {renderMedia(msg)}

@@ -1,16 +1,37 @@
 /* =============================================== */
 /* Base Window & Message List Styles             */
 /* =============================================== */
+
+/*
+* FIX 1: iOS KEYBOARD LAYOUT DISTORTION
+* Set height to 100vh to fill the *entire* screen,
+* ignoring the keyboard. -webkit-fill-available is a
+* fallback. overflow: hidden prevents the whole page
+* from scrolling or distorting.
+*/
 .chatWindow {
     display: flex;
     flex-direction: column;
-    height: 100%;
+
+    /* --- PWA LAYOUT FIX --- */
+    height: 100vh; /* Use 100% of the viewport height */
+    height: -webkit-fill-available; /* iOS-specific fallback */
+    width: 100%;
+    /* --- END FIX --- */
+
     background-color: #FFFFFF;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, '.SFNSText-Regular', sans-serif;
+
+    /* CRITICAL: Prevents the whole page from scrolling */
     overflow: hidden;
     position: relative;
 }
 
+/*
+* This is the *only* element that should scroll.
+* It will shrink when the keyboard appears, but the
+* .chatWindow container will not.
+*/
 .messageList {
     flex-grow: 1;
     padding: 8px 12px 12px;
@@ -30,7 +51,7 @@
     background-color: #FFFFFF;
     border-bottom: none;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-    flex-shrink: 0;
+    flex-shrink: 0; /* Don't shrink */
     z-index: 10;
     min-height: 52px;
     box-sizing: border-box;
@@ -189,13 +210,31 @@
 /* Input Bar                          */
 /* ================================== */
 .messageInputForm {
-    flex-shrink: 0; background-color: #FFFFFF; padding: 6px 8px; border-top: 1px solid #dadde1;
-    display: flex; align-items: flex-end; gap: 6px; transition: padding 0.2s ease; position: relative;
+    flex-shrink: 0;
+    background-color: #FFFFFF;
+    padding: 6px 8px;
+    border-top: 1px solid #dadde1;
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    transition: padding 0.2s ease;
+    position: relative;
+    box-sizing: border-box; /* Added for iOS layout */
 }
 .actionButtonsContainer {
-    display: flex; align-items: center; gap: 4px; padding-bottom: 5px;
-    transition: max-width 0.2s ease, opacity 0.2s ease, margin-right 0.2s ease, visibility 0.2s ease;
-    max-width: 200px; opacity: 1; overflow: hidden; margin-right: 6px; visibility: visible;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-bottom: 5px;
+    transition: max-width 0.2s ease, opacity 0.2s ease, visibility 0.2s ease;
+
+    /* FIX 3: Responsive width and shrink prevention */
+    max-width: 80px;
+    flex-shrink: 0;
+
+    opacity: 1;
+    overflow: hidden;
+    visibility: visible;
 }
 .chatActionButton {
     background: none; border: none; color: #0084ff; font-size: 1.3rem; padding: 6px; border-radius: 50%;
@@ -208,9 +247,31 @@
 @keyframes pulseRecord { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
 .messageInput { /* Textarea */
-    flex-grow: 1; padding: 8px 12px; border: none; border-radius: 18px; background-color: #f0f2f5;
-    color: #050505; font-size: 0.95rem; outline: none; resize: none; max-height: 100px;
-    line-height: 1.4; font-family: inherit; margin: 0;
+    flex-grow: 1;
+
+    /* FIX 2: Flexbox overflow fix */
+    flex-basis: 0;
+    min-width: 0;
+
+    padding: 8px 12px;
+    border: none;
+    border-radius: 18px;
+    background-color: #f0f2f5;
+    color: #050505;
+
+    /* * FIX 1: THE FIX FOR iOS AUTO-ZOOM ("squeezing" problem)
+    * font-size was 0.95rem (15.2px).
+    * iOS Safari auto-zooms on inputs with < 16px font-size.
+    * Setting it to 1rem (16px) disables this behavior.
+    */
+    font-size: 1rem; /* Was 0.95rem */
+
+    outline: none;
+    resize: none;
+    max-height: 100px;
+    line-height: 1.4;
+    font-family: inherit;
+    margin: 0;
 }
 .messageInput:disabled { background-color: #e4e6eb; cursor: not-allowed; }
 
@@ -227,7 +288,10 @@
 
 /* Styles for when typing */
 .messageInputForm.typingActive .actionButtonsContainer {
-    max-width: 0; opacity: 0; margin-right: 0; visibility: hidden;
+    max-width: 0;
+    opacity: 0;
+    margin-right: 0; /* This rule is now redundant but harmless */
+    visibility: hidden;
 }
 
 /* Upload Error Bar */

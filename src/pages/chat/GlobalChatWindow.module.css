@@ -1,7 +1,7 @@
 /* =============================================== */
 /* Base Window & Message List Styles             */
 /* =============================================== */
-.globalChatWindow { /* Use specific class */
+.globalChatWindow {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -55,11 +55,11 @@
 .headerActions { display: flex; align-items: center; justify-content: flex-end; width: 36px; height: 36px; flex-shrink: 0; }
 
 /* ============================================ */
-/* Message Bubbles & Alignment (Keep Relevant) */
+/* Message Bubbles & Alignment (Simplified)     */
 /* ============================================ */
 .messageWrapper { display: flex; max-width: 70%; margin-bottom: 2px; position: relative; }
 .messageWrapper.grouped { margin-bottom: 2px; }
-.messageBubble { padding: 8px 12px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; max-width: 100%; box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13); width: fit-content; user-select: text; -webkit-user-select: text; touch-action: pan-y; }
+.messageBubble { padding: 8px 12px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; max-width: 100%; box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13); width: fit-content; user-select: text; -webkit-user-select: text; touch-action: pan-y; } /* Allow text selection, keep pan-y */
 .messageText { margin: 0; font-size: 0.9375rem; white-space: pre-wrap; }
 .sent { align-self: flex-end; margin-left: auto; }
 .sent .messageBubble { background-color: #0084ff; color: white; }
@@ -76,7 +76,7 @@
 .senderName { font-size: 0.7rem; color: #65676b; font-weight: 500; margin-bottom: 2px; }
 
 /* =========================================== */
-/* Timestamps & Read Receipts (Keep Relevant)  */
+/* Timestamps & Optimistic Indicator           */
 /* =========================================== */
 .timestampContainer { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
 .sent .timestampContainer { align-self: flex-end; padding-right: 4px; }
@@ -98,7 +98,7 @@
     position: relative;
     box-sizing: border-box;
 }
-.actionButtonsContainer { display: none; } /* Hide completely */
+.actionButtonsContainer { display: none; } /* Hide action buttons */
 
 .messageInput {
     flex-grow: 1;

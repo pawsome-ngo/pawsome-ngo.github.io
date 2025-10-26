@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom'; // Removed useParams if not needed
+import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import useWebSocket from '../../hooks/useWebSocket.js'; // Adjust path if needed
-// Removed imports for features not used in Global Chat
 import styles from './GlobalChatWindow.module.css'; // Use Global Chat CSS
 import {
     FaPaperPlane, FaArrowLeft, FaChevronDown,
@@ -30,7 +29,7 @@ const isSameDay = (d1, d2) => { if (!d1 || !d2) return false; const date1 = new 
 const formatDateSeparator = (dateString) => { if (!dateString) return ''; const date = new Date(dateString); const today = new Date(); const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1); if (isSameDay(date, today)) return 'Today'; if (isSameDay(date, yesterday)) return 'Yesterday'; return date.toLocaleDateString([], { month: 'long', day: 'numeric' }); };
 // --- End Helper Functions ---
 
-// --- Audio Player Component (Keep if audio messages are planned) ---
+// --- Audio Player Component (Optional: Keep if audio messages are planned) ---
 // const AudioPlayer = ({ src }) => { ... };
 // ---
 
@@ -46,7 +45,7 @@ const GlobalChatWindow = ({ token, onLogout }) => {
     const [loggedInUser, setLoggedInUser] = useState(null);
     const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
     const messageListRef = useRef(null);
-    const messageRefs = useRef({});
+    const messageRefs = useRef({}); // Keep if using scroll-to or read receipts
     const userIsAtBottomRef = useRef(true);
 
     // --- Hooks ---
@@ -70,15 +69,15 @@ const GlobalChatWindow = ({ token, onLogout }) => {
         if (!isAtBottom && !messages.some(m => m.id === message.id || m.clientMessageId === message.clientMessageId)) {
             setHasUnreadMessages(true);
         }
-    }, [messages]); // messages dependency is okay here
+    }, [messages]);
 
     useEffect(() => { if (userIsAtBottomRef.current) { scrollToBottom('smooth'); } }, [messages, scrollToBottom]);
 
     const { sendMessage } = useWebSocket({
         onMessageReceived,
         token,
-        chatId: 'global',
-        isGlobal: true
+        chatId: 'global', // Identifier for global topic
+        isGlobal: true   // Flag if hook needs it
     });
 
     useEffect(() => {
@@ -121,28 +120,29 @@ const GlobalChatWindow = ({ token, onLogout }) => {
             return;
         }
 
-        // --- Autocomplete @mention Logic (REFINED for Punctuation) ---
-        // 1. Handle @Everyone first: Replace "@ " or "@" at the end of the string
-        txtToSend = txtToSend.replace(/@(?=\s|$)/g, '@Everyone');
+        // --- Autocomplete @mention Logic (REFINED for @Everyone Punctuation) ---
+        // 1. Handle @Everyone equivalent first, preserving punctuation
+        txtToSend = txtToSend.replace(/@([?!.]*)(?=\s|$)/g, (match, punctuation) => {
+            return `@Everyone${punctuation}`;
+        });
 
-        // 2. Handle specific user mentions, now capturing trailing punctuation
-        // Regex: Find @, capture 3+ letters, capture 0+ trailing non-letter/non-space chars,
-        // followed by space or end of string.
-        const mentionRegex = /@([a-zA-Z]{3,})([^\w\s]*)(?=\s|$)/g;
+        // 2. Handle specific user mentions, capturing trailing punctuation
+        const mentionRegex = /@([a-zA-Z][a-zA-Z0-9]{2,})([^\w\s]*)(?=\s|$)/g;
 
         txtToSend = txtToSend.replace(mentionRegex, (match, typedPrefix, punctuation) => {
+            if (typedPrefix.toLowerCase() === 'everyone') {
+                return match; // Already handled
+            }
+
             const prefixLower = typedPrefix.toLowerCase();
-            // Use ALL_USER_FIRST_NAMES for global chat
             const potentialMatches = ALL_USER_FIRST_NAMES.filter(name =>
                 name.toLowerCase().startsWith(prefixLower)
             );
 
-            // If exactly one match found, return the full correct mention + punctuation
             if (potentialMatches.length === 1) {
                 const correctName = potentialMatches[0];
-                return `@${correctName}${punctuation}`; // Re-append punctuation
+                return `@${correctName}${punctuation}`;
             } else {
-                // If 0 or multiple matches, return the original typed mention (including punctuation)
                 return match;
             }
         });
@@ -152,16 +152,15 @@ const GlobalChatWindow = ({ token, onLogout }) => {
         const optimisticMsg = {
             id: clientMsgId,
             clientMessageId: clientMsgId,
-            text: txtToSend, // Use potentially modified text
+            text: txtToSend,
             sender: { id: loggedInUser.id, firstName: loggedInUser.firstName || 'User', lastName: loggedInUser.lastName || '' },
             timestamp: new Date().toISOString(),
-            reactions: {}, // Keep structure consistent if DTO expects it
-            seenBy: [],    // Keep structure consistent if DTO expects it
+            reactions: {},
+            seenBy: [],
         };
         setMessages(prev => [...prev, optimisticMsg]);
 
-        // Send the potentially modified text via WebSocket
-        sendMessage({ text: txtToSend, clientMessageId: clientMsgId }); // Global chat send format
+        sendMessage({ text: txtToSend, clientMessageId: clientMsgId });
 
         setNewMessage('');
         if(textareaRef.current) textareaRef.current.style.height = 'auto';
@@ -185,51 +184,38 @@ const GlobalChatWindow = ({ token, onLogout }) => {
     // --- Function to render mentions with bold style (Handles Punctuation) ---
     const renderMessageWithMentions = (text) => {
         if (!text) return null;
-        // Regex: Find @, capture the name part (non-space, non-punctuation at end), capture trailing punctuation
-        const mentionRegex = /@(\S+?)([^\w\s]*?(?=\s|$))/g;
+        // Regex: Find @, capture name part (word chars or "everyone" case-insensitive), capture trailing punctuation
+        const mentionRegex = /@((?:everyone|[\w]+))([^\w\s]*?(?=\s|$))/gi;
 
         const parts = [];
         let lastIndex = 0;
         let match;
 
         while ((match = mentionRegex.exec(text)) !== null) {
-            // Add text before the mention
             if (match.index > lastIndex) {
                 parts.push(text.substring(lastIndex, match.index));
             }
-
-            const mentionName = match[1]; // Name part (e.g., "Demson", "Everyone")
-            const punctuation = match[2] || ""; // Punctuation part (e.g., "??", "")
-
-            // Check if the name part is a known mention or "Everyone"
+            const mentionName = match[1];
+            const punctuation = match[2] || "";
             const nameLower = mentionName.toLowerCase();
-            // Use ALL_USER_FIRST_NAMES for global chat
-            const isKnownMention = ALL_USER_FIRST_NAMES.some(
-                name => name.toLowerCase() === nameLower
-            );
+            const isKnownMention = ALL_USER_FIRST_NAMES.some(name => name.toLowerCase() === nameLower);
             const isEveryone = nameLower === 'everyone';
 
             if (isKnownMention || isEveryone) {
-                // Add the highlighted mention + punctuation
+                const displayName = isEveryone ? "Everyone" : mentionName; // Use correct case for Everyone
                 parts.push(
                     <span key={match.index} className={styles.mentionHighlight}>
-                        @{mentionName}{punctuation}
+                        @{displayName}{punctuation}
                     </span>
                 );
             } else {
-                // Add the non-recognized mention as plain text
-                parts.push(`@${mentionName}${punctuation}`);
+                parts.push(`@${mentionName}${punctuation}`); // Render unknown as plain text
             }
-
             lastIndex = match.index + match[0].length;
         }
-
-        // Add any remaining text after the last mention
         if (lastIndex < text.length) {
             parts.push(text.substring(lastIndex));
         }
-
-        // Return the array of parts (React can render arrays of strings/elements)
         return parts;
     };
 
@@ -237,7 +223,6 @@ const GlobalChatWindow = ({ token, onLogout }) => {
     // --- Render Logic ---
     if (loading || !loggedInUser) { return <div className={styles.centeredMessage}>Loading...</div>; }
     if (error) { return (<div className={styles.globalChatWindow}> <header className={styles.chatHeader}> <button onClick={() => navigate('/chat')} className={styles.backButton}><FaArrowLeft /></button> <h2>Error</h2> <div className={styles.headerActions}></div> </header> <div className={styles.centeredMessage}>{error}</div> </div>); }
-
 
     return (
         <div className={styles.globalChatWindow}>
@@ -257,7 +242,7 @@ const GlobalChatWindow = ({ token, onLogout }) => {
                     const isTimestampClose = prevMsg && msg.timestamp && prevMsg.timestamp && (new Date(msg.timestamp).getTime() - new Date(prevMsg.timestamp).getTime() < 5 * 60 * 1000);
                     const isFirstInGroup = !isSameSenderAsPrevious || !isTimestampClose || !isSameDay(prevMsg?.timestamp, msg.timestamp);
                     const showDateSeparator = !prevMsg || !isSameDay(prevMsg?.timestamp, msg.timestamp);
-                    const showTimestamp = true; // Always show timestamp in global chat
+                    const showTimestamp = true;
                     const messageNodeRef = (node) => { messageRefs.current[msg.id] = node; };
 
                     return (
@@ -282,13 +267,8 @@ const GlobalChatWindow = ({ token, onLogout }) => {
                                         <div className={styles.senderName}>{msg.sender.firstName} {msg.sender.lastName}</div>
                                     )}
                                     <div className={styles.bubbleContainer}>
-                                        <div
-                                            className={styles.messageBubble}
-                                            // No interactions needed for global chat bubbles usually
-                                        >
-                                            {/* Use renderMessageWithMentions */}
+                                        <div className={styles.messageBubble} >
                                             {msg.text && <p className={styles.messageText}>{renderMessageWithMentions(msg.text)}</p>}
-                                            {/* Optimistic indicator */}
                                             {msg.clientMessageId && !msg.id && (<FaClock className={styles.optimisticIcon} />)}
                                         </div>
                                     </div>
@@ -306,14 +286,13 @@ const GlobalChatWindow = ({ token, onLogout }) => {
                 <div ref={messagesEndRef} />
             </main>
 
-            {/* --- Footer & Modals --- */}
             {hasUnreadMessages &&
                 <button className={`${styles.scrollToBottomIndicator} ${styles.visible}`} onClick={() => scrollToBottom('smooth')}>
                     <FaChevronDown /> New Messages
                 </button>
             }
 
-            <footer className={`${styles.messageInputForm}`}> {/* Removed typingActive class if not used */}
+            <footer className={`${styles.messageInputForm}`}>
                 <div className={styles.actionButtonsContainer} style={{maxWidth: '0', opacity: 0, visibility: 'hidden'}}>
                 </div>
                 <textarea
@@ -334,7 +313,6 @@ const GlobalChatWindow = ({ token, onLogout }) => {
                     <FaPaperPlane />
                 </button>
             </footer>
-            {/* Removed unused modals */}
         </div>
     );
 };

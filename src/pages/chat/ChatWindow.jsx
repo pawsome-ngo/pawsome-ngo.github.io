@@ -90,7 +90,7 @@ const ChatWindow = ({ token, onLogout }) => {
     const startRecording = async () => { /* ... Unchanged ... */ };
     const stopRecording = () => { /* ... Unchanged ... */ };
 
-    // --- UPDATED handleSendMessage with punctuation handling ---
+    // --- UPDATED handleSendMessage with punctuation handling for @Everyone ---
     const handleSendMessage = (event) => {
         event?.preventDefault();
         let txtToSend = newMessage.trim(); // Start with the original trimmed message
@@ -101,39 +101,43 @@ const ChatWindow = ({ token, onLogout }) => {
             return;
         }
 
-        // --- Autocomplete @mention Logic (REFINED for Punctuation) ---
+        // --- Autocomplete @mention Logic (REFINED for @Everyone Punctuation) ---
 
-        // 1. Handle @Everyone first: Replace "@ " or "@" at the end of the string
-        txtToSend = txtToSend.replace(/@(?=\s|$)/g, '@Everyone');
+        // 1. Handle @Everyone equivalent first, preserving punctuation
+        // Regex: Find @, capture punctuation ([?!.]*) or nothing, followed by space or end.
+        txtToSend = txtToSend.replace(/@([?!.]*)(?=\s|$)/g, (match, punctuation) => {
+            return `@Everyone${punctuation}`; // Replace @ with @Everyone, keep punctuation
+        });
 
-        // 2. Handle specific user mentions, now capturing trailing punctuation
+        // 2. Handle specific user mentions, capturing trailing punctuation
         // Regex: Find @, capture 3+ letters, capture 0+ trailing non-letter/non-space chars,
         // followed by space or end of string.
-        const mentionRegex = /@([a-zA-Z]{3,})([^\w\s]*)(?=\s|$)/g;
+        // Important: Ensure this regex doesn't overlap with the @Everyone replacement above if possible
+        // Let's refine it to ensure the first char after @ is a letter for user mentions.
+        const mentionRegex = /@([a-zA-Z][a-zA-Z0-9]{2,})([^\w\s]*)(?=\s|$)/g;
 
         txtToSend = txtToSend.replace(mentionRegex, (match, typedPrefix, punctuation) => {
-            // match: "@Dem??" | typedPrefix: "Dem" | punctuation: "??"
-            // match: "@Ali!!!" | typedPrefix: "Ali" | punctuation: "!!!"
-            // match: "@frank" | typedPrefix: "frank" | punctuation: ""
+            // Check if it's actually "Everyone" (case-insensitive) - already handled above, but as a safeguard
+            if (typedPrefix.toLowerCase() === 'everyone') {
+                return match; // Should have been replaced already
+            }
 
             const prefixLower = typedPrefix.toLowerCase();
             const potentialMatches = TEAM_MEMBER_FIRST_NAMES.filter(name =>
                 name.toLowerCase().startsWith(prefixLower)
             );
 
-            // If exactly one match found, return the full correct mention + punctuation
             if (potentialMatches.length === 1) {
-                const correctName = potentialMatches[0]; // Get the correctly capitalized name
+                const correctName = potentialMatches[0];
                 return `@${correctName}${punctuation}`; // Re-append punctuation
             } else {
-                // If 0 or multiple matches, return the original typed mention (including punctuation)
-                return match;
+                return match; // Keep original if no unique match or "Everyone"
             }
         });
         // --- End Autocomplete Logic ---
 
         const clientMsgId = `temp-${Date.now()}`;
-        const optimisticMsg = {
+        const optimisticMsg = { /* ... (rest of optimistic message setup is the same) ... */
             id: clientMsgId,
             clientMessageId: clientMsgId,
             text: txtToSend, // Use the fully processed text
@@ -145,7 +149,6 @@ const ChatWindow = ({ token, onLogout }) => {
         };
         setMessages(prev => [...prev, optimisticMsg]);
 
-        // Send the potentially modified text to the backend
         sendMessage({ text: txtToSend, clientMessageId: clientMsgId, parentMessageId: replyingTo ? replyingTo.id : null }, `/app/chat/${chatId}/send`);
 
         setNewMessage('');
@@ -157,9 +160,11 @@ const ChatWindow = ({ token, onLogout }) => {
     // --- UPDATED renderMessageWithMentions with punctuation handling ---
     const renderMessageWithMentions = (text) => {
         if (!text) return null;
-        // Regex: Find @, capture the name part (non-space), capture trailing punctuation
-        const mentionRegex = /@(\S+?)([^\w\s]*?(?=\s|$))/g;
-        // Split by the pattern, keeping delimiters. This is tricky, easier to process sequentially.
+        // Regex: Find @, capture the name part (non-space, non-punctuation at end), capture trailing punctuation
+        // Adjusted to better capture name vs punctuation.
+        // Capture word characters (\w includes letters, numbers, _) OR capture "Everyone" case-insensitively
+        // Then capture any trailing non-word/non-space characters.
+        const mentionRegex = /@((?:everyone|[\w]+))([^\w\s]*?(?=\s|$))/gi; // Added 'i' for case-insensitive Everyone
 
         const parts = [];
         let lastIndex = 0;
@@ -183,9 +188,11 @@ const ChatWindow = ({ token, onLogout }) => {
 
             if (isKnownMention || isEveryone) {
                 // Add the highlighted mention + punctuation
+                // Use the original case for "Everyone" if matched that way for display
+                const displayName = isEveryone ? "Everyone" : mentionName;
                 parts.push(
                     <span key={match.index} className={styles.mentionHighlight}>
-                        @{mentionName}{punctuation}
+                        @{displayName}{punctuation}
                     </span>
                 );
             } else {
@@ -201,8 +208,7 @@ const ChatWindow = ({ token, onLogout }) => {
             parts.push(text.substring(lastIndex));
         }
 
-        // Return the array of parts (React can render arrays of strings/elements)
-        return parts;
+        return parts; // Return array of strings/elements
     };
     // --- handleTextareaInput (Unchanged from previous simplified version) ---
     const handleTextareaInput = (e) => {

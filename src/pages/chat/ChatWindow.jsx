@@ -5,7 +5,8 @@ import useWebSocket from '../../hooks/useWebSocket.js';
 import ReactionsModal from './components/ReactionsModal.jsx';
 import ReactionPicker from './components/ReactionPicker.jsx';
 import ChatIncidentDetailModal from './components/ChatIncidentDetailModal.jsx';
-import styles from './ChatWindow.module.css'; // Use your existing CSS module
+import Lightbox from '../../components/common/Lightbox.jsx'; // 1. ADDED IMPORT
+import styles from './ChatWindow.module.css';
 import {
     FaPaperPlane, FaInfoCircle, FaCheck, FaCheckDouble, FaArrowLeft, FaChevronDown,
     FaPlus, FaCamera, FaImage, FaMicrophone, FaStop, FaSpinner, FaFileAudio, FaFileVideo, FaFileImage, FaFileAlt, FaClock, FaUsers,
@@ -16,14 +17,14 @@ import imageCompression from 'browser-image-compression';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// --- Helper Functions (Keep your existing helpers) ---
+// --- Helper Functions (Unchanged) ---
 const getUserInfoFromToken = (token) => { try { const decodedToken = jwtDecode(token); return { id: Number(decodedToken.id), username: decodedToken.sub }; } catch (error) { console.error('Failed to decode token:', error); return { id: null, username: null }; } };
 const formatDate = (dateString) => { if (!dateString) return ''; const date = new Date(dateString); return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
 const isSameDay = (d1, d2) => { if (!d1 || !d2) return false; const date1 = new Date(d1); const date2 = new Date(d2); return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate(); };
 const formatDateSeparator = (dateString) => { if (!dateString) return ''; const date = new Date(dateString); const today = new Date(); const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1); if (isSameDay(date, today)) return 'Today'; if (isSameDay(date, yesterday)) return 'Yesterday'; return date.toLocaleDateString([], { month: 'long', day: 'numeric' }); };
 // --- End Helper Functions ---
 
-// --- Audio Player Component (Keep your existing component) ---
+// --- Audio Player Component (Unchanged) ---
 const AudioPlayer = ({ src }) => {
     const audioRef = useRef(null); const [isPlaying, setIsPlaying] = useState(false); const [duration, setDuration] = useState(0); const [currentTime, setCurrentTime] = useState(0); const waveformBars = useMemo(() => Array.from({ length: 30 }, () => Math.random() * 80 + 20), []); const handleLoadedMetadata = () => { if (audioRef.current) setDuration(audioRef.current.duration); }; const handleTimeUpdate = () => { if (audioRef.current) setCurrentTime(audioRef.current.currentTime); }; const togglePlayPause = (e) => { e.stopPropagation(); if (isPlaying) { audioRef.current.pause(); } else { audioRef.current.play(); } setIsPlaying(!isPlaying); }; const formatTime = (timeInSeconds) => { if (isNaN(timeInSeconds) || !isFinite(timeInSeconds) || timeInSeconds === 0) { return '0:00'; } const minutes = Math.floor(timeInSeconds / 60); const seconds = Math.floor(timeInSeconds % 60); return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`; };
     return ( <div className={styles.audioPlayerContainer}> <audio ref={audioRef} src={src} onLoadedMetadata={handleLoadedMetadata} onTimeUpdate={handleTimeUpdate} onEnded={() => setIsPlaying(false)} preload="metadata" /> <button onClick={togglePlayPause} className={styles.audioPlayButton}> {isPlaying ? <FaPause /> : <FaPlay />} </button> <div className={styles.waveformContainer}> {waveformBars.map((height, i) => (<div key={i} className={styles.waveformBar} style={{ height: `${height}%` }} />))} </div> <span className={styles.audioTimestamp}> {formatTime(duration)} </span> </div> );
@@ -31,7 +32,7 @@ const AudioPlayer = ({ src }) => {
 // --- End Audio Player Component ---
 
 const ChatWindow = ({ token, onLogout }) => {
-    // --- State and Refs (Keep your existing ones + lastTapTimeRef) ---
+    // --- State and Refs ---
     const { chatId } = useParams();
     const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
@@ -53,9 +54,10 @@ const ChatWindow = ({ token, onLogout }) => {
     const messageRefs = useRef({});
     const pressTimer = useRef(null);
     const dragStartXRef = useRef(null);
-    const lastTapTimeRef = useRef(0); // For double-tap
-    const isDraggingRef = useRef(false); // Track dragging state
-    const DRAG_THRESHOLD = 50;
+    const lastTapTimeRef = useRef(0);
+    const isDraggingRef = useRef(false);
+    const isLongPressRef = useRef(false); // 2. ADDED REF
+    const DRAG_THRESHOLD = 35; // 5. UPDATED THRESHOLD
     const userIsAtBottomRef = useRef(true);
     const imageInputRef = useRef(null);
     const [isRecording, setIsRecording] = useState(false);
@@ -63,8 +65,9 @@ const ChatWindow = ({ token, onLogout }) => {
     const audioChunks = useRef([]);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
+    const [lightboxSrc, setLightboxSrc] = useState(null); // 1. ADDED STATE
 
-    // --- Hooks (Keep your existing hooks) ---
+    // --- Hooks (Unchanged) ---
     useEffect(() => { if (token) setLoggedInUser(getUserInfoFromToken(token)); }, [token]);
     const scrollToBottom = useCallback((behavior = 'smooth') => { if (messageListRef.current) { requestAnimationFrame(() => { if (messageListRef.current) { messageListRef.current.scrollTo({ top: messageListRef.current.scrollHeight, behavior }); } }); } }, []);
     const onMessageReceived = useCallback((message) => { const isAtBottom = userIsAtBottomRef.current; setMessages(prevMessages => { const optimisticIndex = prevMessages.findIndex(m => m.clientMessageId && m.clientMessageId === message.clientMessageId); if (optimisticIndex !== -1) { const updated = [...prevMessages]; updated[optimisticIndex] = message; return updated; } const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id); if (existingMessageIndex !== -1) { const updated = [...prevMessages]; updated[existingMessageIndex] = message; return updated; } if (prevMessages.some(m => m.id === message.id)) { return prevMessages; } return [...prevMessages, message]; }); if (!isAtBottom && !messages.some(m => m.id === message.id || m.clientMessageId === message.clientMessageId)) { setHasUnreadMessages(true); } }, [messages]);
@@ -75,7 +78,7 @@ const ChatWindow = ({ token, onLogout }) => {
     useEffect(() => { if (readObserver.current) readObserver.current.disconnect(); const observerCallback = (entries) => { entries.forEach(entry => { if (entry.isIntersecting && entry.intersectionRatio >= 0.7) { const messageId = entry.target.dataset.messageId; handleMarkAsRead(messageId); readObserver.current.unobserve(entry.target); } }); }; readObserver.current = new IntersectionObserver(observerCallback, { root: messageListRef.current, threshold: 0.7 }); messages.forEach(msg => { const element = messageRefs.current[msg.id]; const isReadByMe = msg.seenBy?.some(user => user.id === loggedInUser?.id); if (element && msg.id && !msg.clientMessageId && msg.sender?.id !== loggedInUser?.id && !isReadByMe) { try { readObserver.current.observe(element); } catch (e) { console.warn("Observer error:", e); } } }); return () => { if (readObserver.current) readObserver.current.disconnect(); }; }, [messages, loggedInUser, handleMarkAsRead]);
     const handleScroll = () => { if (messageListRef.current) { const { scrollHeight, scrollTop, clientHeight } = messageListRef.current; const isNearBottom = scrollHeight - scrollTop - clientHeight < 50; userIsAtBottomRef.current = isNearBottom; if (isNearBottom) { setHasUnreadMessages(false); } } };
 
-    // --- Message Sending & Media Handling (Keep your existing functions) ---
+    // --- Message Sending & Media Handling (Unchanged) ---
     const handleMediaUpload = async (file) => { if (!file || !chatId || !token || !loggedInUser) return; setIsUploading(true); setUploadError(''); let processedFile = file; let mediaTypeString = 'UNKNOWN'; try { if (file.type.startsWith('image/')) { mediaTypeString = 'IMAGE'; const compOptions = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true, fileType: 'image/jpeg', quality: 0.7 }; try { const compBlob = await imageCompression(file, compOptions); const fName = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg'; processedFile = new File([compBlob], fName, { type: 'image/jpeg', lastModified: file.lastModified }); } catch (compErr) { console.warn("Img compression failed", compErr); processedFile = file; } } else if (file.type.startsWith('video/')) { mediaTypeString = 'VIDEO'; } else if (file.type.startsWith('audio/')) { mediaTypeString = 'AUDIO'; } else { throw new Error("Unsupported file type."); } const formData = new FormData(); formData.append('media', processedFile); const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}/media`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData }); const result = await response.json(); if (!response.ok) throw new Error(result.message || `Upload failed`); const clientMsgId = `temp-${Date.now()}`; const txtToSend = newMessage.trim(); const optimisticMsg = { id: clientMsgId, clientMessageId: clientMsgId, text: txtToSend || null, sender: { id: loggedInUser.id, firstName: 'You', lastName: '' }, timestamp: new Date().toISOString(), reactions: {}, seenBy: [], parentMessageId: replyingTo ? replyingTo.id : null, mediaUrl: result.mediaUrl, mediaType: result.mediaType }; setMessages(prev => [...prev, optimisticMsg]); sendMessage({ text: txtToSend || null, clientMessageId: clientMsgId, parentMessageId: replyingTo ? replyingTo.id : null, mediaUrl: result.mediaUrl, mediaType: result.mediaType }, `/app/chat/${chatId}/send`); setNewMessage(''); setReplyingTo(null); if(textareaRef.current) textareaRef.current.style.height = 'auto'; setTimeout(() => scrollToBottom('smooth'), 50); } catch (err) { console.error("Media error:", err); setUploadError(err.message); setTimeout(() => setUploadError(''), 5000); } finally { setIsUploading(false); if(imageInputRef.current) imageInputRef.current.value = null; } };
     const handleFileSelected = (event) => { const file = event.target.files?.[0]; if (file) { handleMediaUpload(file); } event.target.value = null; };
     const startRecording = async () => { if (isUploading || isRecording) return; try { if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setUploadError("Audio recording not supported."); setTimeout(() => setUploadError(''), 5000); return; } const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const options = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? { mimeType: 'audio/webm;codecs=opus' } : MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm'} : {}; mediaRecorder.current = new MediaRecorder(stream, options); const mimeType = mediaRecorder.current.mimeType || 'audio/webm'; const fExt = mimeType.includes('opus') ? 'opus' : (mimeType.split('/')[1]?.split(';')[0] || 'webm'); audioChunks.current = []; mediaRecorder.current.ondataavailable = event => { if (event.data.size > 0) audioChunks.current.push(event.data); }; mediaRecorder.current.onstop = () => { const audioBlob = new Blob(audioChunks.current, { type: mimeType }); const audioFile = new File([audioBlob], `voice-msg-${Date.now()}.${fExt}`, { type: mimeType }); handleMediaUpload(audioFile); stream.getTracks().forEach(track => track.stop()); }; mediaRecorder.current.start(); setIsRecording(true); } catch (err) { console.error("Mic error:", err); if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') { setUploadError("Mic permission denied."); } else { setUploadError("Could not access mic."); } setTimeout(() => setUploadError(''), 5000); } };
@@ -86,7 +89,12 @@ const ChatWindow = ({ token, onLogout }) => {
     const handleReact = (reaction) => { if (loggedInUser && activeEmojiPicker) { sendMessage({ messageId: activeEmojiPicker, reaction }, `/app/chat/${chatId}/react`); } setActiveEmojiPicker(null); };
     const handleScrollToMessage = (messageId) => { const element = messageRefs.current[messageId]; if (element) { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); element.classList.add(styles.highlight); setTimeout(() => { element.classList.remove(styles.highlight); }, 1500); } };
 
-    // --- Double Click Handler (Called by handleInteractionStart) ---
+    // --- Lightbox Helper (New) ---
+    const openLightbox = (src) => {
+        setLightboxSrc(src);
+    };
+
+    // --- Double Click Handler (Unchanged) ---
     const handleDoubleClick = (message) => {
         if (!loggedInUser || !message?.id || message?.clientMessageId) return;
         const reactionType = '❤️';
@@ -95,7 +103,7 @@ const ChatWindow = ({ token, onLogout }) => {
         setTimeout(() => setAnimatedHeart(null), 600);
     };
 
-    // --- Interaction Handlers (REVISED based on reference) ---
+    // --- Interaction Handlers (REVISED) ---
 
     const handleInteractionStart = (e, message) => {
         if (message?.clientMessageId) return;
@@ -107,89 +115,104 @@ const ChatWindow = ({ token, onLogout }) => {
 
         // --- Double Tap Detection ---
         if (timeSinceLastTap < 300) {
-            e.preventDefault(); // *** CRUCIAL: Prevent default action like zoom/selection on double tap ***
+            e.preventDefault();
             handleDoubleClick(message);
-            clearTimeout(pressTimer.current); // Cancel pending long press
-            dragStartXRef.current = null; // Cancel swipe
+            clearTimeout(pressTimer.current);
+            dragStartXRef.current = null;
             isDraggingRef.current = false;
-            lastTapTimeRef.current = 0; // Reset tap time to prevent triple tap issue
-            return; // Action handled, exit
+            lastTapTimeRef.current = 0;
+            return;
         }
 
         // --- Single Tap / Start of Long Press or Swipe ---
-        lastTapTimeRef.current = currentTime; // Record tap time for potential double tap
-        dragStartXRef.current = currentX; // Record start X for potential swipe
-        isDraggingRef.current = false; // Reset dragging flag
+        lastTapTimeRef.current = currentTime;
+        dragStartXRef.current = currentX;
+        isDraggingRef.current = false;
+        isLongPressRef.current = false; // 3. UPDATED: Reset long press flag
 
-        // Clear previous timer just in case
         clearTimeout(pressTimer.current);
 
         // Set timer for long press
         pressTimer.current = setTimeout(() => {
-            // If timer fires, and we haven't started dragging, it's a long press
             if (!isDraggingRef.current) {
                 setActiveEmojiPicker(message.id);
-                dragStartXRef.current = null; // Cancel swipe if long press triggers
+                dragStartXRef.current = null; // Cancel swipe
+                isLongPressRef.current = true; // 3. UPDATED: Set long press flag
             }
-        }, 350); // Long press delay (adjust if needed)
+        }, 350);
     };
 
     const handleInteractionMove = (e) => {
-        if (dragStartXRef.current === null) return; // No interaction started
+        if (dragStartXRef.current === null) return;
 
         const isTouchEvent = e.type.startsWith('touch');
         const currentX = isTouchEvent ? e.touches[0].clientX : e.clientX;
         const deltaX = currentX - dragStartXRef.current;
 
-        // If moved beyond a small threshold horizontally, consider it dragging
         if (Math.abs(deltaX) > 10) {
-            isDraggingRef.current = true; // Mark as dragging
-            clearTimeout(pressTimer.current); // Cancel long press if dragging starts
+            isDraggingRef.current = true;
+            clearTimeout(pressTimer.current);
         }
-        // No e.preventDefault() here - allow vertical scrolling
     };
 
     const handleInteractionEnd = (e, message) => {
-        clearTimeout(pressTimer.current); // Always clear timer on interaction end
+        clearTimeout(pressTimer.current);
 
         const isTouchEvent = e.type.startsWith('touch');
 
-        // Check for swipe only if a drag was initiated and wasn't cancelled by long press
+        // --- Check for swipe ---
         if (dragStartXRef.current !== null && isDraggingRef.current) {
             const dragEndX = isTouchEvent ? e.changedTouches[0].clientX : e.clientX;
             const deltaX = dragEndX - dragStartXRef.current;
 
             if (deltaX > DRAG_THRESHOLD) {
-                // Successful swipe right
                 setReplyingTo(message);
             }
         }
 
-        // Reset states for the next interaction
+        // 4. UPDATED: CHECK FOR SINGLE TAP
+        if (!isDraggingRef.current && !isLongPressRef.current) {
+            // It wasn't a drag and wasn't a long press
+            // Check it's not the first tap of an upcoming double tap
+            // (A small delay to see if a 2nd tap comes in)
+            setTimeout(() => {
+                if (Date.now() - lastTapTimeRef.current >= 300) {
+                    // It's a confirmed single tap
+                    if (message.messageType === 'IMAGE') {
+                        openLightbox(`${API_BASE_URL}${message.mediaUrl}`);
+                    }
+                }
+            }, 300); // Match double tap threshold
+        }
+
+        // Reset states
         dragStartXRef.current = null;
         isDraggingRef.current = false;
-        // Do not reset lastTapTimeRef here, it's handled in handleInteractionStart
+        // isLongPressRef is reset in handleInteractionStart
     };
 
     const handleLeave = () => {
-        // If mouse/touch leaves the element boundary, cancel potential actions
         clearTimeout(pressTimer.current);
-        // Important: Reset drag start if user leaves WHILE holding down,
-        // otherwise a mouseUp outside the element could trigger a swipe incorrectly.
-        // However, on touch devices, 'touchleave' is less common/reliable.
-        // A simple timeout clear might be enough, but resetting dragStartX is safer for mouse.
-        // Let's reset dragStartXRef for robustness, especially for mouse users.
         dragStartXRef.current = null;
         isDraggingRef.current = false;
     };
-
     // --- End Interaction Handlers ---
 
     // --- Render Logic (Unchanged) ---
     if (loading || !loggedInUser || !chatGroup) { return <div className={styles.centeredMessage}>Loading...</div>; }
     if (error) { return (<div className={styles.chatWindow}> <header className={styles.chatHeader}> <button onClick={() => navigate('/chat')} className={styles.backButton}><FaArrowLeft /></button> <div className={styles.headerTitleContainer}><h2>Error</h2></div> <div className={styles.headerActions}></div> </header> <div className={styles.centeredMessage}>{error}</div> </div>); }
 
-    const renderMedia = (msg) => { if (!msg.mediaUrl || !msg.mediaType) return null; const mediaFullUrl = `${API_BASE_URL}${msg.mediaUrl}`; switch (msg.mediaType) { case 'IMAGE': return <img src={mediaFullUrl} alt="Chat media" className={styles.chatMediaImage} loading="lazy" />; case 'VIDEO': return <video src={mediaFullUrl} controls className={styles.chatMediaVideo} />; case 'AUDIO': return <AudioPlayer src={mediaFullUrl} />; default: return <a href={mediaFullUrl} target="_blank" rel="noopener noreferrer" className={styles.chatMediaLink}> <FaFileAlt/> Download File</a>; } };
+    const renderMedia = (msg) => {
+        if (!msg.mediaUrl || !msg.mediaType) return null;
+        const mediaFullUrl = `${API_BASE_URL}${msg.mediaUrl}`;
+        switch (msg.mediaType) {
+            // REMOVED onClick from img
+            case 'IMAGE': return <img src={mediaFullUrl} alt="Chat media" className={styles.chatMediaImage} loading="lazy" />;
+            case 'VIDEO': return <video src={mediaFullUrl} controls className={styles.chatMediaVideo} />;
+            case 'AUDIO': return <AudioPlayer src={mediaFullUrl} />;
+            default: return <a href={mediaFullUrl} target="_blank" rel="noopener noreferrer" className={styles.chatMediaLink}> <FaFileAlt/> Download File</a>;
+        }
+    };
 
     return (
         <div className={styles.chatWindow}>
@@ -246,17 +269,15 @@ const ChatWindow = ({ token, onLogout }) => {
                                         {activeEmojiPicker === msg.id && <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />}
                                         <div
                                             className={`${styles.messageBubble} ${msg.mediaUrl ? styles.mediaBubble : ''} ${msg.mediaType === 'AUDIO' ? styles.audioBubble : ''}`}
-                                            // --- USE UPDATED EVENT HANDLERS ---
+                                            // --- EVENT HANDLERS (Unchanged) ---
                                             onMouseDown={(e) => handleInteractionStart(e, msg)}
                                             onMouseUp={(e) => handleInteractionEnd(e, msg)}
                                             onMouseMove={handleInteractionMove}
-                                            onMouseLeave={handleLeave} // Use dedicated leave handler
+                                            onMouseLeave={handleLeave}
                                             onTouchStart={(e) => handleInteractionStart(e, msg)}
                                             onTouchMove={handleInteractionMove}
                                             onTouchEnd={(e) => handleInteractionEnd(e, msg)}
-                                            // Prevent native context menu on long press
                                             onContextMenu={(e) => e.preventDefault()}
-                                            // --- END UPDATE ---
                                         >
                                             {renderMedia(msg)}
                                             {(msg.text && msg.mediaType !== 'AUDIO') && <p className={styles.messageText}>{msg.text}</p>}
@@ -287,7 +308,7 @@ const ChatWindow = ({ token, onLogout }) => {
                 <div ref={messagesEndRef} />
             </main>
 
-            {/* --- Footer & Modals (Unchanged) --- */}
+            {/* --- Footer & Modals --- */}
             {hasUnreadMessages &&
                 <button className={`${styles.scrollToBottomIndicator} ${styles.visible}`} onClick={() => scrollToBottom('smooth')}>
                     <FaChevronDown /> New Messages
@@ -340,6 +361,8 @@ const ChatWindow = ({ token, onLogout }) => {
                 />
             )}
             <ReactionsModal reactions={reactionsModalData} onClose={() => setReactionsModalData(null)} />
+            {/* 1. ADDED LIGHTBOX COMPONENT */}
+            <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
         </div>
     );
 };

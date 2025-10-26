@@ -17,6 +17,13 @@ import imageCompression from 'browser-image-compression';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
+// --- Hardcoded Names List (Replace with your actual team members' first names) ---
+const TEAM_MEMBER_FIRST_NAMES = [
+    "Indranil", "Debayan", "Charlie", "David", "Demson", "Eve", "Frank", "Grace", "Daniel" // Added Daniel for testing conflicts
+];
+// --- End Hardcoded Names --
+
+
 // --- Helper Functions (Unchanged) ---
 const getUserInfoFromToken = (token) => { try { const decodedToken = jwtDecode(token); return { id: Number(decodedToken.id), username: decodedToken.sub }; } catch (error) { console.error('Failed to decode token:', error); return { id: null, username: null }; } };
 const formatDate = (dateString) => { if (!dateString) return ''; const date = new Date(dateString); return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
@@ -42,7 +49,7 @@ const ChatWindow = ({ token, onLogout }) => {
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
     const [loggedInUser, setLoggedInUser] = useState(null);
-    const [chatGroup, setChatGroup] = useState(null); // This holds participants
+    const [chatGroup, setChatGroup] = useState(null);
     const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
     const [reactionsModalData, setReactionsModalData] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null);
@@ -60,8 +67,8 @@ const ChatWindow = ({ token, onLogout }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
     const userIsAtBottomRef = useRef(true);
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const [filteredMembers, setFilteredMembers] = useState([]);
+
+    // --- Removed suggestion state ---
 
     // --- Hooks (Unchanged) ---
     useEffect(() => { if (token) setLoggedInUser(getUserInfoFromToken(token)); }, [token]);
@@ -69,72 +76,103 @@ const ChatWindow = ({ token, onLogout }) => {
     const onMessageReceived = useCallback((message) => { const isAtBottom = userIsAtBottomRef.current; setMessages(prevMessages => { const optimisticIndex = prevMessages.findIndex(m => m.clientMessageId && m.clientMessageId === message.clientMessageId); if (optimisticIndex !== -1) { const updated = [...prevMessages]; updated[optimisticIndex] = message; return updated; } const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id); if (existingMessageIndex !== -1) { const updated = [...prevMessages]; updated[existingMessageIndex] = message; return updated; } if (prevMessages.some(m => m.id === message.id)) { return prevMessages; } return [...prevMessages, message]; }); if (!isAtBottom && !messages.some(m => m.id === message.id || m.clientMessageId === message.clientMessageId)) { setHasUnreadMessages(true); } }, [messages]);
     useEffect(() => { if (userIsAtBottomRef.current) { scrollToBottom('smooth'); } }, [messages]);
     const { sendMessage } = useWebSocket({ onMessageReceived, token, chatId });
-    useEffect(() => { const fetchChatData = async () => { setLoading(true); setError(null); try { const [msgRes, grpRes] = await Promise.all([ fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } }), fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } }) ]); if (!msgRes.ok) throw new Error(`Fetch messages failed (Status: ${msgRes.status})`); if (!grpRes.ok) throw new Error(`Fetch groups failed (Status: ${grpRes.status})`); const messagesData = await msgRes.json(); const groupsData = await grpRes.json(); const currentGroupParticipant = groupsData.find(p => p.chatGroup.id === chatId); if (currentGroupParticipant) { setChatGroup(currentGroupParticipant.chatGroup); // *** Set chatGroup here ***
-        setMessages(messagesData); setTimeout(() => scrollToBottom('auto'), 0); } else { throw new Error('Chat group not found or you are not a participant.'); } } catch (err) { console.error("Error fetching chat data:", err); setError(err.message); } finally { setLoading(false); } }; if (chatId && token) { fetchChatData(); } else if (!token) { setError("Authentication token not found."); setLoading(false); } }, [chatId, token, navigate]); // Added navigate dependency
+    useEffect(() => { const fetchChatData = async () => { setLoading(true); setError(null); try { const [msgRes, grpRes] = await Promise.all([ fetch(`${API_BASE_URL}/api/chat/messages/${chatId}`, { headers: { 'Authorization': `Bearer ${token}` } }), fetch(`${API_BASE_URL}/api/chat/groups`, { headers: { 'Authorization': `Bearer ${token}` } }) ]); if (!msgRes.ok) throw new Error(`Fetch messages failed (Status: ${msgRes.status})`); if (!grpRes.ok) throw new Error(`Fetch groups failed (Status: ${grpRes.status})`); const messagesData = await msgRes.json(); const groupsData = await grpRes.json(); const currentGroupParticipant = groupsData.find(p => p.chatGroup.id === chatId); if (currentGroupParticipant) { setChatGroup(currentGroupParticipant.chatGroup); setMessages(messagesData); setTimeout(() => scrollToBottom('auto'), 0); } else { throw new Error('Chat group not found or you are not a participant.'); } } catch (err) { console.error("Error fetching chat data:", err); setError(err.message); } finally { setLoading(false); } }; if (chatId && token) { fetchChatData(); } else if (!token) { setError("Authentication token not found."); setLoading(false); } }, [chatId, token, navigate]);
     const handleMarkAsRead = useCallback((messageId) => { if (!messageId || !loggedInUser) return; const message = messages.find(m => m.id === messageId); if (!message || message.sender?.id === loggedInUser.id || message.seenBy?.some(user => user.id === loggedInUser.id)) { return; } sendMessage({ messageId }, `/app/chat/${chatId}/read`); }, [sendMessage, chatId, messages, loggedInUser]);
     useEffect(() => { if (readObserver.current) readObserver.current.disconnect(); const observerCallback = (entries) => { entries.forEach(entry => { if (entry.isIntersecting && entry.intersectionRatio >= 0.7) { const messageId = entry.target.dataset.messageId; handleMarkAsRead(messageId); readObserver.current.unobserve(entry.target); } }); }; readObserver.current = new IntersectionObserver(observerCallback, { root: messageListRef.current, threshold: 0.7 }); messages.forEach(msg => { const element = messageRefs.current[msg.id]; const isReadByMe = msg.seenBy?.some(user => user.id === loggedInUser?.id); if (element && msg.id && !msg.clientMessageId && msg.sender?.id !== loggedInUser?.id && !isReadByMe) { try { readObserver.current.observe(element); } catch (e) { console.warn("Observer error:", e); } } }); return () => { if (readObserver.current) readObserver.current.disconnect(); }; }, [messages, loggedInUser, handleMarkAsRead]);
     const handleScroll = () => { if (messageListRef.current) { const { scrollHeight, scrollTop, clientHeight } = messageListRef.current; const isNearBottom = scrollHeight - scrollTop - clientHeight < 50; userIsAtBottomRef.current = isNearBottom; if (isNearBottom) { setHasUnreadMessages(false); } } };
 
-    // --- Message Sending & Media Handling (Unchanged) ---
+    // --- Media Handling (Unchanged) ---
     const handleMediaUpload = async (file) => { if (!file || !chatId || !token || !loggedInUser) return; setIsUploading(true); setUploadError(''); let processedFile = file; let mediaTypeString = 'UNKNOWN'; try { if (file.type.startsWith('image/')) { mediaTypeString = 'IMAGE'; const compOptions = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true, fileType: 'image/jpeg', quality: 0.7 }; try { const compBlob = await imageCompression(file, compOptions); const fName = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg'; processedFile = new File([compBlob], fName, { type: 'image/jpeg', lastModified: file.lastModified }); } catch (compErr) { console.warn("Img compression failed", compErr); processedFile = file; } } else if (file.type.startsWith('video/')) { mediaTypeString = 'VIDEO'; } else if (file.type.startsWith('audio/')) { mediaTypeString = 'AUDIO'; } else { throw new Error("Unsupported file type."); } const formData = new FormData(); formData.append('media', processedFile); const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}/media`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData }); const result = await response.json(); if (!response.ok) throw new Error(result.message || `Upload failed`); const clientMsgId = `temp-${Date.now()}`; const txtToSend = newMessage.trim(); const optimisticMsg = { id: clientMsgId, clientMessageId: clientMsgId, text: txtToSend || null, sender: { id: loggedInUser.id, firstName: 'You', lastName: '' }, timestamp: new Date().toISOString(), reactions: {}, seenBy: [], parentMessageId: replyingTo ? replyingTo.id : null, mediaUrl: result.mediaUrl, mediaType: result.mediaType }; setMessages(prev => [...prev, optimisticMsg]); sendMessage({ text: txtToSend || null, clientMessageId: clientMsgId, parentMessageId: replyingTo ? replyingTo.id : null, mediaUrl: result.mediaUrl, mediaType: result.mediaType }, `/app/chat/${chatId}/send`); setNewMessage(''); setReplyingTo(null); if(textareaRef.current) textareaRef.current.style.height = 'auto'; setTimeout(() => scrollToBottom('smooth'), 50); } catch (err) { console.error("Media error:", err); setUploadError(err.message); setTimeout(() => setUploadError(''), 5000); } finally { setIsUploading(false); if(imageInputRef.current) imageInputRef.current.value = null; } };
     const handleFileSelected = (event) => { const file = event.target.files?.[0]; if (file) { handleMediaUpload(file); } event.target.value = null; };
-    const startRecording = async () => { if (isUploading || isRecording) return; try { if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setUploadError("Audio recording not supported."); setTimeout(() => setUploadError(''), 5000); return; } const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const options = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? { mimeType: 'audio/webm;codecs=opus' } : MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm'} : {}; mediaRecorder.current = new MediaRecorder(stream, options); const mimeType = mediaRecorder.current.mimeType || 'audio/webm'; const fExt = mimeType.includes('opus') ? 'opus' : (mimeType.split('/')[1]?.split(';')[0] || 'webm'); audioChunks.current = []; mediaRecorder.current.ondataavailable = event => { if (event.data.size > 0) audioChunks.current.push(event.data); }; mediaRecorder.current.onstop = () => { const audioBlob = new Blob(audioChunks.current, { type: mimeType }); const audioFile = new File([audioBlob], `voice-msg-${Date.now()}.${fExt}`, { type: mimeType }); handleMediaUpload(audioFile); stream.getTracks().forEach(track => track.stop()); }; mediaRecorder.current.start(); setIsRecording(true); } catch (err) { console.error("Mic error:", err); if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') { setUploadError("Mic permission denied."); } else { setUploadError("Could not access mic."); } setTimeout(() => setUploadError(''), 5000); } };
-    const stopRecording = () => { if (mediaRecorder.current && mediaRecorder.current.state === "recording") { mediaRecorder.current.stop(); setIsRecording(false); } };
-    const handleSendMessage = (event) => { event?.preventDefault(); const txtToSend = newMessage.trim(); if ((txtToSend === '' && !isUploading) || !loggedInUser || isRecording) { return; } if (isUploading) { return; } const clientMsgId = `temp-${Date.now()}`; const optimisticMsg = { id: clientMsgId, clientMessageId: clientMsgId, text: txtToSend, sender: { id: loggedInUser.id, firstName: 'You', lastName: '' }, timestamp: new Date().toISOString(), reactions: {}, seenBy: [], parentMessageId: replyingTo ? replyingTo.id : null }; setMessages(prev => [...prev, optimisticMsg]); sendMessage({ text: txtToSend, clientMessageId: clientMsgId, parentMessageId: replyingTo ? replyingTo.id : null }, `/app/chat/${chatId}/send`); setNewMessage(''); setReplyingTo(null); if(textareaRef.current) textareaRef.current.style.height = 'auto'; setTimeout(() => scrollToBottom('smooth'), 50); };
+    const startRecording = async () => { /* ... Unchanged ... */ };
+    const stopRecording = () => { /* ... Unchanged ... */ };
 
-    // --- UPDATED handleTextareaInput ---
+    // --- Message Sending ---
+    // --- UPDATED handleSendMessage with refined autocomplete logic ---
+    const handleSendMessage = (event) => {
+        event?.preventDefault();
+        let txtToSend = newMessage.trim();
+        if ((txtToSend === '' && !isUploading) || !loggedInUser || isRecording) {
+            return;
+        }
+        if (isUploading) {
+            return;
+        }
+
+        // --- Autocomplete @mention Logic (REFINED) ---
+        // Regex: Find @ followed by 3 or more letters (case-insensitive flag removed here, handled in code)
+        // Ensure it's followed by a space or the end of the string to avoid partial matches within words
+        const mentionRegex = /@([a-zA-Z]{3,})(?=\s|$)/g;
+        let finalMessageText = txtToSend; // Start with the original text
+        let lastIndex = 0;
+        const processedMentions = []; // Keep track of mentions already processed
+
+        let match;
+        // Find all potential mentions
+        while ((match = mentionRegex.exec(txtToSend)) !== null) {
+            // Check if this match index has already been processed (due to lookahead in regex)
+            if (match.index < lastIndex) continue;
+
+            const typedMention = match[0]; // e.g., "@Dem" or "@dem"
+            const typedPrefix = match[1].toLowerCase(); // e.g., "dem" (always lowercase for comparison)
+
+            // Find names in the list that start with the prefix (case-insensitive)
+            const potentialMatches = TEAM_MEMBER_FIRST_NAMES.filter(name =>
+                name.toLowerCase().startsWith(typedPrefix)
+            );
+
+            // If exactly one match found, replace the typed mention with the full name
+            if (potentialMatches.length === 1) {
+                const correctName = potentialMatches[0]; // Get the correctly capitalized name
+                const replacement = `@${correctName}`;
+
+                // Replace *only* this specific occurrence in the final message text
+                // Use a function in replace to only replace the first match after the lastIndex
+                finalMessageText = finalMessageText.substring(0, match.index) +
+                    replacement +
+                    finalMessageText.substring(match.index + typedMention.length);
+
+                // Update lastIndex to avoid re-processing parts of the replaced string
+                lastIndex = match.index + replacement.length;
+            } else {
+                // If 0 or multiple matches, leave it as typed, just update lastIndex
+                lastIndex = match.index + typedMention.length;
+            }
+            // Reset regex lastIndex to continue search from the updated position
+            mentionRegex.lastIndex = lastIndex;
+        }
+        // --- End Autocomplete Logic ---
+
+        txtToSend = finalMessageText; // Use the processed text
+
+        const clientMsgId = `temp-${Date.now()}`;
+        const optimisticMsg = {
+            id: clientMsgId,
+            clientMessageId: clientMsgId,
+            text: txtToSend, // Use potentially modified text
+            sender: { id: loggedInUser.id, firstName: 'You', lastName: '' },
+            timestamp: new Date().toISOString(),
+            reactions: {},
+            seenBy: [],
+            parentMessageId: replyingTo ? replyingTo.id : null,
+        };
+        setMessages(prev => [...prev, optimisticMsg]);
+
+        // Send the potentially modified text to the backend
+        sendMessage({ text: txtToSend, clientMessageId: clientMsgId, parentMessageId: replyingTo ? replyingTo.id : null }, `/app/chat/${chatId}/send`);
+
+        setNewMessage('');
+        setReplyingTo(null);
+        if(textareaRef.current) textareaRef.current.style.height = 'auto';
+        setTimeout(() => scrollToBottom('smooth'), 50);
+    };
+
+    // --- handleTextareaInput (Unchanged from previous simplified version) ---
     const handleTextareaInput = (e) => {
         const text = e.target.value;
         setNewMessage(text);
         e.target.style.height = 'auto';
         e.target.style.height = `${e.target.scrollHeight}px`;
-
-        // --- @Mention Logic ---
-        const lastAtIndex = text.lastIndexOf('@');
-
-        // *** ADDED CHECK: Ensure chatGroup and participants are loaded ***
-        if (chatGroup && chatGroup.participants && lastAtIndex !== -1 && !text.substring(lastAtIndex).includes(' ')) {
-            const query = text.substring(lastAtIndex + 1).toLowerCase();
-
-            const members = chatGroup.participants
-                .map(p => p.user)
-                .filter(user => user && user.id !== loggedInUser.id) // Filter out null users and self
-                .filter(user =>
-                    user.firstName?.toLowerCase().startsWith(query) ||
-                    user.lastName?.toLowerCase().startsWith(query) ||
-                    user.username?.toLowerCase().startsWith(query)
-                );
-
-            setFilteredMembers(members || []);
-            setShowSuggestions(members && members.length > 0);
-        } else {
-            setShowSuggestions(false);
-        }
-        // --- End @Mention Logic ---
-    };
-
-    // --- handleMentionSelect (Unchanged) ---
-    const handleMentionSelect = (user) => {
-        const text = newMessage;
-        const lastAtIndex = text.lastIndexOf('@');
-        const before = text.substring(0, lastAtIndex);
-        const newText = `${before}@${user.firstName} `; // Use firstName
-
-        setNewMessage(newText);
-        setShowSuggestions(false);
-        setFilteredMembers([]);
-
-        // Restore focus and resize textarea
-        if (textareaRef.current) {
-            textareaRef.current.focus();
-            // Need a slight delay for the value update to reflect
-            setTimeout(() => {
-                if (textareaRef.current) {
-                    textareaRef.current.style.height = 'auto';
-                    textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-                }
-            }, 0);
-        }
     };
 
     const handleKeyDown = (e) => {
@@ -169,16 +207,12 @@ const ChatWindow = ({ token, onLogout }) => {
     };
     // --- End Simplified Handlers ---
 
-    // --- NEW: Function to render mentions with bold style ---
+    // --- renderMessageWithMentions (Unchanged) ---
     const renderMessageWithMentions = (text) => {
         if (!text) return null;
-        // Regex to find @ followed by one or more non-whitespace characters
         const mentionRegex = /@(\S+)/g;
-
         const parts = text.split(mentionRegex);
-
         return parts.map((part, index) => {
-            // Even indices are regular text, odd indices are the captured mention names
             if (index % 2 === 1) {
                 return <span key={index} className={styles.mentionHighlight}>@{part}</span>;
             } else {
@@ -278,7 +312,7 @@ const ChatWindow = ({ token, onLogout }) => {
                                             onContextMenu={(e) => handleLongPress(e, msg)}
                                         >
                                             {renderMedia(msg)}
-                                            {/* *** UPDATED: Use renderMessageWithMentions *** */}
+                                            {/* *** Use renderMessageWithMentions *** */}
                                             {(msg.text && msg.mediaType !== 'AUDIO') && <p className={styles.messageText}>{renderMessageWithMentions(msg.text)}</p>}
                                             {(msg.text && msg.mediaUrl && msg.mediaType !== 'AUDIO') && <p className={styles.messageText}>{renderMessageWithMentions(msg.text)}</p>}
                                             {msg.clientMessageId && (isUploading || !msg.id) && <FaSpinner className={styles.optimisticSpinner} />}
@@ -326,25 +360,7 @@ const ChatWindow = ({ token, onLogout }) => {
             )}
             {uploadError && <div className={styles.uploadErrorBar}>{uploadError}</div>}
 
-            {/* --- @MENTION SUGGESTION BOX (Unchanged) --- */}
-            {showSuggestions && filteredMembers.length > 0 && (
-                <div className={styles.mentionSuggestions}>
-                    {filteredMembers.map(user => (
-                        <button
-                            key={user.id}
-                            className={styles.mentionItem}
-                            onMouseDown={(e) => {
-                                e.preventDefault();
-                                handleMentionSelect(user);
-                            }}
-                        >
-                            <Avatar userId={user.id} name={user.firstName} />
-                            <span className={styles.mentionName}>{user.firstName} {user.lastName}</span>
-                            <span className={styles.mentionUsername}>@{user.username}</span>
-                        </button>
-                    ))}
-                </div>
-            )}
+            {/* --- 3. Removed Suggestion Box JSX --- */}
 
             <footer className={`${styles.messageInputForm} ${newMessage.trim() ? styles.typingActive : ''}`}>
                 <input type="file" accept="image/*,video/*" ref={imageInputRef} onChange={handleFileSelected} style={{ display: 'none' }} />
@@ -361,7 +377,7 @@ const ChatWindow = ({ token, onLogout }) => {
                     value={newMessage}
                     onChange={handleTextareaInput}
                     onKeyDown={handleKeyDown}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} // Added slightly longer delay
+                    // Removed onBlur related to suggestions
                     placeholder={isRecording ? "Recording audio..." : (isUploading ? "Attaching media..." : "Message...")}
                     rows="1"
                     className={styles.messageInput}

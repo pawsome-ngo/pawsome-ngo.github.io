@@ -5,7 +5,7 @@ import useWebSocket from '../../hooks/useWebSocket.js';
 import ReactionsModal from './components/ReactionsModal.jsx';
 import ReactionPicker from './components/ReactionPicker.jsx';
 import ChatIncidentDetailModal from './components/ChatIncidentDetailModal.jsx';
-import Lightbox from '../../components/common/Lightbox.jsx'; // Make sure this component exists
+import Lightbox from '../../components/common/Lightbox.jsx';
 import styles from './ChatWindow.module.css';
 import {
     FaPaperPlane, FaInfoCircle, FaCheck, FaCheckDouble, FaArrowLeft, FaChevronDown,
@@ -32,7 +32,7 @@ const AudioPlayer = ({ src }) => {
 // --- End Audio Player Component ---
 
 const ChatWindow = ({ token, onLogout }) => {
-    // --- State and Refs (Simplified) ---
+    // --- State and Refs ---
     const { chatId } = useParams();
     const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
@@ -61,7 +61,9 @@ const ChatWindow = ({ token, onLogout }) => {
     const [uploadError, setUploadError] = useState('');
     const userIsAtBottomRef = useRef(true);
 
-    // --- All complex gesture refs (like pressTimer, dragStartXRef) are no longer needed. ---
+    // --- NEW STATE FOR @MENTIONS ---
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [filteredMembers, setFilteredMembers] = useState([]);
 
     // --- Hooks (Unchanged) ---
     useEffect(() => { if (token) setLoggedInUser(getUserInfoFromToken(token)); }, [token]);
@@ -80,14 +82,63 @@ const ChatWindow = ({ token, onLogout }) => {
     const startRecording = async () => { if (isUploading || isRecording) return; try { if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setUploadError("Audio recording not supported."); setTimeout(() => setUploadError(''), 5000); return; } const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const options = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? { mimeType: 'audio/webm;codecs=opus' } : MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm'} : {}; mediaRecorder.current = new MediaRecorder(stream, options); const mimeType = mediaRecorder.current.mimeType || 'audio/webm'; const fExt = mimeType.includes('opus') ? 'opus' : (mimeType.split('/')[1]?.split(';')[0] || 'webm'); audioChunks.current = []; mediaRecorder.current.ondataavailable = event => { if (event.data.size > 0) audioChunks.current.push(event.data); }; mediaRecorder.current.onstop = () => { const audioBlob = new Blob(audioChunks.current, { type: mimeType }); const audioFile = new File([audioBlob], `voice-msg-${Date.now()}.${fExt}`, { type: mimeType }); handleMediaUpload(audioFile); stream.getTracks().forEach(track => track.stop()); }; mediaRecorder.current.start(); setIsRecording(true); } catch (err) { console.error("Mic error:", err); if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') { setUploadError("Mic permission denied."); } else { setUploadError("Could not access mic."); } setTimeout(() => setUploadError(''), 5000); } };
     const stopRecording = () => { if (mediaRecorder.current && mediaRecorder.current.state === "recording") { mediaRecorder.current.stop(); setIsRecording(false); } };
     const handleSendMessage = (event) => { event?.preventDefault(); const txtToSend = newMessage.trim(); if ((txtToSend === '' && !isUploading) || !loggedInUser || isRecording) { return; } if (isUploading) { return; } const clientMsgId = `temp-${Date.now()}`; const optimisticMsg = { id: clientMsgId, clientMessageId: clientMsgId, text: txtToSend, sender: { id: loggedInUser.id, firstName: 'You', lastName: '' }, timestamp: new Date().toISOString(), reactions: {}, seenBy: [], parentMessageId: replyingTo ? replyingTo.id : null }; setMessages(prev => [...prev, optimisticMsg]); sendMessage({ text: txtToSend, clientMessageId: clientMsgId, parentMessageId: replyingTo ? replyingTo.id : null }, `/app/chat/${chatId}/send`); setNewMessage(''); setReplyingTo(null); if(textareaRef.current) textareaRef.current.style.height = 'auto'; setTimeout(() => scrollToBottom('smooth'), 50); };
-    const handleTextareaInput = (e) => { setNewMessage(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; };
-    const handleKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } };
+
+    // --- UPDATED handleTextareaInput ---
+    const handleTextareaInput = (e) => {
+        const text = e.target.value;
+        setNewMessage(text);
+        e.target.style.height = 'auto';
+        e.target.style.height = `${e.target.scrollHeight}px`;
+
+        // --- @Mention Logic ---
+        const lastAtIndex = text.lastIndexOf('@');
+        // Check if '@' exists and there is no space after it
+        if (lastAtIndex !== -1 && !text.substring(lastAtIndex).includes(' ')) {
+            const query = text.substring(lastAtIndex + 1).toLowerCase();
+
+            const members = chatGroup?.participants
+                .map(p => p.user)
+                .filter(user => user.id !== loggedInUser.id) // Don't suggest yourself
+                .filter(user =>
+                    user.firstName.toLowerCase().startsWith(query) ||
+                    user.lastName.toLowerCase().startsWith(query) ||
+                    user.username.toLowerCase().startsWith(query)
+                );
+
+            setFilteredMembers(members || []);
+            setShowSuggestions(members && members.length > 0);
+        } else {
+            setShowSuggestions(false);
+        }
+        // --- End @Mention Logic ---
+    };
+
+    // --- NEW FUNCTION: handleMentionSelect ---
+    const handleMentionSelect = (user) => {
+        const text = newMessage;
+        const lastAtIndex = text.lastIndexOf('@');
+
+        // Get text before the @query
+        const before = text.substring(0, lastAtIndex);
+        // Create the new text with the selected name (using firstName, but username is also a good option)
+        const newText = `${before}@${user.firstName} `; // Add space after
+
+        setNewMessage(newText);
+        setShowSuggestions(false);
+        setFilteredMembers([]);
+        textareaRef.current.focus();
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
     const handleReact = (reaction) => { if (loggedInUser && activeEmojiPicker) { sendMessage({ messageId: activeEmojiPicker, reaction }, `/app/chat/${chatId}/react`); } setActiveEmojiPicker(null); };
     const handleScrollToMessage = (messageId) => { const element = messageRefs.current[messageId]; if (element) { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); element.classList.add(styles.highlight); setTimeout(() => { element.classList.remove(styles.highlight); }, 1500); } };
 
-    // --- NEW, SIMPLIFIED INTERACTION HANDLERS ---
-
-    // 1. Single Click: Open images
+    // --- Simplified Interaction Handlers (from our last attempt) ---
     const handleSingleClick = (e, message) => {
         e.stopPropagation();
         if (message.messageType === 'IMAGE') {
@@ -95,25 +146,21 @@ const ChatWindow = ({ token, onLogout }) => {
         }
     };
 
-    // 2. Double Click: Send '❤️'
     const handleDoubleClick = (e, message) => {
-        e.stopPropagation(); // Stop click from firing
+        e.stopPropagation();
         if (!loggedInUser || !message?.id || message?.clientMessageId) return;
-
         const reactionType = '❤️';
         sendMessage({ messageId: message.id, reaction: reactionType }, `/app/chat/${chatId}/react`);
         setAnimatedHeart(message.id);
         setTimeout(() => setAnimatedHeart(null), 600);
     };
 
-    // 3. Long Press (Context Menu): Open Reaction/Reply picker
     const handleLongPress = (e, message) => {
-        e.preventDefault(); // *** CRITICAL: Stops the browser's right-click menu ***
+        e.preventDefault();
         e.stopPropagation();
         if (message?.clientMessageId) return;
         setActiveEmojiPicker(message.id);
     };
-
     // --- End Simplified Handlers ---
 
 
@@ -192,7 +239,6 @@ const ChatWindow = ({ token, onLogout }) => {
                                             <ReactionPicker
                                                 onReact={handleReact}
                                                 onClose={() => setActiveEmojiPicker(null)}
-                                                // 4. Pass the onReply prop
                                                 onReply={() => {
                                                     setReplyingTo(msg);
                                                     setActiveEmojiPicker(null);
@@ -201,11 +247,9 @@ const ChatWindow = ({ token, onLogout }) => {
                                         )}
                                         <div
                                             className={`${styles.messageBubble} ${msg.mediaUrl ? styles.mediaBubble : ''} ${msg.mediaType === 'AUDIO' ? styles.audioBubble : ''}`}
-                                            // --- 5. USE NEW, SIMPLE EVENT HANDLERS ---
                                             onClick={(e) => handleSingleClick(e, msg)}
                                             onDoubleClick={(e) => handleDoubleClick(e, msg)}
                                             onContextMenu={(e) => handleLongPress(e, msg)}
-                                            // --- END UPDATE ---
                                         >
                                             {renderMedia(msg)}
                                             {(msg.text && msg.mediaType !== 'AUDIO') && <p className={styles.messageText}>{msg.text}</p>}
@@ -236,7 +280,7 @@ const ChatWindow = ({ token, onLogout }) => {
                 <div ref={messagesEndRef} />
             </main>
 
-            {/* --- Footer & Modals (Unchanged) --- */}
+            {/* --- Footer & Modals --- */}
             {hasUnreadMessages &&
                 <button className={`${styles.scrollToBottomIndicator} ${styles.visible}`} onClick={() => scrollToBottom('smooth')}>
                     <FaChevronDown /> New Messages
@@ -252,6 +296,29 @@ const ChatWindow = ({ token, onLogout }) => {
                 </div>
             )}
             {uploadError && <div className={styles.uploadErrorBar}>{uploadError}</div>}
+
+            {/* --- NEW: @MENTION SUGGESTION BOX --- */}
+            {/* This is placed *before* the footer so it can be positioned above it */}
+            {showSuggestions && filteredMembers.length > 0 && (
+                <div className={styles.mentionSuggestions}>
+                    {filteredMembers.map(user => (
+                        <button
+                            key={user.id}
+                            className={styles.mentionItem}
+                            // Use onMouseDown to prevent the textarea from losing focus (onBlur)
+                            onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleMentionSelect(user);
+                            }}
+                        >
+                            <Avatar userId={user.id} name={user.firstName} />
+                            <span className={styles.mentionName}>{user.firstName} {user.lastName}</span>
+                            <span className={styles.mentionUsername}>@{user.username}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+
             <footer className={`${styles.messageInputForm} ${newMessage.trim() ? styles.typingActive : ''}`}>
                 <input type="file" accept="image/*,video/*" ref={imageInputRef} onChange={handleFileSelected} style={{ display: 'none' }} />
                 <div className={styles.actionButtonsContainer}>
@@ -267,6 +334,8 @@ const ChatWindow = ({ token, onLogout }) => {
                     value={newMessage}
                     onChange={handleTextareaInput}
                     onKeyDown={handleKeyDown}
+                    // Hide suggestions if the textarea loses focus
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
                     placeholder={isRecording ? "Recording audio..." : (isUploading ? "Attaching media..." : "Message...")}
                     rows="1"
                     className={styles.messageInput}

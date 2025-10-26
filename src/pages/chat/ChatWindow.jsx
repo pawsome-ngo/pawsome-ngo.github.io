@@ -88,68 +88,55 @@ const ChatWindow = ({ token, onLogout }) => {
     const stopRecording = () => { /* ... Unchanged ... */ };
 
     // --- Message Sending ---
-    // --- UPDATED handleSendMessage with refined autocomplete logic ---
+    // --- UPDATED handleSendMessage with refined autocomplete logic for MULTIPLE mentions and @Everyone ---
     const handleSendMessage = (event) => {
         event?.preventDefault();
-        let txtToSend = newMessage.trim();
+        let txtToSend = newMessage.trim(); // Start with the original trimmed message
         if ((txtToSend === '' && !isUploading) || !loggedInUser || isRecording) {
             return;
         }
         if (isUploading) {
-            return;
+            return; // Or handle differently if you want to send text with pending upload
         }
 
-        // --- Autocomplete @mention Logic (REFINED) ---
+        // --- Autocomplete @mention Logic (REFINED for Multiple & @Everyone) ---
+
+        // 1. Handle @Everyone first: Replace "@ " or "@" at the end of the string
+        txtToSend = txtToSend.replace(/@(?=\s|$)/g, '@Everyone');
+
+        // 2. Handle specific user mentions
         // Regex: Find @ followed by 3 or more letters (case-insensitive flag removed here, handled in code)
         // Ensure it's followed by a space or the end of the string to avoid partial matches within words
         const mentionRegex = /@([a-zA-Z]{3,})(?=\s|$)/g;
-        let finalMessageText = txtToSend; // Start with the original text
-        let lastIndex = 0;
-        const processedMentions = []; // Keep track of mentions already processed
 
-        let match;
-        // Find all potential mentions
-        while ((match = mentionRegex.exec(txtToSend)) !== null) {
-            // Check if this match index has already been processed (due to lookahead in regex)
-            if (match.index < lastIndex) continue;
+        // Use replace with a function to process each match individually
+        txtToSend = txtToSend.replace(mentionRegex, (match, typedPrefix) => {
+            // match is the full mention typed (e.g., "@Dem", "@dem")
+            // typedPrefix is the name part (e.g., "Dem", "dem")
 
-            const typedMention = match[0]; // e.g., "@Dem" or "@dem"
-            const typedPrefix = match[1].toLowerCase(); // e.g., "dem" (always lowercase for comparison)
+            const prefixLower = typedPrefix.toLowerCase(); // For case-insensitive comparison
 
             // Find names in the list that start with the prefix (case-insensitive)
             const potentialMatches = TEAM_MEMBER_FIRST_NAMES.filter(name =>
-                name.toLowerCase().startsWith(typedPrefix)
+                name.toLowerCase().startsWith(prefixLower)
             );
 
-            // If exactly one match found, replace the typed mention with the full name
+            // If exactly one match found, return the full correct mention
             if (potentialMatches.length === 1) {
                 const correctName = potentialMatches[0]; // Get the correctly capitalized name
-                const replacement = `@${correctName}`;
-
-                // Replace *only* this specific occurrence in the final message text
-                // Use a function in replace to only replace the first match after the lastIndex
-                finalMessageText = finalMessageText.substring(0, match.index) +
-                    replacement +
-                    finalMessageText.substring(match.index + typedMention.length);
-
-                // Update lastIndex to avoid re-processing parts of the replaced string
-                lastIndex = match.index + replacement.length;
+                return `@${correctName}`;
             } else {
-                // If 0 or multiple matches, leave it as typed, just update lastIndex
-                lastIndex = match.index + typedMention.length;
+                // If 0 or multiple matches, return the original typed mention
+                return match;
             }
-            // Reset regex lastIndex to continue search from the updated position
-            mentionRegex.lastIndex = lastIndex;
-        }
+        });
         // --- End Autocomplete Logic ---
-
-        txtToSend = finalMessageText; // Use the processed text
 
         const clientMsgId = `temp-${Date.now()}`;
         const optimisticMsg = {
             id: clientMsgId,
             clientMessageId: clientMsgId,
-            text: txtToSend, // Use potentially modified text
+            text: txtToSend, // Use the fully processed text
             sender: { id: loggedInUser.id, firstName: 'You', lastName: '' },
             timestamp: new Date().toISOString(),
             reactions: {},

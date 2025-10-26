@@ -50,8 +50,31 @@
 }
 .backButton { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #0084ff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s ease; flex-shrink: 0; margin: 0; padding: 0; }
 .backButton:hover { background-color: #f0f2f5; }
-.headerTitleContainer { flex-grow: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 6px; overflow: hidden; cursor: pointer; border-radius: 8px; transition: background-color 0.2s ease; height: 40px; background: none; border: none; color: #050505; font: inherit; text-decoration: none; gap: 0.4rem; }
-.headerTitleContainer:hover { background-color: #f0f2f5; }
+/* === THIS IS THE UPDATED SECTION === */
+.headerTitleContainer {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 10px; /* Increased padding */
+    overflow: hidden;
+    cursor: pointer;
+    border-radius: 20px; /* Made into a pill shape */
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    height: 40px;
+    background-color: #f0f2f5; /* Added a light background */
+    border: 1px solid #e0e0e0; /* Added a subtle border */
+    color: #050505;
+    font: inherit;
+    text-decoration: none;
+    gap: 0.4rem;
+}
+.headerTitleContainer:hover {
+    background-color: #e4e6eb; /* Darken background on hover */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Add subtle shadow on hover */
+}
+/* === END OF UPDATED SECTION === */
 .headerButton { padding: 0; margin: 0; background: none; border: none; font: inherit; } /* Redundant */
 .headerTitleContainer h2 { font-size: 1rem; font-weight: 600; color: #050505; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
 .headerIcon { color: #0084ff; font-size: 0.9rem; margin-left: 5px; flex-shrink: 0; }

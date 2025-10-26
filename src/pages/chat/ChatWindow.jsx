@@ -61,7 +61,14 @@ const AudioPlayer = ({ src }) => {
     const handleLoadedMetadata = () => { if (audioRef.current) setDuration(audioRef.current.duration); };
     const handleTimeUpdate = () => { if (audioRef.current) setCurrentTime(audioRef.current.currentTime); };
     const togglePlayPause = (e) => { e.stopPropagation(); if (isPlaying) { audioRef.current.pause(); } else { audioRef.current.play(); } setIsPlaying(!isPlaying); };
-    const formatTime = (timeInSeconds) => { if (isNaN(timeInSeconds) || timeInSeconds === 0) return '0:00'; const minutes = Math.floor(timeInSeconds / 60); const seconds = Math.floor(timeInSeconds % 60); return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`; };
+    const formatTime = (timeInSeconds) => {
+        if (isNaN(timeInSeconds) || !isFinite(timeInSeconds) || timeInSeconds === 0) {
+            return '0:00';
+        }
+        const minutes = Math.floor(timeInSeconds / 60);
+        const seconds = Math.floor(timeInSeconds % 60);
+        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    };
     return (
         <div className={styles.audioPlayerContainer}>
             <audio ref={audioRef} src={src} onLoadedMetadata={handleLoadedMetadata} onTimeUpdate={handleTimeUpdate} onEnded={() => setIsPlaying(false)} preload="metadata" />
@@ -234,21 +241,29 @@ const ChatWindow = ({ token, onLogout }) => {
         const reactionType = '❤️';
         sendMessage({ messageId: message.id, reaction: reactionType }, `/app/chat/${chatId}/react`);
         setAnimatedHeart(message.id);
-        setTimeout(() => setAnimatedHeart(null), 500);
+        setTimeout(() => setAnimatedHeart(null), 600); // Match animation duration
     };
 
     // --- Interaction Handlers for Long Press & Swipe ---
+
+    // --- UPDATED FUNCTION ---
     const handleInteractionStart = (e, message) => {
         if (message?.clientMessageId) return; // Don't interact with optimistic/unsaved messages
         clearTimeout(pressTimer.current);
-        // Set timer for long press
-        pressTimer.current = setTimeout(() => {
-            if (dragStartXRef.current === null) { setActiveEmojiPicker(message.id); } // Long press opens picker if not dragging
-        }, 350); // Long press delay (350ms)
+
         // Record start position for swipe detection
         dragStartXRef.current = e.clientX || e.touches?.[0]?.clientX;
-    };
 
+        // Set timer for long press
+        pressTimer.current = setTimeout(() => {
+            // If timer fires, it's a long press. Open picker and cancel swipe.
+            setActiveEmojiPicker(message.id);
+            dragStartXRef.current = null; // Cancel swipe
+        }, 350); // Long press delay (350ms)
+    };
+    // --- END UPDATE ---
+
+    // --- UPDATED FUNCTION ---
     const handleInteractionEnd = (e, message) => {
         clearTimeout(pressTimer.current); // Clear long press timer
         // Delay slightly to allow potential double-click to register before checking swipe
@@ -265,6 +280,7 @@ const ChatWindow = ({ token, onLogout }) => {
         };
         setTimeout(interactionEnded, 50); // Short delay (50ms)
     };
+    // --- END UPDATE ---
 
     const handleInteractionMove = (e) => {
         // Cancel long press if user starts dragging horizontally significantly
@@ -272,10 +288,10 @@ const ChatWindow = ({ token, onLogout }) => {
             const currentX = e.clientX || e.touches?.[0]?.clientX;
             if (currentX && Math.abs(currentX - dragStartXRef.current) > 10) { // Drag threshold
                 clearTimeout(pressTimer.current);
-                // Keep dragStartXRef *unless* you want move to cancel swipe too
             }
         }
     };
+    // --- END UPDATES ---
 
     const handleScrollToMessage = (messageId) => { const element = messageRefs.current[messageId]; if (element) { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); element.classList.add(styles.highlight); setTimeout(() => { element.classList.remove(styles.highlight); }, 1500); } };
 
@@ -339,16 +355,16 @@ const ChatWindow = ({ token, onLogout }) => {
                                         {activeEmojiPicker === msg.id && <ReactionPicker onReact={handleReact} onClose={() => setActiveEmojiPicker(null)} />}
                                         <div
                                             className={`${styles.messageBubble} ${msg.mediaUrl ? styles.mediaBubble : ''} ${msg.mediaType === 'AUDIO' ? styles.audioBubble : ''}`}
-                                            // --- ADD INTERACTION HANDLERS ---
+                                            // --- UPDATE INTERACTION HANDLERS ---
                                             onMouseDown={(e) => handleInteractionStart(e, msg)}
                                             onMouseUp={(e) => handleInteractionEnd(e, msg)}
                                             onMouseMove={handleInteractionMove}
-                                            onMouseLeave={() => { clearTimeout(pressTimer.current); dragStartXRef.current = null; }}
+                                            onMouseLeave={() => { clearTimeout(pressTimer.current); }} // Fix: Don't reset drag ref
                                             onTouchStart={(e) => handleInteractionStart(e, msg)}
                                             onTouchMove={handleInteractionMove}
                                             onTouchEnd={(e) => handleInteractionEnd(e, msg)}
                                             onDoubleClick={() => handleDoubleClick(msg)}
-                                            // --- END ADD ---
+                                            // --- END UPDATE ---
                                         >
                                             {renderMedia(msg)}
                                             {/* Render text unless it's ONLY audio */}
@@ -400,7 +416,6 @@ const ChatWindow = ({ token, onLogout }) => {
 
             {uploadError && <div className={styles.uploadErrorBar}>{uploadError}</div>}
 
-            {/* --- Apply typingActive class conditionally --- */}
             <footer className={`${styles.messageInputForm} ${newMessage.trim() ? styles.typingActive : ''}`}>
                 <input type="file" accept="image/*,video/*" ref={imageInputRef} onChange={handleFileSelected} style={{ display: 'none' }} />
                 <div className={styles.actionButtonsContainer}>

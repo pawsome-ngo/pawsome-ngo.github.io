@@ -10,9 +10,6 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 // --- END ADD ---
 
-// Define a cache name (Workbox typically handles naming based on strategy)
-// const CACHE_NAME = 'pawsome-cache-v1'; // You might not need this if Workbox manages caches
-
 // --- ✨ INJECT PRECACHE MANIFEST ✨ ---
 // This line is crucial. Workbox build tools will replace self.__WB_MANIFEST
 // with the actual list of files to precache during the build process.
@@ -46,21 +43,6 @@ registerRoute(
         ],
     })
 );
-
-// Example: Network first for API calls (if needed beyond browser cache)
-/*
-registerRoute(
-  ({url}) => url.pathname.startsWith('/api/'),
-  new NetworkFirst({
-    cacheName: 'api-cache',
-    plugins: [
-      new CacheableResponsePlugin({statuses: [0, 200]}),
-      new ExpirationPlugin({maxAgeSeconds: 5 * 60}), // Cache for 5 minutes
-    ]
-  })
-);
-*/
-
 
 // --- Activate Event ---
 // Ensure the new service worker takes control immediately.
@@ -102,10 +84,14 @@ self.addEventListener('push', (event) => {
         renotify: payload.notification?.renotify || false, // Vibrate/sound again if replacing based on tag
         requireInteraction: payload.notification?.requireInteraction || false, // Keep notification until dismissed
         data: payload.data || { url: '/#/' }, // Crucial: Pass the whole custom data object
-        actions: [] // Initialize actions array
+
+        // --- ✨ MODIFICATION: Comment out the 'actions' array ---
+        // actions: [] // Initialize actions array
+        // --- END MODIFICATION ---
     };
 
-    // --- Add Actions Conditionally ---
+    // --- ✨ MODIFICATION: Comment out the conditional actions block ---
+    /*
     const dataType = payload.data?.type;
     if (dataType === 'chat') {
         notificationOptions.actions.push({ action: 'reply', title: 'Reply', icon: '/icons/reply.png' }); // Optional icon paths
@@ -115,7 +101,8 @@ self.addEventListener('push', (event) => {
     } else if (dataType === 'approval') {
         notificationOptions.actions.push({ action: 'view_approvals', title: 'View Approvals', icon: '/icons/approval.png' });
     }
-    // Add more conditions for other notification types
+    */
+    // --- END MODIFICATION ---
 
     const title = payload.notification?.title || 'Pawsome Rescue';
 
@@ -154,16 +141,19 @@ self.addEventListener('notificationclick', (event) => {
         );
     };
 
-    const action = event.action;
+    const action = event.action; // This will now be empty, so it will fall to the 'else' block
 
     if (action === 'mark_read') {
+        // This block will no longer be hit, but is safe to keep
         console.log('[SW] Mark Read action clicked.');
         handleNavigation(targetUrl); // Navigate to let the app handle it
     } else if (action === 'reply' || action === 'view_incident' || action === 'view_approvals') {
+        // This block will also no longer be hit
         console.log(`[SW] Action '${action}' clicked, navigating to: ${targetUrl}`);
         handleNavigation(targetUrl);
     } else {
-        console.log(`[SW] Notification body clicked, navigating to: ${targetUrl}`);
+        // --- This 'else' block will now handle all clicks ---
+        console.log(`[SW] Notification body clicked (or action was empty), navigating to: ${targetUrl}`);
         handleNavigation(targetUrl);
     }
 });

@@ -282,6 +282,125 @@
     padding: 0.25rem;
     flex-shrink: 0; /* Add this to prevent the button from shrinking */
 }
+
+.incidentIdMessage {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-top: -10px; /* Adjust as needed */
+    margin-bottom: 20px;
+}
 /* ... rest of your styles ... */
 
 /* Remove text color override for .progressBar + .progressText */
+
+/* --- New Report Success Modal Styles --- */
+
+.reportSuccessModal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+}
+
+.incidentIdCard {
+    background-color: var(--color-background-light);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    text-align: center;
+    border: 1px dashed var(--color-primary-dark);
+}
+
+.incidentIdCard span {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 4px;
+}
+
+.incidentIdCard strong {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    letter-spacing: 1px;
+}
+
+.whatsNextBox {
+    background-color: var(--color-background-light);
+    border-radius: 8px;
+    padding: 16px;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.whatsNextBox strong {
+    display: block;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+}
+
+.whatsNextBox p {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+
+/* --- Animated Checkmark --- */
+.successCheckmark {
+    margin: -10px 0 20px 0;
+    height: 80px;
+    width: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.checkmarkCircle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--color-success);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: scaleUp 0.3s ease-out forwards;
+}
+
+.checkmarkDraw {
+    width: 20px;
+    height: 35px;
+    border-bottom: 5px solid white;
+    border-right: 5px solid white;
+    transform: rotate(45deg) translate(-5px, -5px);
+    opacity: 0;
+    animation: drawCheck 0.4s 0.2s ease-out forwards;
+}
+
+@keyframes scaleUp {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes drawCheck {
+    from {
+        width: 0;
+        height: 0;
+        opacity: 0;
+    }
+    to {
+        width: 20px;
+        height: 35px;
+        opacity: 1;
+    }
+}

@@ -27,6 +27,7 @@ const ReportIncidentPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
     const [formErrors, setFormErrors] = useState({});
+    const [reportedIncidentId, setReportedIncidentId] = useState(null);
 
 
     // State for audio recording
@@ -200,9 +201,11 @@ const ReportIncidentPage = () => {
 
             if (xhr.status >= 200 && xhr.status < 300) {
                 setModalMessage(result.message || 'Incident reported successfully!');
+                setReportedIncidentId(result.incidentId); // <-- ✨ ADD THIS
                 setIsModalOpen(true);
             } else {
                 setModalMessage(result.message || 'Failed to report incident.');
+                setReportedIncidentId(null); // <-- ✨ Optional: reset on failure
                 setIsModalOpen(true);
             }
         };
@@ -353,12 +356,35 @@ const ReportIncidentPage = () => {
             </div>
             {/* --- Success Modal --- */}
             <SignUpModal isOpen={isModalOpen} onClose={closeModal}>
-                <div className={appStyles.successModal}>
-                    <div className={appStyles.successModalIcon}>✔</div>
-                    <h2 className={appStyles.successModalTitle}>Report Submitted</h2>
+                <div className={styles.reportSuccessModal}>
+
+                    {/* Animated Checkmark Icon */}
+                    <div className={styles.successCheckmark}>
+                        <div className={styles.checkmarkCircle}>
+                            <div className={styles.checkmarkDraw}></div>
+                        </div>
+                    </div>
+
+                    <h2 className={appStyles.successModalTitle}>Report Submitted!</h2>
+
                     <p className={appStyles.successModalMessage}>{modalMessage}</p>
-                    <button onClick={closeModal} className={`${appStyles.btn} ${appStyles.btnPrimary}`}>
-                        OK
+
+                    {/* Incident ID Card */}
+                    {reportedIncidentId && (
+                        <div className={styles.incidentIdCard}>
+                            <span>Your Incident ID</span>
+                            <strong>{reportedIncidentId}</strong>
+                        </div>
+                    )}
+
+                    {/* What's Next Info Box */}
+                    <div className={styles.whatsNextBox}>
+                        <strong>What's Next?</strong>
+                        <p>Our team will review the report immediately. We may contact you at the provided number if we need more details.</p>
+                    </div>
+
+                    <button onClick={closeModal} className={`${appStyles.btn} ${appStyles.btnPrimary} ${appStyles.btnFullWidth}`}>
+                        OK, Got It
                     </button>
                 </div>
             </SignUpModal>

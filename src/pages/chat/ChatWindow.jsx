@@ -389,7 +389,6 @@ const ChatWindow = ({ token, onLogout }) => {
             )}
             {uploadError && <div className={styles.uploadErrorBar}>{uploadError}</div>}
 
-            {/* --- 3. Removed Suggestion Box JSX --- */}
 
             <footer className={`${styles.messageInputForm} ${newMessage.trim() ? styles.typingActive : ''}`}>
                 <input type="file" accept="image/*,video/*" ref={imageInputRef} onChange={handleFileSelected} style={{ display: 'none' }} />

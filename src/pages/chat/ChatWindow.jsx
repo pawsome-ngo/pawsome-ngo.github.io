@@ -100,17 +100,6 @@ const ChatWindow = ({ token, onLogout }) => {
         if (isUploading) {
             return;
         }
-        console.log("handleSendMessage", txtToSend);
-
-        if (txtToSend) {
-            // Regex explanation:
-            // \b        - Matches a word boundary (start/end of string, space, punctuation)
-            // (L?lll)   - Matches 'lll' or 'Lll' (case-insensitive due to 'i' flag)
-            // \b        - Matches another word boundary
-            // 'gi'      - Global (all occurrences), case-insensitive
-            txtToSend = txtToSend.replace(/\b(L?lll)\b/gi, '@Everyone');
-        }
-        // --- END UPDATE ---
 
         // --- Autocomplete @mention Logic (REFINED for @Everyone Punctuation) ---
 
@@ -400,6 +389,7 @@ const ChatWindow = ({ token, onLogout }) => {
             )}
             {uploadError && <div className={styles.uploadErrorBar}>{uploadError}</div>}
 
+            {/* --- 3. Removed Suggestion Box JSX --- */}
 
             <footer className={`${styles.messageInputForm} ${newMessage.trim() ? styles.typingActive : ''}`}>
                 <input type="file" accept="image/*,video/*" ref={imageInputRef} onChange={handleFileSelected} style={{ display: 'none' }} />

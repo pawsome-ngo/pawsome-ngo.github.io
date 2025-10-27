@@ -96,58 +96,54 @@ const UpdateIncidentModal = ({ isOpen, onClose, incidentData, token, onSaveSucce
     };
 
     // Handle form submission to save changes
-    const handleSave = async () => {
-        setIsSubmitting(true);
-        setError(''); // Clear previous errors
+    const handleSave = async (e) => {
+        e.preventDefault(); // Prevent default form submission
+        setIsSaving(true);
+        setError('');
+        setLocationStatus(''); // Clear location status on save attempt
 
-        // Basic validation
-        if (!formData.informerName || !formData.contactNumber || !formData.location || !formData.description) {
-            setError('Please fill in all required fields.');
-            setIsSubmitting(false);
-            return;
-        }
+        // Prepare data payload, including coordinates
+        const dataToSave = {
+            informerName: formData.informerName,
+            contactNumber: formData.contactNumber,
+            animalType: formData.animalType,
+            description: formData.description,
+            location: formData.location,
+            latitude: formData.latitude,
+            longitude: formData.longitude,
+        };
+
+        console.log("Saving updated incident data:", dataToSave); // Log data being sent
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentId}`, {
+            // --- Actual API Call ---
+            const response = await fetch(`${API_BASE_URL}/api/incidents/${incidentData.id}`, { // Use incidentData.id from props
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`, // Pass the token
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(dataToSave), // Send updated object as JSON
             });
 
-            // --- ✨ ADDED 403 CHECK ✨ ---
-            if (response.status === 403) {
-                setError('Permission Denied: You do not have the required role (Admin or Captain) to update this incident.');
-                setIsSubmitting(false); // Ensure button is re-enabled
-                return; // Stop further processing
-            }
-            // --- END ADD ---
-
-            const result = await response.json();
-
             if (!response.ok) {
-                // Handle other non-403 errors
-                throw new Error(result.message || `Failed to update incident (Status: ${response.status})`);
+                // Try to parse error message from backend
+                const errorBody = await response.json().catch(() => ({ message: `HTTP error! Status: ${response.status}` }));
+                throw new Error(errorBody.message || 'Failed to update incident. Please check details and try again.');
             }
 
-            // Success: Call the callback passed from the parent component
-            onUpdateSuccess(result); // Pass the updated incident data back
-            // onClose(); // Typically, the parent component handles closing after success
+            const updatedIncident = await response.json(); // Get updated incident from backend response
+
+            // Call the success handler passed from the parent component
+            onSaveSuccess(updatedIncident); // Pass updated data back
+            onClose(); // Close modal on successful save
 
         } catch (err) {
-            console.error("Error updating incident:", err);
-            // Show specific permission error if already set, otherwise show the caught error
-            if (!error || !error.startsWith('Permission Denied')) { // Avoid overwriting the specific 403 message
-                setError(err.message || 'An unexpected error occurred. Please try again.');
-            }
+            console.error("Error saving incident:", err); // Log the full error
+            setError(err.message || 'Failed to save changes. Check connection or input.');
+            // Keep modal open on error
         } finally {
-            // Only set submitting to false if no specific error stopped it earlier
-            if (!error || !error.startsWith('Permission Denied')) {
-                setIsSubmitting(false);
-            }
-            // If it *was* a 403, isSubmitting was already set to false before the return
+            setIsSaving(false); // Stop loading indicator AFTER request finishes
         }
     };
 

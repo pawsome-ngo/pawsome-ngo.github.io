@@ -100,6 +100,7 @@ const ChatWindow = ({ token, onLogout }) => {
         if (isUploading) {
             return;
         }
+        console.log("handleSendMessage", txtToSend);
 
         if (txtToSend) {
             // Regex explanation:

@@ -101,6 +101,16 @@ const ChatWindow = ({ token, onLogout }) => {
             return;
         }
 
+        if (txtToSend) {
+            // Regex explanation:
+            // \b        - Matches a word boundary (start/end of string, space, punctuation)
+            // (L?lll)   - Matches 'lll' or 'Lll' (case-insensitive due to 'i' flag)
+            // \b        - Matches another word boundary
+            // 'gi'      - Global (all occurrences), case-insensitive
+            txtToSend = txtToSend.replace(/\b(L?lll)\b/gi, '@Everyone');
+        }
+        // --- END UPDATE ---
+
         // --- Autocomplete @mention Logic (REFINED for @Everyone Punctuation) ---
 
         // 1. Handle @Everyone equivalent first, preserving punctuation

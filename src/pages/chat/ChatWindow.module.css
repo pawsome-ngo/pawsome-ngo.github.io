@@ -4,23 +4,11 @@
 .chatWindow {
     display: flex;
     flex-direction: column;
-
-    /* --- PWA LAYOUT FIX (MODIFIED) --- */
-    /*
-     * We change this from 100vh (viewport height) to 100% (parent container height).
-     * This makes the chat window fill the ".contentArea" from App.jsx
-     * instead of overflowing it, which keeps the footer fixed at the bottom.
-     */
-    height: 100%; /* Was 100vh */
-    /* height: -webkit-fill-available; */ /* Removed this line */
+    height: 100%; /* Fill parent container */
     width: 100%;
-    /* --- END FIX --- */
-
     background-color: #FFFFFF;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, '.SFNSText-Regular', sans-serif;
-
-    /* CRITICAL: Prevents the whole page from scrolling */
-    overflow: hidden;
+    overflow: hidden; /* Prevent whole page scroll */
     position: relative;
 }
 
@@ -30,79 +18,96 @@
     overflow-y: auto; /* Allow ONLY this part to scroll */
     display: flex;
     flex-direction: column;
+    gap: 2px; /* Small gap between grouped messages */
 }
 
 /* ================================== */
 /* Header Styles (Compact Version)    */
 /* ================================== */
 .chatHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 10px;
-    background-color: #FFFFFF;
-    border-bottom: none;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-    flex-shrink: 0; /* Don't shrink */
-    z-index: 10;
-    min-height: 52px;
-    box-sizing: border-box;
+    display: flex; align-items: center; justify-content: space-between; padding: 6px 10px;
+    background-color: #FFFFFF; border-bottom: none; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0; z-index: 10; min-height: 52px; box-sizing: border-box;
 }
 .backButton { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #0084ff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s ease; flex-shrink: 0; margin: 0; padding: 0; }
 .backButton:hover { background-color: #f0f2f5; }
-/* === THIS IS THE UPDATED SECTION === */
 .headerTitleContainer {
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 0 10px; /* Increased padding */
-    overflow: hidden;
-    cursor: pointer;
-    border-radius: 20px; /* Made into a pill shape */
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-    height: 40px;
-    background-color: #f0f2f5; /* Added a light background */
-    border: 1px solid #e0e0e0; /* Added a subtle border */
-    color: #050505;
-    font: inherit;
-    text-decoration: none;
-    gap: 0.4rem;
+    flex-grow: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 0 10px; overflow: hidden; cursor: pointer; border-radius: 20px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease; height: 40px;
+    background-color: #f0f2f5; border: 1px solid #e0e0e0; color: #050505;
+    font: inherit; text-decoration: none; gap: 0.4rem;
 }
-.headerTitleContainer:hover {
-    background-color: #e4e6eb; /* Darken background on hover */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Add subtle shadow on hover */
-}
-/* === END OF UPDATED SECTION === */
-.headerButton { padding: 0; margin: 0; background: none; border: none; font: inherit; } /* Redundant */
+.headerTitleContainer:hover { background-color: #e4e6eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 .headerTitleContainer h2 { font-size: 1rem; font-weight: 600; color: #050505; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
 .headerIcon { color: #0084ff; font-size: 0.9rem; margin-left: 5px; flex-shrink: 0; }
 .headerActions { display: flex; align-items: center; justify-content: flex-end; width: 36px; height: 36px; flex-shrink: 0; }
 
 /* ============================================ */
-/* Message Bubbles & Alignment                  */
+/* Message Bubbles & Alignment (Spacing Fixed) */
 /* ============================================ */
-.messageWrapper { display: flex; max-width: 70%; margin-bottom: 2px; position: relative; transition: background-color 0.5s ease-out; }
-.messageWrapper.grouped { margin-bottom: 2px; }
+.messageWrapper {
+    display: flex;
+    max-width: 70%;
+    margin-bottom: 0; /* Default margin between blocks */
+    position: relative;
+    transition: background-color 0.5s ease-out;
+}
+.messageWrapper.grouped {
+    margin-bottom: 0; /* No margin when grouped */
+}
 .highlight { background-color: rgba(0, 132, 255, 0.15); border-radius: 8px; }
-.messageBubble { padding: 8px 12px; border-radius: 18px; line-height: 1.4; word-wrap: break-word; max-width: 100%; box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13); cursor: pointer; user-select: none; -webkit-user-select: none; width: fit-content; touch-action: pan-y; }
+
+.messageBubble {
+    padding: 8px 12px;
+    border-radius: 18px; /* Base bubble radius */
+    line-height: 1.4;
+    word-wrap: break-word;
+    max-width: 100%;
+    box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    width: fit-content;
+    touch-action: pan-y;
+    position: relative;
+    overflow: visible;
+}
+
 .messageText { margin: 0; font-size: 0.9375rem; white-space: pre-wrap; }
 .sent { align-self: flex-end; margin-left: auto; }
 .sent .messageBubble { background-color: #0084ff; color: white; }
 .received { align-self: flex-start; }
 .received .messageBubble { background-color: #e4e6eb; color: #050505; }
-.avatarContainer { width: 28px; height: 28px; flex-shrink: 0; margin-right: 8px; position: relative; align-self: flex-end; }
+
+/* Avatar - Show only for first in group */
+.avatarContainer { width: 28px; height: 28px; flex-shrink: 0; margin-right: 8px; position: relative; align-self: flex-end; visibility: hidden; /* Hide by default */ }
+.messageWrapper:not(.grouped) .avatarContainer { visibility: visible; /* Show only if NOT grouped */ }
 .chatAvatarWrapper { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; position: absolute; bottom: 0; }
+
 .messageContent { display: flex; flex-direction: column; width: 100%; }
 .sent .messageContent { align-items: flex-end; }
 .received .messageContent { align-items: flex-start; }
-.bubbleContainer { display: flex; flex-direction: column; position: relative; }
-.sent.grouped .messageBubble { border-top-right-radius: 4px; }
-.received.grouped .messageBubble { border-top-left-radius: 4px; }
-.sent.followedByGrouped .messageBubble { border-bottom-right-radius: 4px; }
-.received.followedByGrouped .messageBubble { border-bottom-left-radius: 4px; }
-.senderName { font-size: 0.7rem; color: #65676b; font-weight: 500; margin-left: 4px; margin-bottom: 2px; }
+
+.bubbleContainer { display: flex; flex-direction: column; }
+.sent .bubbleContainer { align-items: flex-end; }
+.received .bubbleContainer { align-items: flex-start; }
+
+/* Bubble Radii for Grouping */
+.sent:not(.grouped) .messageBubble { border-radius: 18px 18px 4px 18px; }
+.received:not(.grouped) .messageBubble { border-radius: 18px 18px 18px 4px; }
+.sent.grouped.followedByGrouped .messageBubble { border-radius: 4px 18px 4px 18px; }
+.received.grouped.followedByGrouped .messageBubble { border-radius: 18px 4px 18px 4px; }
+.sent.grouped:not(.followedByGrouped) .messageBubble { border-radius: 4px 18px 18px 18px; }
+.received.grouped:not(.followedByGrouped) .messageBubble { border-radius: 18px 4px 18px 18px;}
+
+/* Sender Name - Show only for first in group */
+.senderName { display: none; }
+.received:not(.grouped) .senderName {
+    display: block; font-size: 0.7rem; color: #65676b; font-weight: 500;
+    margin-left: 4px; margin-bottom: 2px; align-self: flex-start;
+}
+
 
 /* =========================================== */
 /* Timestamps & Read Receipts                  */
@@ -114,18 +119,36 @@
 .seenIcon { font-size: 0.8rem; color: #65676b; }
 .seenIcon.read { color: #0084ff; }
 .optimisticIcon { font-size: 0.7rem; color: #95a5a6; }
-.optimisticSpinner { font-size: 0.7rem; color: #95a5a6; margin: 4px; animation: spin 1s linear infinite; }
+/* Spinner (kept for send button) */
+.spinner { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
 
 /* ========================================= */
-/* Replies & Reactions                     */
+/* Replies & Reactions (REDESIGNED)        */
 /* ========================================= */
-.repliedMessageSnippet { padding: 6px 10px; margin-bottom: 4px; border-radius: 12px; background-color: rgba(0, 0, 0, 0.05); overflow: hidden; cursor: pointer; border-left: 3px solid #bec3c9; max-width: 90%; }
-.repliedMessageSnippet:hover { background-color: rgba(0, 0, 0, 0.08); }
+
+.repliedMessageSnippet {
+    padding: 6px 10px; margin-bottom: -6px; border-radius: 12px;
+    background-color: #f0f2f5; /* Light gray */
+    overflow: hidden; cursor: pointer; border: 1px solid rgba(0, 0, 0, 0.05);
+    max-width: calc(100% - 10px); box-sizing: border-box; display: block;
+    width: fit-content; align-self: stretch; position: relative; z-index: 1; text-align: left;
+}
+.repliedMessageSnippet:hover { background-color: #e4e6eb; }
+
+/* Rounded corners to visually attach */
+.sent .repliedMessageSnippet { border-top-left-radius: 12px; border-top-right-radius: 4px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; margin-right: 1px; }
+.received .repliedMessageSnippet { border-top-left-radius: 4px; border-top-right-radius: 12px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; margin-left: 1px; }
+.sent .bubbleContainer > .messageBubble { border-top-right-radius: 4px; }
+.received .bubbleContainer > .messageBubble { border-top-left-radius: 4px; }
+
 .replyHeader { font-size: 0.75rem; font-weight: 600; color: #65676b; margin: 0 0 2px 0; }
 .replyText { margin: 0; font-size: 0.85rem; color: #050505; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.sent .repliedMessageSnippet { background-color: rgba(255, 255, 255, 0.15); border-left: 3px solid rgba(255, 255, 255, 0.5); }
-.sent .replyHeader { color: rgba(255, 255, 255, 0.8); }
-.sent .replyText { color: #FFFFFF; }
+
+/* No special text color needed for sent reply snippets */
+
+
 .replyingToContext { display: flex; align-items: center; padding: 8px 12px; background-color: #f0f2f5; border-top: 1px solid #dadde1; animation: slideInUp 0.2s ease-out; flex-shrink: 0; }
 @keyframes slideInUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .replyContextContent { flex-grow: 1; border-left: 3px solid #0084ff; padding-left: 10px; overflow: hidden; }
@@ -133,36 +156,42 @@
 .replyingToText { font-size: 0.85rem; color: #050505; margin: 2px 0 0 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .cancelReplyButton { background: none; border: none; color: #65676b; font-size: 1.5rem; cursor: pointer; padding: 4px; margin-left: 8px; }
 
-.reactionsContainer { position: absolute; bottom: -10px; z-index: 2; display: flex; align-items: center; gap: 2px; padding: 2px 6px; background-color: #fff; border: 0.5px solid #ced0d4; border-radius: 10px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-.sent .reactionsContainer { right: 8px; }
-.received .reactionsContainer { left: 8px; }
+/* --- Reactions Container (In Flow, Spacing Fixed) --- */
+.reactionsContainer {
+    z-index: 2; display: flex; align-items: center; gap: 2px; padding: 2px 6px;
+    background-color: #fff; border: 0.5px solid #ced0d4; border-radius: 10px;
+    cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    width: fit-content; margin-top: -8px; margin-bottom: 0; /* Space comes from wrapper */
+}
+/* *** THIS IS THE FIX FOR REACTION ALIGNMENT *** */
+.sent .reactionsContainer {
+    align-self: flex-end; /* Align right */
+    margin-right: 8px;
+}
+.received .reactionsContainer {
+    align-self: flex-end; /* *** CHANGED from flex-start to flex-end *** */
+    margin-right: 8px; /* *** ADDED to match sent margin *** */
+    /* margin-left: 8px; */ /* REMOVED */
+}
+/* --- END OF FIX --- */
+
 .reactionEmoji { font-size: 0.75rem; }
 .totalReactionCount { font-size: 0.75rem; font-weight: 500; color: #333; margin-left: 3px; }
 
-.emojiPicker { display: flex; gap: 4px; background-color: #fff; border: 1px solid #ddd; border-radius: 20px; padding: 6px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%); z-index: 10; animation: pickerPop 0.1s ease-out; }
-@keyframes pickerPop{ from { transform: translateX(-50%) scale(0.8); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+/* --- Reaction Picker Position (Fixed) --- */
+.emojiPicker {
+    display: flex; gap: 4px; background-color: #fff; border: 1px solid #ddd;
+    border-radius: 20px; padding: 6px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: fixed; /* Use fixed positioning */
+    z-index: 10; animation: pickerPop 0.1s ease-out;
+    max-width: calc(100vw - 20px); box-sizing: border-box;
+    /* top, left, right, transform are set via inline style in JS */
+}
+@keyframes pickerPop{ from { transform-origin: center bottom; transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } } /* Adjusted animation */
+
 .emojiPicker span { font-size: 1.5rem; cursor: pointer; padding: 4px; transition: transform 0.1s ease-out; }
-
-/* ADD THIS NEW CLASS */
-.replyButton {
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 6px;
-    transition: transform 0.1s ease-out, background-color 0.1s ease;
-    color: #65676b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border-right: 1px solid #e4e6eb;
-    padding-right: 10px;
-    margin-right: 4px;
-}
-.replyButton:hover {
-    transform: scale(1.2);
-    background-color: #f0f2f5;
-}
-
+.replyButton { font-size: 1.2rem; cursor: pointer; padding: 6px; transition: transform 0.1s ease-out, background-color 0.1s ease; color: #65676b; display: flex; align-items: center; justify-content: center; border-radius: 50%; border-right: 1px solid #e4e6eb; padding-right: 10px; margin-right: 4px; }
+.replyButton:hover { transform: scale(1.2); background-color: #f0f2f5; }
 .emojiPicker span:hover { transform: scale(1.3); }
 
 .animatedHeart { position: absolute; font-size: 3rem; color: #ff3838; top: 50%; left: 50%; transform: translate(-50%, -50%); animation: heart-pop 0.5s ease-out; pointer-events: none; z-index: 100; }
@@ -172,82 +201,23 @@
 /* Input Bar                          */
 /* ================================== */
 .messageInputForm {
-    flex-shrink: 0;
-    background-color: #FFFFFF;
-    padding: 6px 8px;
-    border-top: 1px solid #dadde1;
-    display: flex;
-    align-items: flex-end;
-    gap: 6px;
-    transition: padding 0.2s ease;
-    position: relative;
-    box-sizing: border-box;
+    flex-shrink: 0; background-color: #FFFFFF; padding: 6px 8px; border-top: 1px solid #dadde1;
+    display: flex; align-items: flex-end; gap: 6px; transition: padding 0.2s ease;
+    position: relative; box-sizing: border-box;
 }
-
-.actionButtonsContainer {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding-bottom: 5px;
-    max-width: 80px;
-    flex-shrink: 0;
-    transition: max-width 0.2s ease, opacity 0.2s ease, visibility 0.2s ease;
-    opacity: 1;
-    overflow: hidden;
-    visibility: visible;
-}
-
-.chatActionButton {
-    background: none; border: none; color: #0084ff; font-size: 1.3rem; padding: 6px; border-radius: 50%;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background-color 0.2s ease; flex-shrink: 0;
-}
+.actionButtonsContainer { display: flex; align-items: center; gap: 4px; padding-bottom: 5px; max-width: 80px; flex-shrink: 0; transition: max-width 0.2s ease, opacity 0.2s ease, visibility 0.2s ease; opacity: 1; overflow: hidden; visibility: visible; }
+.chatActionButton { background: none; border: none; color: #0084ff; font-size: 1.3rem; padding: 6px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s ease; flex-shrink: 0; }
 .chatActionButton:hover:not(:disabled) { background-color: #f0f2f5; }
 .chatActionButton:disabled { color: #bec3c9; cursor: not-allowed; }
 .chatActionButton.recordingActive { color: #e74c3c; animation: pulseRecord 1.5s infinite ease-in-out; }
 @keyframes pulseRecord { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
-.messageInput { /* Textarea */
-    flex-grow: 1;
-    flex-basis: 0;
-    min-width: 0;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 18px;
-    background-color: #f0f2f5;
-    color: #050505;
-    font-size: 1rem; /* 16px to prevent iOS zoom */
-    outline: none;
-    resize: none;
-    max-height: 100px;
-    line-height: 1.4;
-    font-family: inherit;
-    margin: 0;
-}
+.messageInput { flex-grow: 1; flex-basis: 0; min-width: 0; padding: 8px 12px; border: none; border-radius: 18px; background-color: #f0f2f5; color: #050505; font-size: 1rem; outline: none; resize: none; max-height: 100px; line-height: 1.4; font-family: inherit; margin: 0; }
 .messageInput:disabled { background-color: #e4e6eb; cursor: not-allowed; }
-
-.sendButton { /* Send Icon Button */
-    height: 36px; width: 36px; border: none; border-radius: 50%; background-color: transparent;
-    color: #0084ff; cursor: pointer; transition: background-color 0.2s, color 0.2s;
-    display: flex; justify-content: center; align-items: center; flex-shrink: 0;
-    font-size: 1.2rem; margin-bottom: 2px;
-}
+.sendButton { height: 36px; width: 36px; border: none; border-radius: 50%; background-color: transparent; color: #0084ff; cursor: pointer; transition: background-color 0.2s, color 0.2s; display: flex; justify-content: center; align-items: center; flex-shrink: 0; font-size: 1.2rem; margin-bottom: 2px; }
 .sendButton:hover:not(:disabled) { background-color: #f0f2f5; }
 .sendButton:disabled { color: #bec3c9; cursor: default; background-color: transparent; }
-.spinner { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-.messageInputForm.typingActive .actionButtonsContainer {
-    max-width: 0;
-    opacity: 0;
-    visibility: hidden;
-}
-
-.uploadErrorBar {
-    position: absolute; bottom: 100%; left: 0; width: 100%; background-color: #f8d7da;
-    color: #721c24; padding: 4px 12px; font-size: 0.8rem; text-align: center;
-    border-top-left-radius: 4px; border-top-right-radius: 4px; z-index: 5;
-}
+.messageInputForm.typingActive .actionButtonsContainer { max-width: 0; opacity: 0; visibility: hidden; }
+.uploadErrorBar { position: absolute; bottom: 100%; left: 0; width: 100%; background-color: #f8d7da; color: #721c24; padding: 4px 12px; font-size: 0.8rem; text-align: center; border-top-left-radius: 4px; border-top-right-radius: 4px; z-index: 5; }
 
 /* ================================== */
 /* Media Rendering Styles             */
@@ -277,9 +247,55 @@
 .sent .waveformBar { background-color: white; }
 .audioTimestamp { font-size: 0.8rem; font-weight: 500; color: #333; flex-shrink: 0; margin-left: 4px; }
 .sent .audioTimestamp { color: white; }
+
 /* ================================== */
-/* End Custom Audio Player Styles     */
+/* *** ADDED: Emoji Only Styles *** */
 /* ================================== */
+.emojiOnlyWrapper {
+    max-width: none; /* Allow emoji to take full width */
+    /* Use flex alignment from parent */
+}
+.emojiOnlyContainer {
+    display: flex;
+    width: fit-content;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: pan-y;
+}
+.sent .emojiOnlyContainer { margin-left: auto; }
+.received .emojiOnlyContainer { margin-right: auto; }
+
+.emojiOnlyMessage {
+    font-size: 2.8rem;  /* Larger font size */
+    line-height: 1.1;   /* Adjust line height */
+    margin: 2px 0;
+    padding: 0 4px; /* Minimal horizontal padding for touch area */
+    background: none;
+    box-shadow: none;
+    display: inline-block;
+    border-radius: 0;
+    cursor: pointer;
+}
+/* Ensure mentions inside large emojis don't get bubble styles */
+.emojiOnlyMessage .mentionHighlight {
+    background: none; padding: 0; font-weight: normal; color: inherit;
+}
+
+/* Adjust timestamp position for emoji-only messages */
+.emojiOnlyWrapper .timestampContainer {
+    margin-top: 0;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+.sent.emojiOnlyWrapper .timestampContainer { align-self: flex-end; }
+.received.emojiOnlyWrapper .timestampContainer { align-self: flex-start; }
+
+/* Ensure reactions position correctly below emoji-only messages */
+.emojiOnlyWrapper .reactionsContainer {
+    margin-top: -4px; /* Adjust slightly based on larger font */
+}
+/* Alignment already handled by .sent/.received .reactionsContainer rules */
 
 /* ================================== */
 /* Other Styles                       */
@@ -302,19 +318,10 @@
 .modalReactionItem:last-child { border-bottom: none; }
 .modalReactionEmoji { font-size: 1.5rem; margin-right: 1rem; }
 
-/* ... (keep all existing styles, including the .mentionSuggestions section) ... */
+/* Mentions */
+.mentionHighlight { font-weight: 600; color: #000000; }
+.sent .mentionHighlight { color: #FFFFFF; }
 
-/* === UPDATE THIS CLASS === */
-.mentionHighlight {
-    font-weight: 600; /* Make it bold */
-    color: #000000;   /* Black color */
-    /* Remove background/padding if you don't want them */
-    /* background-color: rgba(0, 0, 0, 0.05); */
-    /* border-radius: 3px; */
-    /* padding: 0 2px; */
-}
-/* Style for mentions in sent bubbles (make it lighter than pure white if needed) */
-.sent .mentionHighlight {
-    color: #FFFFFF; /* White on blue background */
-    /* You could use slightly off-white like #f0f0f0 if pure white is too stark */
+.messageWrapper:not(.grouped) {
+    margin-top: 8px; /* <-- ADD margin-top here */
 }

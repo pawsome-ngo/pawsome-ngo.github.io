@@ -6,7 +6,7 @@ import ReactionsModal from './components/ReactionsModal.jsx';
 import ReactionPicker from './components/ReactionPicker.jsx';
 // REMOVED: ChatIncidentDetailModal import
 import Lightbox from '../../components/common/Lightbox.jsx';
-import styles from './GlobalChatWindow.module.css'; // *** CHANGED: Using ChatWindow.module.css ***
+import styles from './ChatWindow.module.css'; // *** CHANGED: Using ChatWindow.module.css ***
 import {
     FaPaperPlane, /* FaInfoCircle removed */ FaCheck, FaCheckDouble, FaArrowLeft, FaChevronDown,
     FaPlus, FaCamera, FaImage, FaMicrophone, FaStop, FaSpinner, FaFileAudio, FaFileVideo, FaFileImage, FaFileAlt, FaClock, FaUsers, // Keep FaUsers

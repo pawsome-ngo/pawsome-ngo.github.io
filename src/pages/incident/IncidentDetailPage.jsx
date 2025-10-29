@@ -40,7 +40,7 @@ const copyToClipboard = (text) => {
 };
 
 
-const IncidentDetailPage = ({ token }) => {
+const IncidentDetailPage = ({ token, currentUser }) => {
     const { incidentId } = useParams();
     const navigate = useNavigate();
     const [incident, setIncident] = useState(null);
@@ -775,6 +775,7 @@ Please coordinate and proceed to the location. Thank you! 🙏
                 incidentData={incident} // Pass current incident data
                 token={token}
                 onSaveSuccess={handleIncidentUpdateSuccess} // Pass the success handler
+                currentUser={currentUser}
             />
             {/* --- End Modal Rendering --- */}
         </div>

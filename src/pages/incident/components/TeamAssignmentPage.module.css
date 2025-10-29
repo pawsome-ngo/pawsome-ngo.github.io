@@ -133,6 +133,11 @@
     color: #27ae60; /* Green */
 }
 
+/* --- ✨ NEW: Shelter Icon Color --- */
+.shelterIcon {
+    color: #16a085; /* Teal/Green */
+}
+
 /* Experience Level Colors */
 .beginner {
     font-weight: 600;

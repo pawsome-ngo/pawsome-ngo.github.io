@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import styles from './TeamAssignmentPage.module.css';
 // --- ✨ Import FaPaw for the spinner ---
-import { FaArrowLeft, FaMotorcycle, FaMedkit, FaHeart, FaExclamationCircle, FaHistory, FaPaw } from 'react-icons/fa';
+import { FaArrowLeft, FaMotorcycle, FaMedkit, FaHeart, FaExclamationCircle, FaHistory, FaPaw, FaHome } from 'react-icons/fa';
 import CustomSelect from '../../../components/common/CustomSelect.jsx';
 import AssignmentSuccessModal from "./AssignmentSuccessModal.jsx";
 import UnauthorizedModal from "../../../components/common/UnauthorizedModal.jsx";
@@ -228,6 +228,7 @@ const TeamAssignmentPage = ({ token, currentUser }) => {
                                 {/* --- ✨ Apply color classes to icons --- */}
                                 {v.hasVehicle && <FaMotorcycle className={styles.vehicleIcon} title="Has vehicle" />}
                                 {v.hasMedicineBox && <FaMedkit className={styles.medkitIcon} title="Has medicine box" />}
+                                {v.canProvideShelter && <FaHome className={styles.shelterIcon} title="Can provide shelter" />}
                             </div>
                         </div>
                     ))}
